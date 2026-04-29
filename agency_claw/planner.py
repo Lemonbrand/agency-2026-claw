@@ -82,7 +82,7 @@ You will receive:
 Your task:
 1. Select only skills that can run from the available data.
 2. Reject unsupported skills with concrete reasons.
-3. Order selected skills for a one-day live demo.
+3. Order selected skills for a one-day presentation build.
 4. Do not pretend a missing column exists.
 5. Prefer implemented skills. Stub skills can only be rejected or listed as future_work.
 

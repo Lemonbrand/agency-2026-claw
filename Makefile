@@ -1,4 +1,4 @@
-.PHONY: bootstrap demo demo-agentic onboard plan run-plan run correlate verify disconfirm resolve review promote ui neotoma-smoke test
+.PHONY: bootstrap demo presentation demo-agentic onboard plan run-plan run correlate verify disconfirm resolve review promote ui neotoma-smoke test
 
 bootstrap:
 	./scripts/bootstrap.sh
@@ -15,6 +15,8 @@ demo:
 	./bin/agency review --reviewer heuristic
 	./bin/agency promote
 	./bin/agency ui
+
+presentation: demo
 
 demo-agentic:
 	./bin/agency onboard
