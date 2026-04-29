@@ -23,11 +23,16 @@ function findAuditEntry(audit, id) {
   return (audit?.per_challenge || []).find(p => p.id === id || p.id === String(id));
 }
 
+function sourceLink(table) {
+  const q = encodeURIComponent(table);
+  return `<a href="/explore/data-tables.html?q=${q}" title="Search findings using this source table"><code>${escText(table)}</code></a>`;
+}
+
 function renderRelated(related = []) {
   if (!related.length) return '';
   return `
     <div class="card sp-md">
-      <div class="eyebrow">Related findings</div>
+      <div class="eyebrow">Related review leads</div>
       ${related.map(r => `
         <div class="row" style="padding: 6px 0; border-bottom: 1px dashed var(--border);">
           <a href="/challenges/${escAttr(r.challenge_id)}.html" class="mono" style="font-size: 12px;">${escText(r.challenge_id)}</a>
@@ -46,8 +51,8 @@ function renderHeroFinding(c) {
   return `
     <div class="card accent-orange sp-md">
       <div class="row" style="margin-bottom: 10px;">
-        <span class="eyebrow">The finding</span>
-        ${c.execution_status?.row_count != null ? `<span class="chip orange" style="margin-left: auto;">${fmtInt(c.execution_status.row_count)} rows</span>` : ''}
+        <span class="eyebrow">Review lead</span>
+        ${c.execution_status?.row_count != null ? `<span class="chip orange" style="margin-left: auto;">${fmtInt(c.execution_status.row_count)} records returned</span>` : ''}
       </div>
       ${f.entity ? `<h3 style="font-size: 22px; margin-bottom: 8px;">${escText(f.entity)}</h3>` : ''}
       ${metric.value ? `<div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ink-2); margin-bottom: 10px;">${escText(metric.label || '')} <strong style="color: var(--ink); font-size: 18px;">${escText(metric.value)}</strong></div>` : ''}
@@ -61,23 +66,23 @@ function renderReplay(c) {
   const sql = c.replay_sql || '';
   const status = c.execution_status || {};
   const meta = [];
-  if (status.ran) meta.push(`<span class="chip green">probe ran</span>`);
-  if (status.row_count != null) meta.push(`<span class="chip">${fmtInt(status.row_count)} rows</span>`);
-  if (status.runtime_ms != null) meta.push(`<span class="chip">${status.runtime_ms} ms</span>`);
-  if (status.sql_hash) meta.push(`<span class="chip">sha: <code>${escText(shortHash(status.sql_hash))}</code></span>`);
+  if (status.ran) meta.push(`<span class="chip green">query ran</span>`);
+  if (status.row_count != null) meta.push(`<span class="chip">${fmtInt(status.row_count)} records returned</span>`);
+  if (status.runtime_ms != null) meta.push(`<span class="chip">${status.runtime_ms} ms runtime</span>`);
+  if (status.sql_hash) meta.push(`<span class="chip">query hash: <code>${escText(shortHash(status.sql_hash))}</code></span>`);
 
   if (!sql && meta.length === 0) return '';
 
   return `
     <details class="collapsible sp-md">
-      <summary>Replay this finding</summary>
+      <summary>Evidence and query</summary>
       ${meta.length ? `<div class="row" style="margin-top: 10px;">${meta.join('')}</div>` : ''}
       ${sql ? `<pre style="margin-top: 10px;">${escText(sql)}</pre>` : ''}
       ${(c.tables_joined || []).length ? `
         <div style="margin-top: 10px;">
-          <span class="eyebrow">Tables joined</span>
+          <span class="eyebrow">Source data</span>
           <div class="row" style="margin-top: 4px;">
-            ${c.tables_joined.map(t => `<code>${escText(t)}</code>`).join(' ')}
+            ${c.tables_joined.map(sourceLink).join(' ')}
           </div>
         </div>` : ''}
     </details>
@@ -88,7 +93,7 @@ function renderDisconfirm(c) {
   if (!c.disconfirm_check) return '';
   return `
     <div class="card accent-navy sp-md">
-      <div class="eyebrow">What would disprove this</div>
+      <div class="eyebrow">Countercheck</div>
       <p style="margin-top: 6px; line-height: 1.6;">${escText(c.disconfirm_check)}</p>
     </div>
   `;
@@ -98,10 +103,25 @@ function renderRoadblocks(roadblocks = []) {
   if (!roadblocks.length) return '';
   return `
     <div class="card accent-amber sp-md">
-      <div class="eyebrow">Roadblocks</div>
+      <div class="eyebrow">What we still need</div>
       <ul style="margin-left: 18px; margin-top: 8px; line-height: 1.55;">
         ${roadblocks.map(r => `<li>${escText(r)}</li>`).join('')}
       </ul>
+    </div>
+  `;
+}
+
+function renderEvidenceLegend(c) {
+  const tableCount = (c.tables_joined || []).length;
+  const query = c.execution_status || {};
+  return `
+    <div class="card sp-md">
+      <div class="eyebrow">How to read this page</div>
+      <div style="display: grid; gap: 10px; margin-top: 10px; font-size: 13px; line-height: 1.45; color: var(--ink-2);">
+        <div><strong style="color: var(--ink);">Source data</strong> means the tables or datasets the check read. ${tableCount ? `${fmtInt(tableCount)} source ${tableCount === 1 ? 'table is' : 'tables are'} linked below.` : 'No source table is attached yet.'}</div>
+        <div><strong style="color: var(--ink);">Evidence status</strong> says whether the data fields were verified, the query ran, or an outside source is still needed.</div>
+        <div><strong style="color: var(--ink);">Query proof</strong> is the reproducible record: ${query.sql_hash ? `hash ${escText(shortHash(query.sql_hash))}, ` : ''}${query.runtime_ms != null ? `${query.runtime_ms} ms runtime, ` : ''}${query.row_count != null ? `${fmtInt(query.row_count)} returned records.` : 'not yet executed.'}</div>
+      </div>
     </div>
   `;
 }
@@ -115,9 +135,9 @@ function renderDecisionPanel(challengeId, prompt) {
       ${prompt ? `<p style="margin: 8px 0 12px; color: var(--ink-2);">${escText(prompt)}</p>` : ''}
       <div class="decision" data-verdict="${escAttr(verdict)}">
         <div class="decision__row">
-          <button class="btn btn--success" data-verdict="promote">Promote</button>
-          <button class="btn" data-verdict="review">Needs review</button>
-          <button class="btn btn--danger" data-verdict="reject">Reject</button>
+          <button class="btn btn--success" data-verdict="promote">Escalate</button>
+          <button class="btn" data-verdict="review">Hold for review</button>
+          <button class="btn btn--danger" data-verdict="reject">Close</button>
           <span class="note note--small" style="margin-left: auto;" data-decided-at>${existing.decided_at ? 'last saved ' + new Date(existing.decided_at).toLocaleTimeString() : ''}</span>
         </div>
         <textarea class="decision__note" placeholder="Optional note (saved as you type)">${escText(existing.note || '')}</textarea>
@@ -138,7 +158,8 @@ function wireDecisionPanel(root, challengeId) {
       panel.dataset.verdict = verdict;
       const saved = setDecision(challengeId, verdict, note?.value || '');
       if (decided) decided.textContent = 'last saved ' + new Date(saved.decided_at).toLocaleTimeString();
-      toast(`Saved. ${verdict.charAt(0).toUpperCase() + verdict.slice(1)} → ${challengeId}`);
+      const label = { promote: 'Escalate', review: 'Hold for review', reject: 'Close' }[verdict] || verdict;
+      toast(`Saved. ${label} -> ${challengeId}`);
     });
   });
 
@@ -175,21 +196,21 @@ function toast(message) {
 function renderQARail(challengeId, challengeTitle) {
   const q1 = `Why does ${challengeTitle} matter?`;
   const q2 = `What is the strongest evidence for ${challengeTitle}?`;
-  const q3 = `What would disprove the finding in ${challengeTitle}?`;
+  const q3 = `What countercheck would disprove the review lead in ${challengeTitle}?`;
   return `
     <aside class="card sp-md" id="qa-rail">
-      <div class="eyebrow">Ask about this loop</div>
+      <div class="eyebrow">Ask about this check</div>
       <div class="row" style="gap: 6px; margin: 10px 0;">
         <button class="qa-inline__chip-btn" data-q="${escAttr(q1)}">Why it matters</button>
         <button class="qa-inline__chip-btn" data-q="${escAttr(q2)}">Strongest evidence</button>
-        <button class="qa-inline__chip-btn" data-q="${escAttr(q3)}">What would disprove</button>
+        <button class="qa-inline__chip-btn" data-q="${escAttr(q3)}">Countercheck</button>
       </div>
       <select id="qa-rail-model" style="font-size: 13px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; width: 100%;">
         <option value="sonnet">Claude Sonnet 4.5 · US</option>
         <option value="opus">Claude Opus 4.1 · US (deep)</option>
         <option value="cohere">Cohere Command A · Sovereign / Canadian</option>
       </select>
-      <textarea id="qa-rail-input" rows="2" placeholder="Or type a question scoped to this loop." style="width: 100%; font-family: 'DM Sans'; font-size: 13px; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; resize: vertical;"></textarea>
+      <textarea id="qa-rail-input" rows="2" placeholder="Or type a question scoped to this accountability check." style="width: 100%; font-family: 'DM Sans'; font-size: 13px; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; resize: vertical;"></textarea>
       <button class="btn btn--primary" id="qa-rail-submit" style="margin-top: 8px; width: 100%;">Ask</button>
       <div id="qa-rail-answer" style="margin-top: 12px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; color: var(--ink-2);"></div>
       <div id="qa-rail-meta" class="qa-inline__meta" style="margin-top: 8px;"></div>
@@ -254,8 +275,8 @@ export async function renderChallengePage() {
   if (!challenge) {
     document.querySelector('main').innerHTML = `
       <div class="card accent-amber">
-        <h2>This loop is loading.</h2>
-        <p class="note">The backend bundle does not yet contain challenge <code>${escText(id)}</code>. The page will fill in once <code>challenges.json</code> includes it. Reload in a minute.</p>
+        <h2>This check is loading.</h2>
+        <p class="note">The evidence bundle does not yet contain check <code>${escText(id)}</code>. The page will fill in once <code>challenges.json</code> includes it. Reload in a minute.</p>
       </div>`;
     return;
   }
@@ -263,16 +284,16 @@ export async function renderChallengePage() {
   const auditEntry = findAuditEntry(audit, challenge.id);
   const proofEntry = findExecutionProof(proofs, challenge.id);
 
-  document.title = `${challenge.title} — Agency 2026`;
+  document.title = `${challenge.title} | Agency 2026`;
 
   const main = document.querySelector('main');
   main.innerHTML = `
     <div class="row sp-md">
-      <span class="chip primary">Loop ${escText(challenge.id || challenge.number)}</span>
+      <span class="chip primary">Check ${escText(challenge.id || challenge.number)}</span>
       <span class="chip ${statusToCls(challenge.status)}">${escText(statusLabel(challenge.status))}</span>
       ${renderProofChips(challenge.proof_levels || [])}
-      ${auditEntry ? `<span class="chip ${verdictCls(auditEntry.verdict)}" title="Lexical audit verdict">audit: ${escText(auditEntry.verdict)}</span>` : ''}
-      <a href="/explore/audit.html#challenge-${escAttr(challenge.id)}" class="chip" style="margin-left: auto;">View in audit ↗</a>
+      ${auditEntry ? `<span class="chip ${verdictCls(auditEntry.verdict)}" title="Evidence-trail verdict">evidence trail: ${escText(auditEntry.verdict)}</span>` : ''}
+      <a href="/explore/audit.html#challenge-${escAttr(challenge.id)}" class="chip" style="margin-left: auto;">Open evidence trail ↗</a>
     </div>
 
     <h1 class="sp-md">${escText(challenge.title)}</h1>
@@ -282,18 +303,19 @@ export async function renderChallengePage() {
       <div>
         ${challenge.brief_excerpt ? `
           <div class="card sp-md" style="background: var(--navy-wash); border-color: var(--navy-border);">
-            <div class="eyebrow" style="color: var(--navy);">Challenge as posed</div>
+            <div class="eyebrow" style="color: var(--navy);">Accountability question</div>
             <p style="font-style: italic; color: var(--navy-deep); line-height: 1.55; margin-top: 6px;">${escText(challenge.brief_excerpt)}</p>
           </div>
         ` : ''}
 
         ${challenge.presentation_sentence ? `
           <div class="sp-md">
-            <div class="eyebrow">AI-native pattern</div>
+            <div class="eyebrow">How this check works</div>
             <p style="margin-top: 6px; line-height: 1.6;">${escText(challenge.presentation_sentence)}</p>
           </div>
         ` : ''}
 
+        ${renderEvidenceLegend(challenge)}
         ${renderHeroFinding(challenge)}
         ${renderRoadblocks(challenge.roadblocks)}
         ${renderReplay(challenge)}
@@ -301,10 +323,10 @@ export async function renderChallengePage() {
 
         ${proofEntry?.missing && (proofEntry.missing.tables?.length || proofEntry.missing.fields?.length || proofEntry.missing.external_sources?.length) ? `
           <div class="card accent-gray sp-md">
-            <div class="eyebrow">What is missing to run this further</div>
-            ${proofEntry.missing.tables?.length ? `<p style="margin-top: 8px;"><strong>Tables:</strong> ${proofEntry.missing.tables.map(t => `<code>${escText(t)}</code>`).join(' ')}</p>` : ''}
+            <div class="eyebrow">Missing evidence</div>
+            ${proofEntry.missing.tables?.length ? `<p style="margin-top: 8px;"><strong>Source tables:</strong> ${proofEntry.missing.tables.map(sourceLink).join(' ')}</p>` : ''}
             ${proofEntry.missing.fields?.length ? `<p><strong>Fields:</strong> ${proofEntry.missing.fields.map(t => `<code>${escText(t)}</code>`).join(' ')}</p>` : ''}
-            ${proofEntry.missing.external_sources?.length ? `<p><strong>External sources:</strong> ${proofEntry.missing.external_sources.map(s => escText(s)).join(' · ')}</p>` : ''}
+            ${proofEntry.missing.external_sources?.length ? `<p><strong>Outside sources:</strong> ${proofEntry.missing.external_sources.map(s => escText(s)).join(' · ')}</p>` : ''}
           </div>
         ` : ''}
 

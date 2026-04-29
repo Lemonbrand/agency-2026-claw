@@ -6,3 +6,13 @@ public/embeds/
 public/briefs/
 *.log
 .DS_Store
+
+# Generated chart payloads (backend writes these on each public-export)
+public/charts/
+public/data/
+public/embeds/
+
+# Playwright screenshots and reports
+tests/screenshots/
+test-results/
+playwright-report/

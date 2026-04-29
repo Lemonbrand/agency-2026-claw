@@ -33,7 +33,7 @@
   <span class="chip" id="conn-chip">checking connection...</span>
 </div>
 <h1>Ask the system. Make it cite its work.</h1>
-<p class="lede">Pick a question or write your own. Answers come back with the model badge, token count, cost, and citations to specific findings. The cost chip on every answer is the sovereignty argument restated quietly.</p>
+<p class="lede">Pick a question or write your own. Answers come back with the model badge, token count, cost, and citations to specific review leads. The cost chip on every answer is the sovereignty argument restated quietly.</p>
 
 <div class="ask-grid">
   <div>
@@ -47,8 +47,8 @@
         <button class="chip-btn" data-q="What is the strongest finding the system surfaced?">Strongest finding</button>
         <button class="chip-btn" data-q="Which entity recurs across CRA, federal, and Alberta records?">Cross-jurisdictional entity</button>
         <button class="chip-btn" data-q="What did the system refuse to answer and why?">What was refused</button>
-        <button class="chip-btn" data-q="Show me one SQL probe that ran successfully today.">Show a SQL probe</button>
-        <button class="chip-btn" data-q="What is the disconfirming check on the funding-loops finding?">Disconfirm funding loops</button>
+        <button class="chip-btn" data-q="Show me one source-data query that ran successfully today.">Show a query that ran</button>
+        <button class="chip-btn" data-q="What is the countercheck on the funding-cycles review lead?">Countercheck funding cycles</button>
         <button class="chip-btn" data-q="Which department has the highest HHI vendor concentration?">Top HHI department</button>
       </div>
       <div class="row-1">
@@ -66,9 +66,9 @@
   <aside>
     <div class="card sp-md">
       <div class="eyebrow">Where the answer comes from</div>
-      <p class="note" style="margin-top: 8px;">When the droplet API is reachable, questions go through <code>/api/ask</code>, which can run live SQL probes against the GovAlta database and pull external evidence with citations.</p>
+      <p class="note" style="margin-top: 8px;">When the droplet API is reachable, questions go through <code>/api/ask</code>, which can run live read-only queries against the GovAlta database and pull outside evidence with citations.</p>
       <p class="note">When the droplet is offline, the static page falls back to a curated context bundle (<code>qa-context.json</code>) and a capped event OpenRouter key. Same contract, less reach.</p>
-      <p class="note">The system is instructed to refuse claims past the data, name missing sources, and cite findings by id and SHA.</p>
+      <p class="note">The system is instructed to refuse claims past the data, name missing sources, and cite review leads by id and hash.</p>
     </div>
     <div class="card accent-orange">
       <div class="eyebrow">Costs you incur</div>
@@ -79,7 +79,7 @@
 
 <footer class="footer">
   <div class="footer__close">If the auditors won't, the system will, and it will show its work.</div>
-  <div class="footer__meta"><a href="/index.html">Home</a> · <a href="/explore/decisions.html">My review</a></div>
+  <div class="footer__meta"><a href="/index.html">Home</a> · <a href="/explore/decisions.html">My decisions</a></div>
 </footer>
 </div>
 <script type="module">

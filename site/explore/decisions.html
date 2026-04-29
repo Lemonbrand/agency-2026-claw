@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>My Review · Agency 2026</title>
+<title>My Decisions · Agency 2026</title>
 <link rel="icon" href="/icons/rocket.png" type="image/png">
 <link rel="stylesheet" href="/src/styles/lemon.css">
 <style>
@@ -30,9 +30,9 @@
 <nav class="nav"></nav>
 
 <div class="row sp-md">
-  <span class="chip primary">Your review</span>
+  <span class="chip primary">Your decisions</span>
 </div>
-<h1>Mark what's worth promoting. Take it with you.</h1>
+<h1>Mark what is worth escalating. Take it with you.</h1>
 <p class="lede">One JSON, one printable sheet. Your call, your record. Decisions are stored in your browser only. Nothing leaves your machine until you export.</p>
 
 <div class="judge-form">
@@ -48,9 +48,9 @@
 </div>
 
 <div class="qstrip">
-  <div class="metric accent-green"><strong id="r-promote">0</strong><span>promote</span></div>
-  <div class="metric accent-amber"><strong id="r-review">0</strong><span>need review</span></div>
-  <div class="metric accent-red"><strong id="r-reject">0</strong><span>reject</span></div>
+  <div class="metric accent-green"><strong id="r-promote">0</strong><span>escalate</span></div>
+  <div class="metric accent-amber"><strong id="r-review">0</strong><span>hold for review</span></div>
+  <div class="metric accent-red"><strong id="r-reject">0</strong><span>close</span></div>
   <div class="metric accent-navy"><strong id="r-total">0</strong><span>total</span></div>
 </div>
 
@@ -62,8 +62,8 @@
 
 <h2 class="sp-md">Decisions</h2>
 <table class="table sp-md" id="decisions-table">
-  <thead><tr><th>Loop</th><th>Verdict</th><th>Note</th><th>When</th></tr></thead>
-  <tbody><tr><td colspan="4" class="empty">No decisions saved yet. Open a loop and pick promote, needs review, or reject.</td></tr></tbody>
+  <thead><tr><th>Check</th><th>Decision</th><th>Note</th><th>When</th></tr></thead>
+  <tbody><tr><td colspan="4" class="empty">No decisions saved yet. Open a check and pick escalate, hold for review, or close.</td></tr></tbody>
 </table>
 
 <h2 class="sp-md">Questions you asked</h2>
@@ -71,7 +71,7 @@
 
 <footer class="footer">
   <div class="footer__close">If the auditors won't, the system will, and it will show its work.</div>
-  <div class="footer__meta"><a href="/index.html">Home</a> · <a href="/explore/audit.html">Audit</a></div>
+  <div class="footer__meta"><a href="/index.html">Home</a> · <a href="/explore/audit.html">Evidence trail</a></div>
 </footer>
 </div>
 <script type="module">
@@ -83,6 +83,9 @@ import { startLivePoll } from '/src/lib/live-poll.js';
 
 function vCls(v) {
   switch (v) { case 'promote': return 'green'; case 'review': return 'amber'; case 'reject': return 'red'; default: return 'gray'; }
+}
+function vLabel(v) {
+  switch (v) { case 'promote': return 'escalate'; case 'review': return 'hold for review'; case 'reject': return 'close'; default: return v || ''; }
 }
 
 async function paint() {
@@ -103,12 +106,12 @@ async function paint() {
   const tbody = document.querySelector('#decisions-table tbody');
   const decisions = Object.entries(store.decisions);
   if (!decisions.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty">No decisions saved yet. Open a loop and pick promote, needs review, or reject.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="empty">No decisions saved yet. Open a check and pick escalate, hold for review, or close.</td></tr>';
   } else {
     tbody.innerHTML = decisions.map(([id, d]) => `
       <tr>
         <td><a href="/challenges/${escText(id)}.html"><strong>${escText(id)}</strong></a> · ${escText(titleById[id] || '')}</td>
-        <td><span class="chip ${vCls(d.verdict)}">${escText(d.verdict)}</span></td>
+        <td><span class="chip ${vCls(d.verdict)}">${escText(vLabel(d.verdict))}</span></td>
         <td>${escText(d.note || '')}</td>
         <td>${relativeTime(d.decided_at)}</td>
       </tr>

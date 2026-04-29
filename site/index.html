@@ -4,407 +4,436 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Agency 2026 · LemonClaw</title>
-<meta name="description" content="Eleven Government of Alberta accountability loops, classified honestly. Every answer carries its own receipt.">
-<link rel="icon" href="/icons/shield.png" type="image/png">
+<meta name="description" content="One day of AI auditing. $752 spent. All of it routed through US infrastructure.">
+<link rel="icon" href="/icons/dollar.png" type="image/png">
 <link rel="stylesheet" href="/src/styles/lemon.css">
 <style>
-  .hero__icon { width: 56px; height: 56px; flex-shrink: 0; object-fit: contain; }
-  .hero__head-row { display: flex; align-items: flex-start; gap: 18px; margin-bottom: 12px; }
-  .hero__chart { background: var(--paper-2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; min-height: 320px; }
-  .hero__chart-canvas { height: 280px; }
-  .hero__caption { margin-top: 12px; font-style: italic; color: var(--ink-2); font-size: 13px; line-height: 1.5; }
+  body { padding: 0; }
+  .page { max-width: 1280px; padding: 0; box-shadow: none; background: transparent; }
+  .nav { margin: 24px 24px 0; border-radius: 14px; padding: 16px 24px; background: var(--paper); border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+  .stage { background: var(--paper); border-radius: 14px; margin: 18px 24px 24px; padding: 56px clamp(24px, 4vw, 64px) 64px; box-shadow: var(--shadow-lg); }
 
-  .position { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  @media (max-width: 720px) { .position { grid-template-columns: 1fr; } }
-  .position p { color: var(--ink-2); font-size: 14px; line-height: 1.55; }
+  .eyebrow-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 28px; }
 
-  .status-strip {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-    background: var(--paper-2); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 16px; margin: 16px 0 0;
+  .pill-money {
+    font-family: "Outfit", sans-serif; font-weight: 800;
+    font-size: clamp(72px, 12vw, 168px); line-height: 0.92;
+    letter-spacing: -0.045em; color: var(--ink);
+    margin: 0 0 22px;
   }
-  .status-strip > div strong { font-size: 22px; font-family: "Outfit", sans-serif; font-weight: 800; display: block; }
-  .status-strip > div span { font-size: 11px; font-family: "JetBrains Mono", monospace; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
-  @media (max-width: 720px) { .status-strip { grid-template-columns: 1fr 1fr; } }
+  .pill-money .currency { font-size: 0.5em; font-weight: 700; color: var(--ink-2); margin-right: 0.05em; vertical-align: 24%; }
 
-  .loops-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
-  .loop-card { display: flex; flex-direction: column; gap: 10px; padding: 18px 18px 16px; min-height: 200px; transition: transform 0.15s, box-shadow 0.15s; cursor: pointer; text-decoration: none; color: inherit; border: 1px solid var(--border); border-radius: 10px; background: var(--paper); border-left: 4px solid var(--gray-border); }
-  .loop-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-left-color: var(--orange); }
-  .loop-card[data-status="runnable"]    { border-left-color: var(--green); }
-  .loop-card[data-status="materialized"] { border-left-color: var(--amber); }
-  .loop-card[data-status="external"]    { border-left-color: var(--ink-3); }
-  .loop-card[data-status="refused"]     { border-left-color: var(--ink-3); }
-  .loop-card__num { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.08em; color: var(--ink-3); text-transform: uppercase; }
-  .loop-card__title { font-family: "Outfit", sans-serif; font-weight: 700; font-size: 17px; line-height: 1.3; color: var(--ink); margin: 4px 0 6px; }
-  .loop-card__one-line { font-size: 13.5px; color: var(--ink-2); line-height: 1.5; flex: 1; }
-  .loop-card__chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-  .loop-card__arrow { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--orange); letter-spacing: 0.06em; text-transform: uppercase; }
+  .pill-statement {
+    font-family: "Outfit", sans-serif; font-weight: 700;
+    font-size: clamp(20px, 2.4vw, 28px); line-height: 1.25;
+    letter-spacing: -0.01em; color: var(--ink); max-width: 920px;
+    margin-bottom: 44px;
+  }
+  .pill-statement .accent { color: var(--orange); }
+  .pill-statement .muted { color: var(--ink-2); }
 
-  .strongest { display: grid; grid-template-columns: 1fr; gap: 18px; padding: 24px 28px; border-radius: 12px; background: linear-gradient(135deg, var(--navy-deep), var(--navy)); color: var(--paper); margin-top: 16px; }
-  .strongest h2 { color: var(--paper); }
-  .strongest h2 .accent { color: var(--orange); }
-  .strongest__chart { background: hsl(207, 35%, 14%); border-radius: 8px; padding: 16px; min-height: 320px; }
-  .strongest__chart-canvas { height: 280px; }
-  .strongest__cap { color: hsl(207, 25%, 88%); font-size: 14px; line-height: 1.5; }
+  /* Pie + Map grid */
+  .viz-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.9fr) 1.4fr;
+    gap: 24px;
+    margin-bottom: 24px;
+    align-items: stretch;
+  }
+  @media (max-width: 880px) { .viz-grid { grid-template-columns: 1fr; } }
 
-  .arch-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-  @media (max-width: 720px) { .arch-row { grid-template-columns: 1fr; } }
-  .arch-card { padding: 18px 20px; }
-  .arch-card h3 { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-  .arch-card h3 img { width: 28px; height: 28px; }
-  .arch-card p { font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
+  .viz-card {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  .viz-card h3 {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-2);
+    font-weight: 500; margin-bottom: 10px;
+  }
+  .viz-card .h2 {
+    font-family: "Outfit", sans-serif; font-weight: 700;
+    font-size: 22px; line-height: 1.2; letter-spacing: -0.01em;
+    color: var(--ink); margin-bottom: 14px;
+  }
 
-  .cost-row { display: grid; grid-template-columns: 1fr 1.4fr; gap: 18px; align-items: stretch; }
-  @media (max-width: 880px) { .cost-row { grid-template-columns: 1fr; } }
-  .cost-chart { background: var(--paper); border: 1px solid var(--border); border-radius: 12px; padding: 18px; min-height: 280px; }
-  .cost-chart-canvas { height: 240px; }
-  .cost-cta h2 { display: flex; align-items: center; gap: 10px; }
-  .cost-cta h2 img { width: 32px; height: 32px; }
-  .cost-cta p { color: var(--ink-2); font-size: 14px; line-height: 1.55; margin-bottom: 12px; }
+  .pie-frame { position: relative; height: 280px; display: flex; align-items: center; justify-content: center; }
+  .pie-frame canvas { max-height: 280px; }
+  .pie-center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .pie-center .total {
+    font-family: "Outfit", sans-serif; font-weight: 800;
+    font-size: 36px; color: var(--ink); letter-spacing: -0.02em;
+  }
+  .pie-center .label {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2);
+  }
 
-  .qa-inline { background: var(--paper-2); border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px; }
-  .qa-inline__row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0 14px; }
-  .qa-inline__row select, .qa-inline__row input[type="text"] { font-family: "DM Sans", sans-serif; font-size: 14px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--paper); }
-  .qa-inline__row input[type="text"] { flex: 1; min-width: 200px; }
-  .qa-inline__chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-  .qa-inline__chip-btn { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.05em; padding: 6px 10px; border: 1px solid var(--navy-border); border-radius: 999px; background: var(--paper); color: var(--navy); cursor: pointer; }
-  .qa-inline__chip-btn:hover { background: var(--navy); color: var(--paper); }
-  .qa-inline__answer { background: var(--paper); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; min-height: 80px; font-size: 14px; line-height: 1.55; white-space: pre-wrap; }
-  .qa-inline__meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-2); }
+  /* Map */
+  .map-frame {
+    position: relative;
+    background: hsl(207, 30%, 96%);
+    border-radius: 8px;
+    padding: 16px;
+    flex: 1;
+    overflow: hidden;
+    min-height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .map-frame > svg {
+    width: 100%; height: 100%;
+    max-height: 380px;
+  }
+  .map-frame > svg .land { fill: hsl(200, 12%, 80%); stroke: hsl(200, 8%, 65%); stroke-width: 0.5; }
+  .map-frame > svg .land:hover { fill: hsl(200, 12%, 75%); }
+  .map-frame .legend {
+    position: absolute; bottom: 14px; left: 16px;
+    display: flex; gap: 14px; flex-wrap: wrap;
+    background: rgba(255,255,255,0.92); padding: 6px 12px; border-radius: 999px;
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink);
+    z-index: 5;
+  }
+  .map-frame .legend .leg { display: inline-flex; align-items: center; gap: 6px; }
+  .map-frame .legend .leg::before { content: ''; width: 10px; height: 10px; border-radius: 50%; }
+  .map-frame .legend .leg.us::before { background: hsl(216, 90%, 48%); }
+  .map-frame .legend .leg.ca::before { background: hsl(0, 80%, 48%); }
+  .marker-label { font-family: "JetBrains Mono", monospace; pointer-events: none; }
 
-  .review-bar { background: var(--paper); border: 1px dashed var(--border-s); border-radius: 10px; padding: 14px 16px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-  .review-bar strong { font-family: "Outfit", sans-serif; font-size: 16px; }
-  .review-bar .stat { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.06em; }
-  .review-bar .stat b { color: var(--ink); font-size: 13px; }
+  .provider-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    margin-bottom: 48px;
+  }
+  @media (max-width: 720px) { .provider-row { grid-template-columns: 1fr; } }
 
-  .data-loading-banner { background: var(--amber-wash); border: 1px solid var(--amber-border); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--amber-deep); margin-bottom: 16px; }
-  .data-loading-banner.is-hidden { display: none; }
+  .provider {
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 22px 26px; background: var(--paper);
+  }
+  .provider .label {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .provider .label::before {
+    content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+  }
+  .provider.claude .label::before    { background: hsl(216, 90%, 48%); }
+  .provider.codex .label::before     { background: hsl(216, 90%, 60%); }
+  .provider.openrouter .label::before { background: hsl(216, 90%, 72%); }
+  .provider .num {
+    font-family: "Outfit", sans-serif; font-weight: 800;
+    font-size: 36px; color: var(--ink); letter-spacing: -0.02em; line-height: 1;
+  }
+  .provider .country { font-size: 13px; color: var(--ink-2); margin-top: 6px; }
+
+  /* Highlighted findings block */
+  .stories-section h2 {
+    font-family: "Outfit", sans-serif; font-weight: 800;
+    font-size: clamp(28px, 3.4vw, 38px); letter-spacing: -0.02em;
+    color: var(--ink); margin-bottom: 8px;
+  }
+  .stories-section .subline { color: var(--ink-2); font-size: 15px; max-width: 720px; line-height: 1.5; margin-bottom: 22px; }
+
+  .story-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 36px; }
+  @media (max-width: 880px) { .story-row { grid-template-columns: 1fr; } }
+  .ministory {
+    background: var(--paper); border: 1px solid var(--border);
+    border-left: 5px solid var(--orange);
+    border-radius: 12px; padding: 20px 22px;
+    text-decoration: none; color: inherit;
+    display: flex; flex-direction: column; justify-content: space-between;
+    min-height: 220px;
+  }
+  .ministory.k-platform { border-left-color: var(--green); }
+  .ministory.k-cross    { border-left-color: var(--navy); }
+  .ministory.k-incumbency { border-left-color: var(--orange); }
+  .ministory:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); transition: 0.15s; }
+  .ministory .tag {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2);
+    margin-bottom: 8px;
+  }
+  .ministory .ent {
+    font-family: "Outfit", sans-serif; font-weight: 700;
+    font-size: 19px; color: var(--ink); line-height: 1.25; margin-bottom: 8px;
+  }
+  .ministory .one {
+    font-size: 14px; color: var(--ink-2); line-height: 1.5; flex: 1;
+  }
+  .ministory .more {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    letter-spacing: 0.06em; color: var(--orange-deep); text-transform: uppercase;
+    margin-top: 10px;
+  }
+
+  .cta-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    margin-top: 8px;
+  }
+  @media (max-width: 720px) { .cta-row { grid-template-columns: 1fr; } }
+  .cta-card {
+    display: flex; flex-direction: column; justify-content: space-between;
+    gap: 12px; padding: 24px 26px; border-radius: 12px;
+    border: 1px solid var(--border); background: var(--paper);
+    text-decoration: none; color: inherit;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    min-height: 180px;
+  }
+  .cta-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--orange); }
+  .cta-card.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .cta-card.primary .ct, .cta-card.primary .cs { color: var(--paper); }
+  .cta-card.primary .cs { opacity: 0.78; }
+  .cta-card.primary .cg { color: var(--orange); }
+  .cta-card .ci { width: 40px; height: 40px; }
+  .cta-card .ct { font-family: "Outfit", sans-serif; font-weight: 700; font-size: 22px; line-height: 1.2; color: var(--ink); letter-spacing: -0.01em; }
+  .cta-card .cs { font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
+  .cta-card .cg { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--orange-deep); }
+
+  .footer-strip {
+    display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+    margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border);
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .footer-strip a { color: var(--ink-2); border-bottom: 0; }
+  .footer-strip a:hover { color: var(--orange); }
+  .footer-strip .spacer { flex: 1; }
 </style>
 </head>
 <body>
 <div class="page">
 <nav class="nav"></nav>
 
-<div class="data-loading-banner is-hidden" id="data-banner">
-  Backend bundle is still being produced. The page will fill in as artifacts land.
-</div>
+<section class="stage fade-in">
+  <div class="eyebrow-row">
+    <span class="chip primary">Lemonclaw / Agency 2026</span>
+    <span class="chip" id="freeze-chip">Live · refreshes every minute</span>
+  </div>
 
-<!-- ── HERO ─────────────────────────────────────── -->
-<section class="hero fade-in">
-  <div>
-    <div class="hero__head-row">
-      <img class="hero__icon" src="/icons/shield.png" alt="">
-      <div>
-        <div class="eyebrow">LemonClaw / Agency 2026 / GoA Hackathon Submission</div>
-        <h1>Audit your agencies <span class="accent">before someone else does.</span></h1>
+  <h1 class="visually-hidden" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;">
+    Agency 2026 LemonClaw: $<span id="h1-cost">752</span> spent today on AI auditing the Government of Alberta. All routed through US infrastructure.
+  </h1>
+  <div class="pill-money">
+    <span class="currency">$</span><span id="big-cost">752</span>
+  </div>
+
+  <div class="pill-statement">
+    One day of AI auditing the Government of Alberta. <span class="muted">Every dollar routed through</span> <span class="accent">US-controlled infrastructure</span>.
+  </div>
+
+  <!-- ── Pie + Map ─────────────────────────────────── -->
+  <div class="viz-grid">
+    <!-- PIE -->
+    <div class="viz-card">
+      <h3>Spend by provider</h3>
+      <div class="h2">All three roads lead south.</div>
+      <div class="pie-frame">
+        <canvas id="pie-chart"></canvas>
+        <div class="pie-center">
+          <div class="total" id="pie-total">$0</div>
+          <div class="label">total today</div>
+        </div>
       </div>
     </div>
-    <p class="lede">
-      Eleven loops. Some runnable today. Some need one more dataset. Some the system honestly refused.
-      <strong>Every answer carries its own receipt.</strong>
-    </p>
 
-    <div class="hero__numbers">
-      <div class="metric accent-navy"><strong id="m-rows">—</strong><span>rows scanned</span></div>
-      <div class="metric accent-orange"><strong id="m-findings">—</strong><span>findings surfaced</span></div>
-      <div class="metric accent-green"><strong id="m-dollars">—</strong><span>API-equivalent today</span></div>
-    </div>
-
-    <div class="status-strip" id="status-strip">
-      <div><strong id="s-sql">—</strong><span>sql executed</span></div>
-      <div><strong id="s-mat">—</strong><span>materialization</span></div>
-      <div><strong id="s-ext">—</strong><span>external data</span></div>
-      <div><strong id="s-safe">—</strong><span>schema safe</span></div>
-    </div>
-
-    <div class="hero__cta-row">
-      <a class="btn btn--primary" href="#loops">See the eleven loops</a>
-      <a class="btn" href="#ask">Ask the system</a>
-    </div>
-  </div>
-
-  <div class="hero__chart fade-in delay-1">
-    <div class="eyebrow">Vendor concentration · top 15 federal departments</div>
-    <div class="hero__chart-canvas"><canvas id="chart-hhi"></canvas></div>
-    <div class="hero__caption" id="cap-hhi">HHI by department. Green stays competitive. Amber crosses the FTC moderate line. Red sits past the highly-concentrated threshold.</div>
-  </div>
-</section>
-
-<!-- ── POSITION ────────────────────────────────── -->
-<section class="sp-lg fade-in delay-2">
-  <div class="eyebrow">The position</div>
-  <h2>What was asked. What ran. What was refused.</h2>
-  <div class="position" id="position-text">
-    <p>The Government of Alberta posed ten accountability questions. We classified eleven (one split for honesty) and produced one artifact for each. Some are findings. Some are review leads. Some are honest refusals with the missing data named.</p>
-    <p>Every challenge page carries a proof level. Schema safe means the references resolve. SQL executed means the probe ran end-to-end. Materialization means we know exactly what subset is needed. External-needed means we will not pretend the data is in our hands.</p>
-    <p>The system did not guess. It assembled evidence packets, ran checks, and refused claims the data could not support. The audit page lists every reference. The cost panel shows where the bytes went.</p>
-  </div>
-</section>
-
-<!-- ── 11 LOOPS GRID ──────────────────────────── -->
-<section class="sp-lg fade-in delay-3" id="loops">
-  <div class="eyebrow">The loops, classified by what actually ran</div>
-  <h2>Eleven challenges. Eleven evidence packets.</h2>
-  <p class="note sp-md">Green border means we ran the SQL. Amber means we need one more dataset. Gray means we said no and named the missing source.</p>
-  <div class="loops-grid" id="loops-grid">
-    <div class="empty">Loading challenges…</div>
-  </div>
-</section>
-
-<!-- ── STRONGEST FINDING (SANKEY) ─────────────── -->
-<section class="strongest sp-lg fade-in">
-  <div class="eyebrow" style="color: hsl(28, 79%, 75%);">The strongest finding</div>
-  <h2>One charity drew funds from <span class="accent">three jurisdictions</span> in one year.</h2>
-  <div class="strongest__chart">
-    <div class="strongest__chart-canvas"><canvas id="chart-sankey"></canvas></div>
-  </div>
-  <p class="strongest__cap" id="cap-sankey">Cross-jurisdictional flows surfaced via the GovAlta golden-records layer. The system flagged this without being told to look.</p>
-</section>
-
-<!-- ── ARCHITECTURE ────────────────────────────── -->
-<section class="sp-lg fade-in">
-  <div class="eyebrow">Architecture, briefly</div>
-  <h2>Three brains. Three jobs.</h2>
-  <div class="arch-row">
-    <div class="card arch-card accent-orange">
-      <h3><img src="/icons/bulb.png" alt="">Discovery</h3>
-      <p><strong>GLM 5.1</strong> generates the per-challenge research briefs in parallel. Cheap, fast, ten loops at once.</p>
-    </div>
-    <div class="card arch-card accent-navy">
-      <h3><img src="/icons/tick.png" alt="">Replay & verify</h3>
-      <p><strong>Codex GPT-5.5</strong> connects directly to the GovAlta Postgres. Verifies references, runs probes, captures SQL hashes and row counts.</p>
-    </div>
-    <div class="card arch-card accent-green">
-      <h3><img src="/icons/shield.png" alt="">Audit & narrative</h3>
-      <p><strong>Claude Opus 4.7</strong> runs the lexical audit, assembles the storyboard, and refuses the claims the data does not support.</p>
-    </div>
-  </div>
-  <p class="note" style="margin-top: 14px;">Read the <a href="/explore/audit.html">full audit verdict</a>. Every brief has a SHA. Every claim cites its source.</p>
-</section>
-
-<!-- ── COST & SOVEREIGNTY ──────────────────────── -->
-<section class="sp-lg fade-in">
-  <div class="cost-row">
-    <div class="cost-cta">
-      <div class="eyebrow">Cost &amp; sovereignty</div>
-      <h2><img src="/icons/dollar.png" alt=""> <span id="cost-headline">$0 today.</span></h2>
-      <p>All of it routed through US infrastructure. This is the sovereignty argument as a line on a bill. Every byte of every prompt and every response crossed the border.</p>
-      <div id="cost-breakdown" class="grid grid--3" style="margin: 12px 0; gap: 8px;">
-        <div class="metric"><strong id="c-claude">—</strong><span>claude · US</span></div>
-        <div class="metric"><strong id="c-codex">—</strong><span>codex · US</span></div>
-        <div class="metric"><strong id="c-openrouter">—</strong><span>openrouter · US-routed</span></div>
+    <!-- MAP -->
+    <div class="viz-card">
+      <h3>Where the inference runs</h3>
+      <div class="h2">Blue lights are US datacenters. Red is the Canadian one.</div>
+      <div class="map-frame" id="map-frame">
+        <!-- d3-geo + topojson-client renders the map and projects city coords
+             from real (lng, lat). See src/lib/map.js. -->
+        <div class="legend">
+          <span class="leg us">US datacenters · all our spend</span>
+          <span class="leg ca">Canadian datacenters · 0% of our spend</span>
+        </div>
       </div>
-      <p class="note note--small" id="c-source">Updates every minute from the sovereignty tracker. Freezes at 14:00 ET.</p>
-      <a class="btn" href="/explore/sovereignty.html">Open the cost tracker</a>
     </div>
-    <div class="cost-chart">
-      <div class="eyebrow">Spend over time · stacked by provider</div>
-      <div class="cost-chart-canvas"><canvas id="chart-cost"></canvas></div>
-      <div class="hero__caption" id="cap-cost"></div>
+  </div>
+
+  <div class="provider-row">
+    <div class="provider claude"><div class="label">Claude · Anthropic</div><div class="num" id="c-claude">$0</div><div class="country">San Francisco, USA</div></div>
+    <div class="provider codex"><div class="label">Codex · OpenAI</div><div class="num" id="c-codex">$0</div><div class="country">San Francisco, USA</div></div>
+    <div class="provider openrouter"><div class="label">OpenRouter · Z.ai</div><div class="num" id="c-openrouter">$0</div><div class="country">Routed via San Francisco, USA</div></div>
+  </div>
+
+  <!-- Highlighted findings -->
+  <section class="stories-section">
+    <h2>What it bought.</h2>
+    <p class="subline">Three findings worth a deputy minister's time. Eight challenges classified honestly. Cross-signal entities flagged. Refusals named.</p>
+    <div class="story-row">
+      <a class="ministory k-platform" href="/stories.html#canada-gives">
+        <div>
+          <div class="tag">Check 03 · Funding cycles</div>
+          <div class="ent">Canada Gives</div>
+          <div class="one">Donor-advised foundation in 321 qualified-donee funding cycles with $4.1M circular volume. Read it as platform behaviour, not a flag.</div>
+        </div>
+        <div class="more">Open the story →</div>
+      </a>
+      <a class="ministory k-incumbency" href="/stories.html#alberta-vendors">
+        <div>
+          <div class="tag">Checks 04 + 05 · Vendor concentration</div>
+          <div class="ent">Alberta Blue Cross + B+H + Telus Health</div>
+          <div class="one">Three vendors dominate both competitive and sole-source spend in their ministries. The procurement design picked the incumbent.</div>
+        </div>
+        <div class="more">Open the story →</div>
+      </a>
+      <a class="ministory k-cross" href="/stories.html#cross-signal">
+        <div>
+          <div class="tag">Cross-signal entities</div>
+          <div class="ent">IBM Canada · TransAlta · Wood Buffalo</div>
+          <div class="one">Each flagged from two or more independent angles without being told to look. The cross-reference is the story.</div>
+        </div>
+        <div class="more">Open the story →</div>
+      </a>
     </div>
+  </section>
+
+  <!-- ── CTAs ────────────────────────────────────────── -->
+  <div class="cta-row">
+    <a class="cta-card primary" href="/stories.html">
+      <img class="ci" src="/icons/target.png" alt="">
+      <div class="ct">All findings</div>
+      <div class="cs">Three to open. Eight more to skim. Three claims the system refused to promote.</div>
+      <span class="cg">Open findings →</span>
+    </a>
+    <a class="cta-card" href="/trust.html">
+      <img class="ci" src="/icons/shield.png" alt="">
+      <div class="ct">Evidence trail</div>
+      <div class="cs">Three review assistants. One evidence trail. Every claim hashed and replayable.</div>
+      <span class="cg">Open evidence →</span>
+    </a>
+    <a class="cta-card" href="/explore/ask.html">
+      <img class="ci" src="/icons/bulb.png" alt="">
+      <div class="ct">Ask the system</div>
+      <div class="cs">Every answer cites source data, model, and cost.</div>
+      <span class="cg">Open Q&amp;A →</span>
+    </a>
+  </div>
+
+  <div class="footer-strip">
+    <span>If the auditors won't, the system will.</span>
+    <span class="spacer"></span>
+    <a href="/explore/sovereignty.html">Cost detail</a>
+    <a href="/explore/audit.html">Audit ledger</a>
+    <a href="/explore/data-tables.html">Findings table</a>
+    <a href="/explore/decisions.html">My review</a>
   </div>
 </section>
-
-<!-- ── ASK INLINE ──────────────────────────────── -->
-<section class="sp-lg fade-in" id="ask">
-  <div class="qa-inline">
-    <div class="eyebrow">Q&amp;A</div>
-    <h2>Ask the system. Make it cite its work.</h2>
-    <p class="note sp-md">The answers come back with sources, model, and cost attached. The cost chip on every answer is the same argument the cost section makes, restated quietly.</p>
-    <div class="qa-inline__chips">
-      <button class="qa-inline__chip-btn" data-q="What is the strongest finding and why?">What is the strongest finding?</button>
-      <button class="qa-inline__chip-btn" data-q="Which entity recurs across multiple jurisdictions?">Which entity recurs across jurisdictions?</button>
-      <button class="qa-inline__chip-btn" data-q="What did the system refuse to answer and why?">What did the system refuse to answer?</button>
-      <button class="qa-inline__chip-btn" data-q="Show me a SQL probe that actually ran today.">Show me a SQL probe that ran.</button>
-    </div>
-    <div class="qa-inline__row">
-      <select id="qa-model">
-        <option value="sonnet">Claude Sonnet 4.5 · US</option>
-        <option value="opus">Claude Opus 4.1 · US (deep)</option>
-        <option value="cohere">Cohere Command A · Sovereign / Canadian</option>
-      </select>
-      <input type="text" id="qa-input" placeholder="Or type your own question. Press enter.">
-      <button class="btn btn--primary" id="qa-submit">Ask</button>
-    </div>
-    <div class="qa-inline__answer" id="qa-answer">Pick a question or type your own. The system will cite findings and show the model and cost on every answer.</div>
-    <div class="qa-inline__meta" id="qa-meta"></div>
-  </div>
-</section>
-
-<!-- ── REVIEW SUMMARY ──────────────────────────── -->
-<section class="sp-lg fade-in">
-  <div class="eyebrow">Your review</div>
-  <h2>Mark what's worth promoting. Take it with you.</h2>
-  <div class="review-bar">
-    <strong>Decisions so far:</strong>
-    <span class="stat"><b id="r-promote">0</b> promote</span>
-    <span class="stat"><b id="r-review">0</b> need review</span>
-    <span class="stat"><b id="r-reject">0</b> reject</span>
-    <span class="stat"><b id="r-questions">0</b> questions asked</span>
-    <span class="stat" style="margin-left: auto;"><b id="r-cost">$0.00</b> total Q&amp;A cost</span>
-    <a class="btn" href="/explore/decisions.html">Review &amp; export</a>
-  </div>
-</section>
-
-<!-- ── FOOTER ──────────────────────────────────── -->
-<footer class="footer">
-  <div class="footer__close">
-    If the auditors won't, the system will, and it will show its work.
-  </div>
-  <div class="footer__meta" id="footer-meta">
-    Build sha: pending · Generated: pending<br>
-    <a href="/explore/audit.html">Audit</a> · <a href="/explore/sovereignty.html">Cost</a> · <a href="/explore/stories.html">Stories</a> · <a href="/explore/data-tables.html">Data</a>
-  </div>
-</footer>
-
 </div>
 
 <script type="module">
-  import '/src/lib/nav.js';
-  import { loadOverview, loadChallenges, isBundleReady } from '/src/lib/manifest.js';
-  import { renderProofChips, statusToChipClass, statusLabel } from '/src/lib/proof.js';
-  import { fmtUSD, fmtInt, escText, escAttr, shortHash } from '/src/lib/data-format.js';
-  import { renderHHI, renderSankey, renderCostOverTime } from '/src/lib/charts.js';
-  import { ask } from '/src/lib/openrouter.js';
-  import { summary as decisionSummary } from '/src/lib/decisions.js';
-  import { startLivePoll } from '/src/lib/live-poll.js';
+import '/src/lib/nav.js';
+import { Chart, registerables } from 'chart.js';
+import 'chartjs-adapter-date-fns';
+import { loadOverview } from '/src/lib/manifest.js';
+import { startLivePoll } from '/src/lib/live-poll.js';
+import { fmtUSD } from '/src/lib/data-format.js';
+import { buildMap } from '/src/lib/map.js';
+Chart.register(...registerables);
 
-  async function paintHero() {
-    const [ov, challenges] = await Promise.all([loadOverview(), loadChallenges()]);
-    if (ov._missing) {
-      document.getElementById('data-banner').classList.remove('is-hidden');
-    }
+function fmtBigDollar(n) {
+  if (n == null || isNaN(n)) return '0';
+  if (n < 10) return n.toFixed(2);
+  if (n < 1000) return Math.round(n).toString();
+  return Math.round(n).toLocaleString('en-US');
+}
+
+let _pie = null;
+
+function renderPie(claude, codex, openrouter) {
+  const canvas = document.getElementById('pie-chart');
+  if (_pie) _pie.destroy();
+  const total = claude + codex + openrouter;
+  document.getElementById('pie-total').textContent = total >= 100 ? `$${Math.round(total).toLocaleString()}` : `$${total.toFixed(2)}`;
+  _pie = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels: ['Claude · Anthropic', 'Codex · OpenAI', 'OpenRouter · Z.ai'],
+      datasets: [{
+        data: [claude, codex, openrouter],
+        backgroundColor: ['hsl(216, 90%, 48%)', 'hsl(216, 90%, 60%)', 'hsl(216, 90%, 72%)'],
+        borderColor: 'hsl(207, 30%, 96%)',
+        borderWidth: 3,
+        hoverOffset: 6,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.label}: $${ctx.parsed.toFixed(2)} (${(ctx.parsed/total*100).toFixed(1)}%)`,
+          },
+        },
+      },
+    },
+  });
+}
+
+async function paint() {
+  const ov = await loadOverview();
+  const n = ov.headline_numbers || {};
+  const sov = ov.sovereignty || {};
+  const total = n.dollars_today ?? 0;
+  document.getElementById('big-cost').textContent = fmtBigDollar(total);
+  const claude = sov.claude_cost_usd ?? 0;
+  const codex  = sov.codex_cost_usd ?? 0;
+  const orouter = sov.openrouter_cost_usd ?? 0;
+  document.getElementById('c-claude').textContent = fmtUSD(claude);
+  document.getElementById('c-codex').textContent = fmtUSD(codex);
+  document.getElementById('c-openrouter').textContent = fmtUSD(orouter);
+  renderPie(claude, codex, orouter);
+}
+
+paint();
+
+// ── Map: d3-geo + topojson, real projection from GPS coords ──────────
+const _mapMount = document.getElementById('map-frame');
+if (_mapMount) {
+  // Wait one paint so the container has its final width.
+  requestAnimationFrame(() => buildMap(_mapMount));
+}
+
+// Live refresh every minute
+setInterval(async () => {
+  try {
+    const ov = await (await fetch('/data/overview.json?t=' + Date.now(), { cache: 'no-store' })).json();
     const n = ov.headline_numbers || {};
-    document.getElementById('m-rows').textContent = fmtInt(n.rows_scanned);
-    document.getElementById('m-findings').textContent = fmtInt(n.findings);
-    document.getElementById('m-dollars').textContent = fmtUSD(n.dollars_today);
-
-    // Derive status strip from per-challenge proof_levels.
-    const counts = { 'sql-executed': 0, materialized: 0, 'external-needed': 0, 'schema-safe': 0 };
-    for (const c of challenges) {
-      for (const lv of (c.proof_levels || [])) {
-        if (lv in counts) counts[lv]++;
-      }
-    }
-    document.getElementById('s-sql').textContent = fmtInt(counts['sql-executed']);
-    document.getElementById('s-mat').textContent = fmtInt(counts.materialized);
-    document.getElementById('s-ext').textContent = fmtInt(counts['external-needed']);
-    document.getElementById('s-safe').textContent = fmtInt(counts['schema-safe']);
-
-    if (Array.isArray(ov.position) && ov.position.length) {
-      document.getElementById('position-text').innerHTML =
-        ov.position.map(p => `<p>${escText(p)}</p>`).join('');
-    }
-
-    if (n.dollars_today != null) {
-      document.getElementById('cost-headline').textContent =
-        `${fmtUSD(n.dollars_today)} today.`;
-    }
-
-    // Per-provider sovereignty breakdown from tracker (source of truth).
     const sov = ov.sovereignty || {};
+    const total = n.dollars_today ?? 0;
+    const next = fmtBigDollar(total);
+    const el = document.getElementById('big-cost');
+    if (el && el.textContent !== next) {
+      el.textContent = next;
+      const orig = el.style.color;
+      el.style.transition = 'color 0.4s';
+      el.style.color = 'var(--orange)';
+      setTimeout(() => { el.style.color = orig; }, 600);
+    }
     document.getElementById('c-claude').textContent = fmtUSD(sov.claude_cost_usd ?? 0);
     document.getElementById('c-codex').textContent = fmtUSD(sov.codex_cost_usd ?? 0);
     document.getElementById('c-openrouter').textContent = fmtUSD(sov.openrouter_cost_usd ?? 0);
-    if (sov.date) {
-      document.getElementById('c-source').textContent =
-        `Tracker for ${escText(sov.date)}. Updates every minute. Freezes at 14:00 ET.`;
-    }
+    renderPie(sov.claude_cost_usd ?? 0, sov.codex_cost_usd ?? 0, sov.openrouter_cost_usd ?? 0);
+  } catch { /* ignore */ }
+}, 60_000);
 
-    const meta = ov.build_meta || {};
-    document.getElementById('footer-meta').innerHTML =
-      `Build sha: <code>${escText(shortHash(meta.build_sha))}</code> · Generated: ${escText(meta.generated_at || 'pending')}<br>` +
-      `<a href="/explore/audit.html">Audit</a> · <a href="/explore/sovereignty.html">Cost</a> · <a href="/explore/stories.html">Stories</a> · <a href="/explore/data-tables.html">Data</a>`;
-  }
-
-  async function paintLoops() {
-    const challenges = await loadChallenges();
-    const grid = document.getElementById('loops-grid');
-    if (!challenges || challenges.length === 0) {
-      grid.innerHTML = `<div class="empty">Challenges will appear once the backend bundle lands.</div>`;
-      return;
-    }
-    grid.innerHTML = challenges.map(c => `
-      <a class="loop-card" href="/challenges/${escAttr(c.slug)}.html" data-status="${escAttr(c.status)}">
-        <div class="loop-card__num">Loop ${escText(c.id || c.number)} · ${escText(statusLabel(c.status))}</div>
-        <div class="loop-card__title">${escText(c.title)}</div>
-        <div class="loop-card__one-line">${escText(c.presentation_sentence || c.subtitle || '')}</div>
-        <div class="loop-card__chips">${renderProofChips(c.proof_levels || [])}</div>
-        <span class="loop-card__arrow">Open the brief →</span>
-      </a>
-    `).join('');
-  }
-
-  async function paintReviewBar() {
-    const s = decisionSummary();
-    document.getElementById('r-promote').textContent = s.promote;
-    document.getElementById('r-review').textContent = s.review;
-    document.getElementById('r-reject').textContent = s.reject;
-    document.getElementById('r-questions').textContent = s.questions_asked;
-    document.getElementById('r-cost').textContent = fmtUSD(s.total_qa_cost_usd);
-  }
-  document.addEventListener('lc:decisions-changed', paintReviewBar);
-
-  async function paintCharts() {
-    try { await renderHHI(document.getElementById('chart-hhi'), document.getElementById('cap-hhi')); }
-    catch (err) { console.warn('HHI chart failed:', err); }
-    try { await renderSankey(document.getElementById('chart-sankey'), document.getElementById('cap-sankey')); }
-    catch (err) { console.warn('Sankey chart failed:', err); }
-    try { await renderCostOverTime(document.getElementById('chart-cost'), document.getElementById('cap-cost')); }
-    catch (err) { console.warn('Cost chart failed:', err); }
-  }
-
-  function wireQA() {
-    const input = document.getElementById('qa-input');
-    const modelSel = document.getElementById('qa-model');
-    const answer = document.getElementById('qa-answer');
-    const meta = document.getElementById('qa-meta');
-    const submit = document.getElementById('qa-submit');
-
-    document.querySelectorAll('.qa-inline__chip-btn').forEach(btn => {
-      btn.addEventListener('click', () => { input.value = btn.dataset.q; runAsk(); });
-    });
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') runAsk(); });
-    submit.addEventListener('click', runAsk);
-
-    async function runAsk() {
-      const q = input.value.trim();
-      if (!q) return;
-      const model = modelSel.value;
-      answer.textContent = '';
-      meta.innerHTML = `<span>Asking · ${escText(model)}</span>`;
-      submit.disabled = true;
-      try {
-        const result = await ask({
-          question: q,
-          scope: 'home',
-          model,
-          onChunk: (chunk) => { answer.textContent += chunk; },
-        });
-        if (!answer.textContent) answer.textContent = result.answer || '(no answer)';
-        meta.innerHTML = [
-          `<span>via <code>${escText(result.via)}</code></span>`,
-          `<span>${escText(result.model)}</span>`,
-          `<span>in ${fmtInt(result.tokens_in)} · out ${fmtInt(result.tokens_out)}</span>`,
-          `<span>${fmtUSD(result.cost_usd, 4)}</span>`,
-          (result.citations || []).length ? `<span>${result.citations.length} citation${result.citations.length === 1 ? '' : 's'}</span>` : '',
-        ].filter(Boolean).join('');
-      } catch (err) {
-        answer.textContent = `Could not ask: ${err.message}`;
-        meta.innerHTML = '';
-      } finally {
-        submit.disabled = false;
-      }
-    }
-  }
-
-  paintHero();
-  paintLoops();
-  paintReviewBar();
-  paintCharts();
-  wireQA();
-  // Live polling: refresh hero numbers + cost chart every 90s until 14:00 ET freeze.
-  startLivePoll({ includeCostChart: true, includeHHIChart: true });
+startLivePoll({ includeCostChart: false, includeHHIChart: false });
 </script>
 </body>
 </html>

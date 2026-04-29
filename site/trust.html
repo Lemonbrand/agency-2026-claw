@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evidence Trail · Agency 2026</title>
+<meta name="description" content="Three review assistants. One evidence trail. Every claim hashed and replayable.">
+<link rel="icon" href="/icons/shield.png" type="image/png">
+<link rel="stylesheet" href="/src/styles/lemon.css">
+<style>
+  body { padding: 0; }
+  .page { max-width: 1100px; padding: 0; box-shadow: none; background: transparent; }
+  .nav { margin: 24px 24px 0; border-radius: 14px; padding: 16px 24px; background: var(--paper); border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+  .stage { background: var(--paper); border-radius: 14px; margin: 18px 24px 24px; padding: 56px clamp(24px, 4vw, 64px) 64px; box-shadow: var(--shadow-lg); }
+
+  .h1 {
+    font-family: "Outfit", sans-serif; font-weight: 800;
+    font-size: clamp(40px, 6vw, 64px); line-height: 1.0;
+    letter-spacing: -0.025em; color: var(--ink);
+    margin: 12px 0 14px;
+  }
+  .h1 .accent { color: var(--orange); }
+  .lede { font-size: clamp(16px, 1.7vw, 18px); color: var(--ink-2); max-width: 760px; line-height: 1.5; margin-bottom: 36px; }
+
+  .verdict-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    margin-bottom: 36px;
+  }
+  @media (max-width: 720px) { .verdict-row { grid-template-columns: 1fr; } }
+  .vmetric {
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 28px 24px; background: var(--paper);
+  }
+  .vmetric.green { background: var(--green-wash); border-color: var(--green-border); }
+  .vmetric.amber { background: var(--amber-wash); border-color: var(--amber-border); }
+  .vmetric.red   { background: var(--red-wash); border-color: var(--red-border); }
+  .vmetric .num { font-family: "Outfit", sans-serif; font-weight: 800; font-size: 56px; line-height: 1; letter-spacing: -0.02em; color: var(--ink); }
+  .vmetric.green .num { color: var(--green-deep); }
+  .vmetric.red .num { color: var(--red-deep); }
+  .vmetric .lab { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); margin-top: 8px; }
+
+  .brain-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 36px; }
+  @media (max-width: 720px) { .brain-row { grid-template-columns: 1fr; } }
+  .brain {
+    background: var(--paper); border: 1px solid var(--border);
+    border-radius: 12px; padding: 22px 24px;
+    border-top: 5px solid var(--orange);
+  }
+  .brain.b-codex { border-top-color: var(--navy); }
+  .brain.b-claude { border-top-color: var(--green); }
+  .brain h3 {
+    font-family: "Outfit", sans-serif; font-weight: 700; font-size: 18px;
+    color: var(--ink); margin-bottom: 4px; display: flex; align-items: center; gap: 10px;
+  }
+  .brain h3 img { width: 28px; height: 28px; }
+  .brain .role { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 12px; }
+  .brain p { font-size: 14px; color: var(--ink-2); line-height: 1.55; }
+  .legend-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 36px; }
+  @media (max-width: 720px) { .legend-row { grid-template-columns: 1fr; } }
+  .legend-card {
+    background: var(--paper-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .legend-card .term {
+    font-family: "Outfit", sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .legend-card p { font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
+
+  .h2 { font-family: "Outfit", sans-serif; font-weight: 800; font-size: clamp(24px, 3vw, 32px); letter-spacing: -0.018em; color: var(--ink); margin: 36px 0 12px; }
+  .sub { font-size: 14px; color: var(--ink-2); margin-bottom: 18px; max-width: 720px; line-height: 1.5; }
+
+  .audit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .achip {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; background: var(--paper);
+  }
+  .achip.green { background: var(--green-wash); border-color: var(--green-border); }
+  .achip.amber { background: var(--amber-wash); border-color: var(--amber-border); }
+  .achip.red   { background: var(--red-wash); border-color: var(--red-border); }
+  .achip .id { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+  .achip .head { font-family: "Outfit", sans-serif; font-weight: 700; font-size: 15px; color: var(--ink); margin: 4px 0 6px; }
+  .achip .meta { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--ink-3); }
+
+  .footer-strip {
+    display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+    margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border);
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .footer-strip a { color: var(--ink-2); border-bottom: 0; }
+  .footer-strip a:hover { color: var(--orange); }
+  .footer-strip .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<div class="page">
+<nav class="nav"></nav>
+
+<section class="stage fade-in">
+  <div class="row" style="margin-bottom: 18px;">
+    <span class="chip primary">Evidence trail</span>
+    <span class="chip green" id="audit-clean-chip">loading</span>
+  </div>
+
+  <h1 class="h1">Every claim checked. <span class="accent">Every receipt hashed.</span></h1>
+  <p class="lede">Three review assistants, one evidence trail. The system was not asked to guess. It assembled evidence, ran queries, and refused claims the data could not support. The numbers below are the review verdict.</p>
+
+  <div class="verdict-row">
+    <div class="vmetric green"><div class="num" id="v-clean">0</div><div class="lab">Clean</div></div>
+    <div class="vmetric amber"><div class="num" id="v-review">0</div><div class="lab">Need review</div></div>
+    <div class="vmetric red"><div class="num" id="v-unsafe">0</div><div class="lab">Unsafe</div></div>
+  </div>
+
+  <h2 class="h2">What the labels mean.</h2>
+  <p class="sub">The same convention appears on every accountability check.</p>
+  <div class="legend-row">
+    <div class="legend-card">
+      <div class="term">Source data</div>
+      <p>The table or dataset the check read. Source names are clickable where they appear, so a reviewer can jump back to the review-lead index.</p>
+    </div>
+    <div class="legend-card">
+      <div class="term">Evidence status</div>
+      <p>Whether the data fields were verified, the query ran, a prepared dataset is still needed, or an outside source is required.</p>
+    </div>
+    <div class="legend-card">
+      <div class="term">Query proof</div>
+      <p>The reproducible receipt: read-only query, record count, runtime, and hash. It proves what the system actually checked.</p>
+    </div>
+  </div>
+
+  <h2 class="h2">Three review assistants. Three jobs.</h2>
+  <p class="sub">Each model was used for the job it is good at, then checked against the others. The architecture is the evidence discipline.</p>
+  <div class="brain-row">
+    <div class="brain">
+      <h3><img src="/icons/bulb.png" alt="">GLM 5.1</h3>
+      <div class="role">Discovery</div>
+      <p>Drafts research briefs for each accountability question in parallel. Cheap, fast, eleven checks at once.</p>
+    </div>
+    <div class="brain b-codex">
+      <h3><img src="/icons/tick.png" alt="">Codex GPT-5.5</h3>
+      <div class="role">Query &amp; verify</div>
+      <p>Connects directly to the GovAlta Postgres. Verifies every reference, runs the read-only query, captures runtime, record count, and query hash for replay.</p>
+    </div>
+    <div class="brain b-claude">
+      <h3><img src="/icons/shield.png" alt="">Claude Opus 4.7</h3>
+      <div class="role">Review &amp; explain</div>
+      <p>Runs the evidence review, assembles the presentation, refuses claims past the data, and explains what is missing.</p>
+    </div>
+  </div>
+
+  <h2 class="h2">Per-check verdict</h2>
+  <p class="sub">One row per accountability check. Click to open the deep dive.</p>
+  <div class="audit-grid" id="audit-grid"></div>
+
+  <div class="footer-strip">
+    <span>The model proposes. The database checks. The evidence trail remembers.</span>
+    <span class="spacer"></span>
+    <a href="/index.html">Cost</a>
+    <a href="/stories.html">Findings</a>
+    <a href="/explore/audit.html">Full evidence trail</a>
+  </div>
+</section>
+</div>
+<script type="module">
+import '/src/lib/nav.js';
+import { loadAuditSummary, loadChallenges } from '/src/lib/manifest.js';
+import { fmtInt, escText, escAttr, shortHash } from '/src/lib/data-format.js';
+import { startLivePoll } from '/src/lib/live-poll.js';
+
+function vCls(v) {
+  switch ((v || '').toLowerCase()) {
+    case 'clean': return 'green';
+    case 'review': return 'amber';
+    case 'unsafe': return 'red';
+    default: return '';
+  }
+}
+
+(async () => {
+  const [audit, challenges] = await Promise.all([loadAuditSummary(), loadChallenges()]);
+  document.getElementById('v-clean').textContent = fmtInt(audit.clean);
+  document.getElementById('v-review').textContent = fmtInt(audit.needs_review);
+  document.getElementById('v-unsafe').textContent = fmtInt(audit.unsafe);
+  document.getElementById('audit-clean-chip').textContent = `${audit.clean ?? 0}/${audit.total ?? 11} clean`;
+
+  const titleById = Object.fromEntries(challenges.map(c => [c.id, c.title]));
+  const grid = document.getElementById('audit-grid');
+  if (!audit.per_challenge?.length) {
+    grid.innerHTML = '<p class="empty">Audit will populate as the lexical pass completes.</p>';
+    return;
+  }
+  grid.innerHTML = audit.per_challenge.map(p => {
+    const slug = (challenges.find(c => c.id === p.id) || {}).slug || p.id;
+    return `
+      <a class="achip ${vCls(p.verdict)}" href="/challenges/${escAttr(slug)}.html" style="text-decoration: none; color: inherit; display: block;">
+        <div class="id">Check ${escText(p.id)}</div>
+        <div class="head">${escText(titleById[p.id] || '')}</div>
+        <div class="meta">${escText(p.verdict || '')} · sha: ${escText(shortHash(p.sha))}</div>
+      </a>
+    `;
+  }).join('');
+})();
+
+startLivePoll({ includeCostChart: false, includeHHIChart: false });
+</script>
+</body>
+</html>

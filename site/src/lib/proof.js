@@ -1,19 +1,13 @@
 /**
- * Proof-level chip taxonomy. Distinguishes lexical-audit cleanliness from execution proof.
- *
- * - schema-safe: lexical audit clean, references resolve.
- * - sql-executed: probe SQL ran end-to-end; row count + runtime captured.
- * - materialized: needs subset preparation or computed column.
- * - external-needed: requires data outside the GovAlta bundle.
- *
- * A challenge can carry multiple chips (e.g. schema-safe + sql-executed).
+ * Evidence-status chip taxonomy. Internal keys stay stable because the backend
+ * contract uses them, but the labels are written for policy and program teams.
  */
 
 const PROOF_LABELS = {
-  'schema-safe':     { label: 'Schema safe',     tooltip: 'Lexical audit clean. Every table and column reference resolves to the verified schema.' },
-  'sql-executed':    { label: 'SQL executed',    tooltip: 'A probe query ran end-to-end against the GovAlta database. Row count, runtime, and SQL hash captured.' },
-  'materialized':    { label: 'Materialized',    tooltip: 'Needs subset preparation or one computed column before it runs.' },
-  'external-needed': { label: 'External needed', tooltip: 'Requires data not in the GovAlta bundle. The brief names the source.' },
+  'schema-safe':     { label: 'Data fields verified', tooltip: 'The source fields named by this check exist in the supplied data.' },
+  'sql-executed':    { label: 'Query ran',            tooltip: 'A read-only query ran against the GovAlta database. Row count, runtime, and query hash were captured.' },
+  'materialized':    { label: 'Needs prepared data',  tooltip: 'The check can proceed, but it needs a prepared subset, computed field, or follow-up join before promotion.' },
+  'external-needed': { label: 'Needs outside source', tooltip: 'The supplied database does not contain enough evidence. The missing outside source is named.' },
 };
 
 export function renderProofChips(levels = []) {
@@ -38,9 +32,9 @@ export function statusToChipClass(status) {
 
 export function statusLabel(status) {
   switch ((status || '').toLowerCase()) {
-    case 'runnable':     return 'Runnable now';
-    case 'materialized': return 'Needs materialization';
-    case 'external':     return 'Needs external data';
+    case 'runnable':     return 'Ready to review';
+    case 'materialized': return 'Needs prepared data';
+    case 'external':     return 'Needs outside source';
     case 'refused':      return 'Refused';
     default:             return status || 'unclassified';
   }

@@ -47,25 +47,17 @@ function renderBadge() {
   if (!badge) {
     badge = document.createElement('div');
     badge.id = 'lc-live-badge';
-    badge.style.cssText = `
-      position: fixed; top: 12px; right: 12px; z-index: 100;
-      padding: 6px 12px; border-radius: 999px;
-      font-family: "JetBrains Mono", monospace; font-size: 11px;
-      letter-spacing: 0.06em; text-transform: uppercase;
-      background: var(--paper); border: 1px solid var(--orange-border); color: var(--orange-deep);
-      box-shadow: var(--shadow-sm);
-    `;
-    document.body.appendChild(badge);
+    badge.className = 'lc-live-badge';
   }
+  const mount = document.querySelector('.nav__actions') || document.body;
+  badge.classList.toggle('is-floating', mount === document.body);
+  if (badge.parentElement !== mount) mount.prepend(badge);
+
   if (isFrozen()) {
-    badge.style.background = 'var(--ink)';
-    badge.style.color = 'var(--paper)';
-    badge.style.borderColor = 'var(--ink)';
+    badge.classList.add('is-frozen');
     badge.innerHTML = `<span style="display:inline-block; width: 6px; height: 6px; border-radius: 50%; background: hsl(0, 62%, 60%); margin-right: 8px;"></span>Submission frozen · 14:00 ET`;
   } else {
-    badge.style.background = 'var(--paper)';
-    badge.style.color = 'var(--orange-deep)';
-    badge.style.borderColor = 'var(--orange-border)';
+    badge.classList.remove('is-frozen');
     badge.innerHTML = `<span style="display:inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-right: 8px; animation: pulse 1.5s ease-in-out infinite;"></span>Live · freezes in ${fmtCountdown(timeUntilFreeze())}`;
   }
 }

@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Findings · Agency 2026</title>
+<meta name="description" content="Three review leads worth a deputy minister's time. Eight checks named honestly. Cross-signal entities flagged.">
+<link rel="icon" href="/icons/target.png" type="image/png">
+<link rel="stylesheet" href="/src/styles/lemon.css">
+<style>
+  body { padding: 0; }
+  .page { max-width: 1200px; padding: 0; box-shadow: none; background: transparent; }
+  .nav { margin: 24px 24px 0; border-radius: 14px; padding: 16px 24px; background: var(--paper); border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+  .stage { background: var(--paper); border-radius: 14px; margin: 18px 24px 24px; padding: 48px clamp(24px, 4vw, 56px) 56px; box-shadow: var(--shadow-lg); }
+
+  .hero-h1 {
+    font-family: "Outfit", sans-serif; font-weight: 800;
+    font-size: clamp(36px, 6vw, 60px); line-height: 1.0;
+    letter-spacing: -0.025em; color: var(--ink);
+    margin: 12px 0 14px; max-width: 920px;
+  }
+  .hero-h1 .accent { color: var(--orange); }
+  .hero-sub { font-size: clamp(16px, 1.7vw, 18px); color: var(--ink-2); max-width: 760px; line-height: 1.5; margin-bottom: 36px; }
+
+  .section-h { font-family: "Outfit", sans-serif; font-weight: 700; font-size: clamp(22px, 2.4vw, 28px); letter-spacing: -0.012em; color: var(--ink); margin: 48px 0 12px; }
+  .section-sub { font-size: 14px; color: var(--ink-2); margin-bottom: 18px; max-width: 720px; line-height: 1.55; }
+
+  /* Curated findings */
+  .hero-stories { display: grid; gap: 16px; }
+  .hero-story {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-left: 5px solid var(--orange);
+    border-radius: 12px;
+    padding: 24px 28px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+  .hero-story.kind-cross  { border-left-color: var(--navy); }
+  .hero-story.kind-platform { border-left-color: var(--green); }
+  .hero-story.kind-incumbency { border-left-color: var(--orange); }
+  .hero-story__rank {
+    font-family: "Outfit", sans-serif; font-weight: 800;
+    font-size: 64px; line-height: 1; color: var(--orange);
+    letter-spacing: -0.04em; min-width: 64px;
+  }
+  .hero-story.kind-cross .hero-story__rank { color: var(--navy); }
+  .hero-story.kind-platform .hero-story__rank { color: var(--green); }
+  .hero-story__entity {
+    font-family: "Outfit", sans-serif; font-weight: 700;
+    font-size: 24px; color: var(--ink); letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .hero-story__one-line {
+    font-size: 16px; line-height: 1.5; color: var(--ink-2);
+    margin-bottom: 14px; max-width: 680px;
+  }
+  .hero-story__opinion {
+    background: var(--paper-2);
+    border-left: 3px solid var(--ink-2);
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 14px; line-height: 1.55;
+    color: var(--ink); font-style: italic;
+    max-width: 680px;
+    margin-bottom: 14px;
+  }
+  .hero-story__opinion strong { font-style: normal; color: var(--orange-deep); }
+  .hero-story__refs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hero-story__refs a { font-family: "JetBrains Mono", monospace; font-size: 11px; padding: 4px 10px; border-radius: 999px; background: var(--paper-2); border: 1px solid var(--border); color: var(--ink); text-decoration: none; }
+  .hero-story__refs a:hover { background: var(--ink); color: var(--paper); }
+
+  /* Cross-signal panel */
+  .crosslist { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .crossitem {
+    background: var(--navy-wash);
+    border: 1px solid var(--navy-border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .crossitem__name { font-family: "Outfit", sans-serif; font-weight: 700; font-size: 15px; color: var(--ink); margin-bottom: 4px; }
+  .crossitem__count { display: inline-block; padding: 1px 7px; border-radius: 999px; background: var(--navy); color: var(--paper); font-family: "JetBrains Mono", monospace; font-size: 10px; margin-right: 8px; }
+  .crossitem__where { font-size: 12px; color: var(--ink-2); line-height: 1.45; }
+
+  /* Refusals */
+  .refusal {
+    background: var(--paper);
+    border: 1px dashed var(--border-s);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 8px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: center;
+  }
+  .refusal__id { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--ink-3); letter-spacing: 0.06em; text-transform: uppercase; }
+  .refusal__head { font-family: "Outfit", sans-serif; font-weight: 700; font-size: 16px; color: var(--ink); margin-bottom: 2px; }
+  .refusal__why { font-size: 13px; color: var(--ink-2); line-height: 1.45; }
+
+  /* Filter row */
+  .filter-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+  .filter-row input, .filter-row select {
+    font-family: "DM Sans", sans-serif; font-size: 14px; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--paper);
+  }
+  .filter-row input { flex: 1; min-width: 220px; }
+  .filter-row .countpill { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-2); margin-left: auto; }
+
+  /* Findings table */
+  .table tr.is-artifact td { background: var(--gray-wash); color: var(--ink-3); }
+  .table tr.is-artifact td:first-child::before { content: 'data issue'; display: inline-block; padding: 1px 7px; border-radius: 999px; background: var(--ink-3); color: var(--paper); font-family: "JetBrains Mono", monospace; font-size: 10px; margin-right: 8px; }
+  .table .finding-headline { display: block; color: var(--ink-2); font-size: 12px; margin-top: 2px; line-height: 1.4; }
+
+  .footer-strip {
+    display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+    margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--border);
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .footer-strip a { color: var(--ink-2); border-bottom: 0; }
+  .footer-strip a:hover { color: var(--orange); }
+  .footer-strip .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<div class="page">
+<nav class="nav"></nav>
+
+<section class="stage fade-in">
+  <div class="row" style="margin-bottom: 18px;">
+    <span class="chip primary">Findings</span>
+    <span class="chip green" id="story-count">loading</span>
+    <span class="chip gray" id="refusal-count">loading</span>
+    <span class="chip" id="cross-count">loading</span>
+  </div>
+
+  <h1 class="hero-h1">The review leads the data supports. <span class="accent">Plus the claims we refuse to make.</span></h1>
+  <p class="hero-sub">Eleven accountability checks. Three review leads worth a deputy minister's time. A handful of cross-signal entities. Three refusals where the data does not support the question. Each lead is one line, one interpretation, and a link to the evidence.</p>
+
+  <!-- REVIEW LEADS (curated, opinionated) -->
+  <h2 class="section-h">Three review leads worth opening</h2>
+  <p class="section-sub">Hand-picked from the run. Each is an interpretation of what the pattern means, not a "gotcha". The data alone is a number. The interpretation is what makes it useful.</p>
+  <div class="hero-stories" id="hero-stories"></div>
+
+  <!-- CROSS-SIGNAL ENTITIES -->
+  <h2 class="section-h">Cross-signal entities</h2>
+  <p class="section-sub">Entities that surfaced in two or more independent review leads across the accountability checks. The cross-reference itself is the signal: not that any one lead is damning, but that the system flagged the same name from multiple angles.</p>
+  <div class="crosslist" id="cross-list"></div>
+
+  <!-- REFUSALS -->
+  <h2 class="section-h">Three checks we refused to promote</h2>
+  <p class="section-sub">The system declined to fabricate. Each refusal names what data would change the answer. This is not a failure mode; it is the evidence discipline working.</p>
+  <div id="refusals"></div>
+
+  <!-- ALL FINDINGS, FILTERABLE -->
+  <h2 class="section-h">Every finding, with a one-line read</h2>
+  <p class="section-sub">Filterable index of every review lead the system surfaced. Items flagged <code>data issue</code> are likely data-quality issues, not real-world concerns, and are kept here for transparency.</p>
+  <div class="filter-row">
+    <input type="text" id="filter-input" placeholder="Search by entity, headline, challenge id...">
+    <select id="filter-loop">
+      <option value="">All checks</option>
+    </select>
+    <select id="filter-kind">
+      <option value="">All kinds</option>
+      <option value="story">Review leads only</option>
+      <option value="artifact">Data issues only</option>
+      <option value="cross">Cross-signal only</option>
+    </select>
+    <span class="countpill" id="findings-count">0 findings</span>
+  </div>
+  <table class="table" id="findings-table">
+    <thead>
+      <tr>
+        <th>Check</th>
+        <th>Entity</th>
+        <th>One-line read</th>
+        <th>Severity</th>
+        <th>Top metric</th>
+      </tr>
+    </thead>
+    <tbody><tr><td colspan="5" class="empty">Loading findings...</td></tr></tbody>
+  </table>
+
+  <div class="footer-strip">
+    <span>If the auditors won't, the system will.</span>
+    <span class="spacer"></span>
+    <a href="/index.html">Cost</a>
+    <a href="/trust.html">Trust</a>
+    <a href="/explore/ask.html">Ask</a>
+    <a href="/explore/decisions.html">My review</a>
+  </div>
+</section>
+</div>
+
+<script type="module">
+import '/src/lib/nav.js';
+import { loadChallenges, loadFindingsIndex } from '/src/lib/manifest.js';
+import { fmtInt, escText, escAttr } from '/src/lib/data-format.js';
+import { startLivePoll } from '/src/lib/live-poll.js';
+
+// ── Editorial overlay: hand-curated opinions ─────────────────────
+// These are the "first-principles" reads on the strongest findings.
+// Keyed by entity name (case-insensitive contains-match) or finding_id prefix.
+const HERO_STORIES = [
+  {
+    kind: 'platform',
+    rank: '1',
+    entity: 'CANADA GIVES',
+    challenge_id: '03-funding-loops',
+    one_line: 'A donor-advised foundation sitting in 321 qualified-donee funding cycles with a CRA risk score of 23/30 and $4.1M in circular volume.',
+    opinion: '<strong>Read it as platform behaviour, not a flag.</strong> Donor-advised funds aggregate gifts and re-disburse them. The high circular-gift score is what the architecture of platform giving looks like in CRA T3010 data. The review lead is not "Canada Gives is suspect". It is "the data does not distinguish a platform from a network of round-tripping". Until the source data separates donor-advised funds from anomalous cycles, the score should be treated as structural, not behavioural.',
+    refs: [
+      { id: '03', label: 'Funding cycles' }
+    ],
+  },
+  {
+    kind: 'incumbency',
+    rank: '2',
+    entity: 'Alberta Blue Cross + B+H Architects + Telus Health',
+    challenge_id: '05-vendor-concentration',
+    one_line: 'Three Alberta vendors dominate both the competitive AND sole-source spend lines in their respective ministries.',
+    opinion: '<strong>This is the procurement framework choosing the incumbent, not a vendor gaming the system.</strong> When a single vendor sits at the top of both competitive AND sole-source spend in the same ministry, the buying architecture has granted them a default-incumbent role. That is a policy outcome, not a procurement violation. The interesting question is whether the ministry intended that role and whether the rest of the market knows.',
+    refs: [
+      { id: '05', label: 'Vendor concentration' },
+      { id: '04', label: 'Amendment creep' }
+    ],
+  },
+  {
+    kind: 'cross',
+    rank: '3',
+    entity: 'IBM Canada / TransAlta / Wood Buffalo',
+    challenge_id: '06-related-parties',
+    one_line: 'Each appears in two or more independent review leads across the accountability checks.',
+    opinion: '<strong>The cross-reference is the finding.</strong> Not that any one signal damns the entity, but that the system surfaced the same name from multiple angles without being told to. For a deputy minister, the cross-signal list is the natural starting point: every entry is already a triangulation. The risk in a one-lead view is that a single weak signal masquerades as evidence. The cross-signal view raises that bar.',
+    refs: [
+      { id: '06', label: 'Related parties' },
+      { id: '04', label: 'Amendment creep' },
+      { id: '05', label: 'Vendor concentration' }
+    ],
+  },
+];
+
+// Refusals: checks where the system declined to promote a lead.
+const REFUSALS = [
+  {
+    id: '07-policy-misalignment',
+    head: 'Policy misalignment',
+    why: 'Needs a policy commitment corpus. Federal budgets and Treasury Board guidance are not in the GovAlta bundle. The system refuses to fabricate the alignment claim from spend data alone.',
+  },
+  {
+    id: '10-adverse-media',
+    head: 'Adverse media',
+    why: 'Needs regulator, court, and news ingestion. The internal CRA arithmetic-violation table is a surrogate signal at best. Refused as a primary review lead; surfaced only as a quality flag.',
+  },
+  {
+    id: '08b-funding-gaps',
+    head: 'Funding gaps',
+    why: 'Needs policy commitment data. "Where governments claim priority but none fund" requires the policy text to know what was claimed. Refused.',
+  },
+];
+
+// Heuristic: which findings are likely data issues, not real review leads.
+// The biggest culprit: federal amendment-creep with implausible original_value.
+function classifyFinding(f) {
+  const headline = (f.headline || '').toLowerCase();
+  // F-3 cumulative-value artefact: tiny original ($1-$10) blowing up by 1000x+
+  if (/grew.*\d{4,}\s*x/.test(headline) || /grew \d{3,}\.\d+x/.test(headline)) return 'artifact';
+  if (/original \$[12345](\.\d+)? /.test(headline)) return 'artifact';
+  if (/\$5[\.,].*\$\d{3,}/.test(headline) && /amendment/i.test(headline)) return 'artifact';
+  return 'story';
+}
+
+function loopLabel(challengeId, challenges) {
+  const c = challenges.find(x => x.slug === challengeId || x.id === challengeId);
+  if (!c) return challengeId;
+  return `${c.id} ${c.title}`;
+}
+
+function paintHero() {
+  const root = document.getElementById('hero-stories');
+  root.innerHTML = HERO_STORIES.map(s => `
+    <article class="hero-story kind-${escAttr(s.kind)}">
+      <div class="hero-story__rank">${escText(s.rank)}</div>
+      <div>
+        <div class="hero-story__entity">${escText(s.entity)}</div>
+        <p class="hero-story__one-line">${escText(s.one_line)}</p>
+        <div class="hero-story__opinion">${s.opinion}</div>
+        <div class="hero-story__refs">
+          ${s.refs.map(r => `<a href="/challenges/${escAttr(r.id)}-${escAttr(slugFor(r.id))}.html">Check ${escText(r.id)} · ${escText(r.label)}</a>`).join('')}
+        </div>
+      </div>
+    </article>
+  `).join('');
+}
+
+function slugFor(id) {
+  // Map short ids back to the full slug used in challenges/<slug>.html filenames.
+  // The filenames are <id>-<kebab-title>.html which we know by convention.
+  return ({
+    '01': 'zombie-recipients',
+    '02': 'ghost-capacity',
+    '03': 'funding-loops',
+    '04': 'sole-source-amendment',
+    '05': 'vendor-concentration',
+    '06': 'related-parties',
+    '07': 'policy-misalignment',
+    '08a': 'duplicative-overlap',
+    '08b': 'funding-gaps',
+    '09': 'contract-intelligence',
+    '10': 'adverse-media',
+  })[id] || '';
+}
+
+function paintRefusals() {
+  document.getElementById('refusals').innerHTML = REFUSALS.map(r => `
+    <div class="refusal">
+      <div>
+        <div class="refusal__id">Check ${escText(r.id.split('-')[0])}</div>
+      </div>
+      <div>
+        <div class="refusal__head">${escText(r.head)}</div>
+        <div class="refusal__why">${escText(r.why)}</div>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('refusal-count').textContent = `${REFUSALS.length} refusals`;
+}
+
+function paintCrossSignal(findings, challenges) {
+  // Group by normalized entity name
+  const norm = s => (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const byEntity = new Map();
+  for (const f of findings) {
+    const key = norm(f.entity);
+    if (!key) continue;
+    const arr = byEntity.get(key) || [];
+    arr.push(f);
+    byEntity.set(key, arr);
+  }
+  const cross = [...byEntity.entries()]
+    .filter(([_, arr]) => new Set(arr.map(f => f.challenge_id)).size >= 2)
+    .sort((a, b) => b[1].length - a[1].length);
+
+  document.getElementById('cross-count').textContent = `${cross.length} cross-signal entit${cross.length === 1 ? 'y' : 'ies'}`;
+
+  const root = document.getElementById('cross-list');
+  if (cross.length === 0) {
+    root.innerHTML = '<p class="empty">No cross-signal entities yet. The system has not yet surfaced the same entity from two independent challenges.</p>';
+    return;
+  }
+  root.innerHTML = cross.slice(0, 12).map(([key, arr]) => {
+    const display = arr[0].entity;
+    const challengeIds = [...new Set(arr.map(f => f.challenge_id))];
+    return `
+      <div class="crossitem">
+        <div class="crossitem__name"><span class="crossitem__count">${arr.length}</span>${escText(display)}</div>
+        <div class="crossitem__where">Surfaces in: ${challengeIds.map(id => `<a href="/challenges/${escAttr(id)}.html" style="color: var(--navy); border-bottom: 1px dotted var(--navy-border);">${escText(loopLabel(id, challenges))}</a>`).join(' · ')}</div>
+      </div>
+    `;
+  }).join('');
+  return cross;
+}
+
+function paintFindings(findings, challenges, crossSet) {
+  // Check options
+  const loopSel = document.getElementById('filter-loop');
+  const seen = new Set();
+  for (const f of findings) {
+    if (seen.has(f.challenge_id)) continue;
+    seen.add(f.challenge_id);
+    const opt = document.createElement('option');
+    opt.value = f.challenge_id;
+    opt.textContent = loopLabel(f.challenge_id, challenges);
+    loopSel.appendChild(opt);
+  }
+
+  const all = findings.map(f => ({
+    ...f,
+    _kind: classifyFinding(f),
+    _isCross: crossSet.has((f.entity || '').toLowerCase().replace(/\s+/g, ' ').trim()),
+  }));
+
+  function paint(rows) {
+    const tbody = document.querySelector('#findings-table tbody');
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">No findings match the filter.</td></tr>';
+    } else {
+      tbody.innerHTML = rows.map(f => `
+        <tr class="${f._kind === 'artifact' ? 'is-artifact' : ''}">
+          <td>
+            <a href="/challenges/${escAttr(f.challenge_id)}.html">
+              <strong>${escText((f.challenge_id || '').split('-')[0])}</strong>
+            </a>
+            ${f._isCross ? `<span class="chip" style="margin-left: 6px; font-size: 10px; padding: 1px 7px; background: var(--navy-wash); color: var(--navy-deep); border-color: var(--navy-border);">cross</span>` : ''}
+          </td>
+          <td><strong>${escText(f.entity)}</strong></td>
+          <td>${escText(f.headline || '')}</td>
+          <td><span class="chip ${sevCls(f.severity)}">${escText(f.severity || '')}</span></td>
+          <td>${f.top_metric ? `${escText(f.top_metric.label || '')}: <strong>${escText(f.top_metric.value || '')}</strong>` : ''}</td>
+        </tr>
+      `).join('');
+    }
+    document.getElementById('findings-count').textContent = `${rows.length} findings`;
+  }
+
+  function applyFilters() {
+    const q = (document.getElementById('filter-input').value || '').toLowerCase();
+    const loop = document.getElementById('filter-loop').value;
+    const kind = document.getElementById('filter-kind').value;
+    const filtered = all.filter(f => {
+      if (loop && f.challenge_id !== loop) return false;
+      if (kind === 'story' && f._kind !== 'story') return false;
+      if (kind === 'artifact' && f._kind !== 'artifact') return false;
+      if (kind === 'cross' && !f._isCross) return false;
+      if (q) {
+        const hay = [f.entity, f.headline, f.challenge_id].join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    paint(filtered);
+  }
+
+  paint(all);
+  ['filter-input', 'filter-loop', 'filter-kind'].forEach(id => {
+    document.getElementById(id).addEventListener('input', applyFilters);
+    document.getElementById(id).addEventListener('change', applyFilters);
+  });
+
+  document.getElementById('story-count').textContent = `${all.filter(f => f._kind === 'story').length} review leads`;
+}
+
+function sevCls(s) {
+  switch ((s || '').toLowerCase()) {
+    case 'high': return 'red';
+    case 'medium': return 'amber';
+    case 'low': return 'green';
+    default: return 'gray';
+  }
+}
+
+(async () => {
+  const [challenges, findings] = await Promise.all([loadChallenges(), loadFindingsIndex()]);
+  paintHero();
+  paintRefusals();
+  const cross = paintCrossSignal(findings, challenges);
+  const crossSet = new Set((cross || []).map(([k]) => k));
+  paintFindings(findings, challenges, crossSet);
+})();
+
+startLivePoll({ includeCostChart: false, includeHHIChart: false });
+</script>
+</body>
+</html>

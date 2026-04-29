@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Findings Index · Agency 2026</title>
+<title>Review Leads · Agency 2026</title>
 <link rel="icon" href="/icons/chart.png" type="image/png">
 <link rel="stylesheet" href="/src/styles/lemon.css">
 <style>
@@ -19,13 +19,13 @@
 
 <div class="row sp-md">
   <span class="chip primary">Explore</span>
-  <span class="chip">findings</span>
+  <span class="chip">review leads</span>
 </div>
-<h1>Every finding the system surfaced.</h1>
-<p class="lede">Searchable index of findings across all eleven loops. Click a row to open the loop deep-dive. Severity and support status from the audit pipeline.</p>
+<h1>Every review lead the system surfaced.</h1>
+<p class="lede">Searchable index of review leads across the accountability checks. Click a row to open the check. Severity and evidence status come from the evidence trail.</p>
 
 <div class="filter-row">
-  <input type="text" id="filter-input" placeholder="Search by entity, headline, or challenge id...">
+  <input type="text" id="filter-input" placeholder="Search by entity, source table, headline, or check id...">
   <select id="filter-status">
     <option value="">All support statuses</option>
     <option value="supported">Supported</option>
@@ -39,22 +39,23 @@
     <option value="medium">Medium</option>
     <option value="low">Low</option>
   </select>
-  <span class="note note--small" style="margin-left: auto;" id="filter-count">0 findings</span>
+  <span class="note note--small" style="margin-left: auto;" id="filter-count">0 review leads</span>
 </div>
 
 <table class="table" id="findings-table">
   <thead>
     <tr>
-      <th>Loop</th>
+      <th>Check</th>
       <th>Entity</th>
-      <th>Headline</th>
+      <th>Plain-English read</th>
       <th>Top metric</th>
       <th>Severity</th>
       <th>Support</th>
-      <th>SHA</th>
+      <th>Source data</th>
+      <th>Evidence hash</th>
     </tr>
   </thead>
-  <tbody><tr><td colspan="7" class="empty">Loading findings index...</td></tr></tbody>
+  <tbody><tr><td colspan="8" class="empty">Loading review leads...</td></tr></tbody>
 </table>
 
 <footer class="footer">
@@ -80,7 +81,7 @@ function supCls(s) {
 function paint(rows) {
   const tbody = document.querySelector('#findings-table tbody');
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty">No findings match your filter.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">No review leads match your filter.</td></tr>';
   } else {
     tbody.innerHTML = rows.map(f => `
       <tr>
@@ -90,11 +91,12 @@ function paint(rows) {
         <td>${f.top_metric ? `${escText(f.top_metric.label || '')}: <strong>${escText(f.top_metric.value || '')}</strong>` : ''}</td>
         <td><span class="chip ${sevCls(f.severity)}">${escText(f.severity || '')}</span></td>
         <td><span class="chip ${supCls(f.support_status)}">${escText(f.support_status || '')}</span></td>
+        <td>${(f.source_tables || []).slice(0, 2).map(t => `<a href="?q=${escAttr(encodeURIComponent(t))}"><code>${escText(t)}</code></a>`).join(' ')}</td>
         <td><span class="pill">${escText(shortHash(f.sha))}</span></td>
       </tr>
     `).join('');
   }
-  document.getElementById('filter-count').textContent = `${rows.length} findings`;
+  document.getElementById('filter-count').textContent = `${rows.length} review leads`;
 }
 
 function applyFilters() {
@@ -105,7 +107,7 @@ function applyFilters() {
     if (status && f.support_status !== status) return false;
     if (sev && f.severity !== sev) return false;
     if (q) {
-      const hay = [f.entity, f.headline, f.challenge_id, f.finding_id].join(' ').toLowerCase();
+      const hay = [f.entity, f.headline, f.challenge_id, f.finding_id, ...(f.source_tables || [])].join(' ').toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -115,7 +117,11 @@ function applyFilters() {
 
 (async () => {
   _all = await loadFindingsIndex();
+  const params = new URLSearchParams(location.search);
+  const initialQ = params.get('q') || params.get('source') || '';
+  if (initialQ) document.getElementById('filter-input').value = initialQ;
   paint(_all);
+  if (initialQ) applyFilters();
   ['filter-input', 'filter-status', 'filter-severity'].forEach(id => {
     document.getElementById(id).addEventListener('input', applyFilters);
     document.getElementById(id).addEventListener('change', applyFilters);

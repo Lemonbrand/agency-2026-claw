@@ -5,6 +5,7 @@
 
 import { Chart, registerables } from 'chart.js';
 import { SankeyController, Flow } from 'chartjs-chart-sankey';
+import 'chartjs-adapter-date-fns';
 import { loadChartData } from './manifest.js';
 
 Chart.register(...registerables, SankeyController, Flow);

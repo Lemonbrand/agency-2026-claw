@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Audit Verdict · Agency 2026</title>
+<title>Evidence Trail · Agency 2026</title>
 <link rel="icon" href="/icons/tick.png" type="image/png">
 <link rel="stylesheet" href="/src/styles/lemon.css">
 <style>
@@ -20,28 +20,28 @@
 
 <div class="row sp-md">
   <span class="chip primary">Explore</span>
-  <span class="chip">audit</span>
+  <span class="chip">evidence trail</span>
 </div>
-<h1>Audit verdict.</h1>
-<p class="lede">Lexical audit over every brief. References checked against the verified schema. Placeholder names, fake IDs, and known-bad table refs counted. Every brief carries a SHA-256 so a reviewer can confirm the file they read is the file we audited.</p>
+<h1>Evidence trail.</h1>
+<p class="lede">Every accountability check is reviewed against the source data. References are checked against the verified fields. Placeholder names, fake IDs, and unsupported sources are counted. Every brief carries a SHA-256 so a reviewer can confirm the file they read is the file we checked.</p>
 
 <div class="verdict-strip">
-  <div class="metric accent-green"><strong id="audit-clean">—</strong><span>clean</span></div>
-  <div class="metric accent-amber"><strong id="audit-review">—</strong><span>needs review</span></div>
-  <div class="metric accent-red"><strong id="audit-unsafe">—</strong><span>unsafe</span></div>
+  <div class="metric accent-green"><strong id="audit-clean">0</strong><span>clean</span></div>
+  <div class="metric accent-amber"><strong id="audit-review">0</strong><span>needs review</span></div>
+  <div class="metric accent-red"><strong id="audit-unsafe">0</strong><span>unsafe</span></div>
 </div>
 
-<h2 class="sp-md">Per-loop verdict</h2>
+<h2 class="sp-md">Per-check verdict</h2>
 <table class="table sp-md" id="audit-table">
-  <thead><tr><th>Loop</th><th>Verdict</th><th>Known bad</th><th>Suspect</th><th>Placeholders</th><th>SQL blocks</th><th>SHA</th></tr></thead>
-  <tbody><tr><td colspan="7" class="empty">Loading audit summary...</td></tr></tbody>
+  <thead><tr><th>Check</th><th>Verdict</th><th>Known bad</th><th>Needs review</th><th>Placeholders</th><th>Queries</th><th>Hash</th></tr></thead>
+  <tbody><tr><td colspan="7" class="empty">Loading evidence summary...</td></tr></tbody>
 </table>
 
-<h2 class="sp-md">Underlying audit page</h2>
-<p class="note sp-md">The full audit report, embedded as a proof artifact.</p>
+<h2 class="sp-md">Underlying evidence report</h2>
+<p class="note sp-md">The full report, embedded as an evidence file.</p>
 <div class="iframe-shell">
   <div class="iframe-meta">
-    <span>source: <code>web/agency-loop-audit.html</code></span>
+    <span>evidence file: <code>web/agency-loop-audit.html</code></span>
     <a href="/embeds/agency-loop-audit.html" target="_blank" rel="noopener">Open in own tab ↗</a>
   </div>
   <iframe src="/embeds/agency-loop-audit.html" title="Agency loop audit"></iframe>
@@ -74,7 +74,7 @@ async function paint() {
   document.getElementById('audit-unsafe').textContent = fmtInt(a.unsafe);
   const tbody = document.querySelector('#audit-table tbody');
   if (!a.per_challenge || !a.per_challenge.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty">Audit will populate as the backend completes the lexical pass.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Evidence summary will populate as the backend completes the review pass.</td></tr>';
     return;
   }
   tbody.innerHTML = a.per_challenge.map(p => `
