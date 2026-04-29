@@ -53,7 +53,9 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
     --read "$ROOT/STRUCTURE.md" \
     --read "$ROOT/ITERATE.md" \
     --read "$ROOT/KNOWN-DATA-ISSUES-NOTES.md" \
-    --message "Iterate on research-brief.md per ITERATE.md. This is iteration $i of $MAX_ITERATIONS." \
+    --read "$ROOT/VERIFIED_SCHEMA.md" \
+    --read "$ROOT/CORRECTION_PASS.md" \
+    --message "Iterate on research-brief.md per ITERATE.md and CORRECTION_PASS.md. First correct schema/table/column hallucinations using VERIFIED_SCHEMA.md, then improve the weakest section. This is iteration $i of $MAX_ITERATIONS." \
     research-brief.md \
     >> "$PROGRESS" 2>&1 || echo "aider exit $?" >> "$PROGRESS"
 

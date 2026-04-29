@@ -48,4 +48,36 @@ Loop 01 carries iter=3 because the smoke test wrote progress markers and the new
 
 ### T+0:?? — roll-ups every 5 minutes
 
-(Filled in by Claude via /loop cron.)
+### Cycle 1 — 09:28 ET / 13:28 UTC
+
+Three loops self-signaled COMPLETE at iteration 6 (~12 minutes after launch): **03-funding-loops**, **05-vendor-concentration**, **09-contract-intelligence**. Six loops are still iterating. One loop (02-ghost-capacity) hung mid-iteration 1 with aider attached but silent for 13 minutes; killed and restarted clean. Spot-check rotation hit 02 right when it was dead, which is the observation worth logging — failure mode is "tmux running, aider quiet" not "tmux crashed."
+
+```
+loop                              tmux        iter   status      brief_KB
+01-zombie-recipients              running     11     (smoke residue)  13.4
+02-ghost-capacity                 restarted   0      relaunched       0
+03-funding-loops                  running     11     DONE@iter6       16.6
+04-sole-source-amendment          running     3      slow             6.7
+05-vendor-concentration           running     11     DONE@iter6       16.4
+06-related-parties                running     9      active          16.0
+07-policy-misalignment            running     9      active          10.0
+08-duplicative-funding            running     11     active          12.7
+09-contract-intelligence          running     11     DONE@iter6       14.4
+10-adverse-media                  running     9      active          15.3
+```
+
+Sovereignty tracker delta this cycle: **+38 calls / +359k tokens / +$0.80**. Running totals: **125 calls / 1.07M tokens / $8.49 API-equiv**. The CRA loop_universe precomputation is the most-cited resource across loops surveyed so far (03 leans on it directly, 06 references it for governance overlays). Next cycle: rotate to 03 to spot-check a COMPLETED brief.
+
+### Inter-cycle event — 09:28 ET / 13:28 UTC — Codex verification layer enters the architecture
+
+Simon's Codex (with direct SQL DB access) just published `VERIFIED_SCHEMA.md` (434 lines) and `CORRECTION_PASS.md` (118 lines) to `/opt/lemon-agency/`, plus modified `run-template.sh` so every subsequent aider call reads both as ground truth. The schema doc explicitly names the hallucinated references the loops had been citing (`fed.vw_agreement_current`, `cra.t3010`, `cra.loop_universe.risk_score`, etc.) and supplies the F-3-safe CTE workaround. The correction pass forces every brief to add a `Current executable status: RUNNABLE_NOW | RUNNABLE_WITH_EXTRA_MATERIALIZATION | NEEDS_EXTERNAL_DATA | RESEARCH_ONLY` line and replace dead references.
+
+This is the multi-brain pattern landing in real time:
+
+- **GLM 5.1**: parallel cheap-fast generation (10 loops, ~$0.02 / iteration).
+- **GPT-5.2 (Codex)**: SQL-grounded verification + curation of source-of-truth.
+- **Claude (this orchestrator)**: meta-narrative + observability.
+
+Each is doing the job it's actually good at. The hallucination gap I called out in last night's critique just closed. Logged Codex's oversight session in the sovereignty tracker (~255k tokens, ~$0.69 API-equivalent). Running totals after the manual entry: **202 calls / 1.73M tokens / $10.01 API-equiv** — first dollar threshold crossed.
+
+Files mirrored back to local: `scripts/agency-loops/VERIFIED_SCHEMA.md`, `scripts/agency-loops/CORRECTION_PASS.md`, updated `run-template.sh`. They will travel with the next push to the public repo.

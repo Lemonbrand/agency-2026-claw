@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agency Loop Audit</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; background: #f6f3ee; color: #221f1c; }
+main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 56px; }
+h1 { font-size: 34px; margin: 0 0 8px; }
+p { line-height: 1.5; }
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 22px 0; }
+.metric { background: #fff; border: 1px solid #ded7ce; padding: 16px; border-radius: 8px; }
+.metric strong { display: block; font-size: 28px; }
+table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #ded7ce; border-radius: 8px; overflow: hidden; }
+th, td { padding: 10px 9px; border-bottom: 1px solid #eee7dd; text-align: left; vertical-align: top; font-size: 14px; }
+th { background: #25211c; color: white; }
+tr.ok td:first-child { border-left: 5px solid #2e7d4f; }
+tr.warn td:first-child { border-left: 5px solid #b88700; }
+tr.bad td:first-child { border-left: 5px solid #b23b3b; }
+.card { background: #fff; border: 1px solid #ded7ce; border-radius: 8px; padding: 18px; margin-top: 18px; }
+.card.ok { border-left: 6px solid #2e7d4f; }
+.card.warn { border-left: 6px solid #b88700; }
+.card.bad { border-left: 6px solid #b23b3b; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+code { background: #f1ece4; padding: 2px 4px; border-radius: 4px; }
+ul { padding-left: 19px; }
+.note { background: #fff7dd; border: 1px solid #e0bf5f; padding: 12px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<main>
+<h1>Agency Loop Audit</h1>
+<p>This report audits the ten parallel research loops after the schema-correction pass. It checks for known hallucinated views, suspect table or column references, placeholder examples, executable status lines, SQL blocks, and correction-log completion.</p>
+<p class="note">This is a lexical audit over the briefs, not a proof that every SQL block has executed. A brief is presentation-safe only when bad references are zero and the claim language matches its executable status.</p>
+<div class="summary">
+  <div class="metric"><span>Loops</span><strong>10</strong></div>
+  <div class="metric"><span>Clean</span><strong>10</strong></div>
+  <div class="metric"><span>Needs Review</span><strong>0</strong></div>
+  <div class="metric"><span>Unsafe</span><strong>0</strong></div>
+</div>
+<h2>Summary Table</h2>
+<table>
+  <thead><tr><th>Loop</th><th>Status</th><th>Words</th><th>SQL</th><th>Known Bad</th><th>Suspect Refs</th><th>Placeholders</th><th>Gaps</th><th>SHA</th></tr></thead>
+  <tbody>
+<tr class="ok">
+  <td>01-zombie-recipients</td>
+  <td>RUNNABLE_WITH_EXTRA_MATERIALIZATION</td>
+  <td>2122</td>
+  <td>1</td>
+  <td>0</td>
+  <td>0</td>
+  <td>0</td>
+  <td>9</td>
+  <td><code>daf814d1a098</code></td>
+</tr>
+
+
+<tr class="ok">
+  <td>02-ghost-capacity</td>
+  <td>RUNNABLE_NOW</td>
+  <td>1317</td>
+  <td>1</td>
+  <td>0</td>
+  <td>0</td>
+  <td>0</td>
+  <td>7</td>
+  <td><code>8bad5151c8e5</code></td>
+</tr>
+
+
+<tr class="ok">
+  <td>03-funding-loops</td>
+  <td>RUNNABLE_NOW</td>
+  <td>2280</td>
+  <td>1</td>
+  <td>0</td>
+  <td>0</td>
+  <td>0</td>
+  <td>12</td>
+  <td><code>d5af2bd594c8</code></td>
+</tr>
+
+
+<tr class="ok">
+  <td>04-sole-source-amendment</td>
+  <td>RUNNABLE_WITH_EXTRA_MATERIALIZATION</td>
+  <td>1080</td>
+  <td>1</td>
+  <td>0</td>
+  <td>0</td>
+  <td>0</td>
+  <td>9</td>
+  <td><code>ac034581981f</code></td>
+</tr>
+
+
+<tr class="ok">
+  <td>05-vendor-concentration</td>
+  <td>RUNNABLE_NOW</td>
+  <td>2327</td>
+  <td>1</td>
+  <td>0</td>
+  <td>0</td>
+  <td>0</td>
+  <td>15</td>
+  <td><code>0ae7ec50f984</code></td>
+</tr>
+
+
+<tr class="ok">
+  <td>06-related-parties</td>
+  <td>RUNNABLE_WITH_EXTRA_MATERIALIZATION</td>
+  <td>1765</td>
+  <td>1</td>
+  <td>0</td>
+  <td>0</td>
+  <td>0</td>
+  <td>6</td>
+  <td><code>5214dd290eae</code></td>
+</tr>
+
+
+<tr class="ok">
+  <td>07-policy-misalignment</td>
+  <td>NEEDS_EXTERNAL_DATA</td>
+  <td>1868</td>
+  <td>1</td>
+  <td>0</td>
+  <td>0</td>
+  <td>0</td>
+  <td>14</td>
+  <td><code>0c179d78fa8c</code></td>
+</tr>
+
+
+<tr class="ok">
+  <td>08-duplicative-funding</td>
+  <td>NEEDS_EXTERNAL_DATA</td>
+  <td>1754</td>
+  <td>1</td>
+  <td>0</td>
+  <td>0</td>
+  <td>0</td>
+  <td>12</td>
+  <td><code>ccc7667863c5</code></td>
+</tr>
+
+
+<tr class="ok">
+  <td>09-contract-intelligence</td>
+  <td>RUNNABLE_WITH_EXTRA_MATERIALIZATION</td>
+  <td>2059</td>
+  <td>1</td>
+  <td>0</td>
+  <td>0</td>
+  <td>0</td>
+  <td>7</td>
+  <td><code>1072da8bd791</code></td>
+</tr>
+
+
+<tr class="ok">
+  <td>10-adverse-media</td>
+  <td>NEEDS_EXTERNAL_DATA</td>
+  <td>2493</td>
+  <td>2</td>
+  <td>0</td>
+  <td>0</td>
+  <td>0</td>
+  <td>5</td>
+  <td><code>292773cea7cb</code></td>
+</tr>
+</tbody>
+</table>
+<h2>Audit Trail Details</h2>
+
+<section class="card ok">
+  <h2>01-zombie-recipients</h2>
+  <p><strong>Status:</strong> RUNNABLE_WITH_EXTRA_MATERIALIZATION</p>
+  <p><strong>Presentation sentence:</strong> We identified non-profits that received significant public funding despite deriving over 70% of their revenue from government and having ceased filing CRA returns, flagging them as stale-filing zombie recipients requiring further legal dissolution verification.</p>
+  <p><strong>Correction log:</strong> === correction end rc=0 2026-04-29T13:37:04Z ===</p>
+  <p><strong>Brief SHA-256:</strong> <code>daf814d1a0983fc6d7064cafd90ebff36b1efbfb859b0d86eb05156e9e75c9be</code></p>
+  <div class="grid">
+    <div><h3>Known Bad References</h3><p>None.</p></div>
+    <div><h3>Suspect Schema References</h3><p>None.</p></div>
+    <div><h3>Verified References</h3><ul><li><code>ab.ab_contracts.recipient</code></li><li><code>ab.ab_grants</code></li><li><code>ab.ab_grants.recipient</code></li><li><code>ab.ab_sole_source.vendor</code></li><li><code>cra.cra_financial_details.bn</code></li><li><code>cra.cra_identification</code></li><li><code>cra.cra_identification.bn</code></li><li><code>cra.govt_funding_by_charity</code></li><li><code>cra.govt_funding_by_charity.bn</code></li><li><code>cra.govt_funding_by_charity.govt_share_of_rev</code></li><li><code>fed.grants_contributions</code></li><li><code>fed.grants_contributions.agreement_start_date</code></li><li><code>general.entity_golden_records</code></li><li><code>general.entity_golden_records.aliases</code></li><li><code>general.entity_golden_records.bn_root</code></li><li><code>general.entity_source_links.source_pk</code></li><li><code>general.vw_entity_funding</code></li><li><code>general.vw_entity_funding.entity_id</code></li></ul></div>
+    <div><h3>Placeholder Signals</h3><p>None.</p></div>
+  </div>
+</section>
+
+<section class="card ok">
+  <h2>02-ghost-capacity</h2>
+  <p><strong>Status:</strong> RUNNABLE_NOW</p>
+  <p><strong>Presentation sentence:</strong> We identified persistent, government-dependent charities exhibiting thin delivery-capacity signals—high compensation-to-program-spend ratios and negligible physical assets—flagging them as capacity-accounting anomalies requiring further review.</p>
+  <p><strong>Correction log:</strong> === correction end rc=0 2026-04-29T13:36:21Z ===</p>
+  <p><strong>Brief SHA-256:</strong> <code>8bad5151c8e52a00c2056e867639ed0936e541e42b87a0428c709ddc7c49a5ed</code></p>
+  <div class="grid">
+    <div><h3>Known Bad References</h3><p>None.</p></div>
+    <div><h3>Suspect Schema References</h3><p>None.</p></div>
+    <div><h3>Verified References</h3><ul><li><code>cra.cra_compensation</code></li><li><code>cra.cra_compensation.field_300</code></li><li><code>cra.cra_financial_details</code></li><li><code>cra.cra_financial_details.field_4540</code></li><li><code>cra.cra_identification</code></li><li><code>cra.cra_identification.address_line_1</code></li><li><code>cra.cra_identification.bn</code></li><li><code>cra.cra_identification.category</code></li><li><code>cra.cra_identification.designation</code></li><li><code>cra.cra_identification.sub_category</code></li><li><code>cra.govt_funding_by_charity</code></li><li><code>cra.govt_funding_by_charity.fiscal_year</code></li><li><code>cra.govt_funding_by_charity.govt_share_of_rev</code></li><li><code>cra.overhead_by_charity</code></li><li><code>cra.overhead_by_charity.broad_overhead_pct</code></li><li><code>cra.overhead_by_charity.compensation</code></li><li><code>cra.overhead_by_charity.programs</code></li><li><code>general.vw_entity_funding</code></li><li><code>general.vw_entity_funding.ab_total_grants</code></li><li><code>general.vw_entity_funding.bn_root</code></li><li><code>general.vw_entity_funding.entity_id</code></li><li><code>general.vw_entity_funding.fed_total_grants</code></li><li><code>general.vw_entity_funding.total_all_funding</code></li></ul></div>
+    <div><h3>Placeholder Signals</h3><p>None.</p></div>
+  </div>
+</section>
+
+<section class="card ok">
+  <h2>03-funding-loops</h2>
+  <p><strong>Status:</strong> RUNNABLE_NOW</p>
+  <p><strong>Presentation sentence:</strong> GovAlta&#x27;s precomputed loop detection identifies thousands of circular funding paths; by filtering out known federated charities and hubs, we isolate the small subset of loops where high circular volume and overhead suggest potential revenue inflation or round-tripping.</p>
+  <p><strong>Correction log:</strong> === correction end rc=0 2026-04-29T13:37:58Z ===</p>
+  <p><strong>Brief SHA-256:</strong> <code>d5af2bd594c89f1568d717db69912ea36106f1eace300aa1c4818f4e683fcaf7</code></p>
+  <div class="grid">
+    <div><h3>Known Bad References</h3><p>None.</p></div>
+    <div><h3>Suspect Schema References</h3><p>None.</p></div>
+    <div><h3>Verified References</h3><ul><li><code>cra.cra_directors</code></li><li><code>cra.cra_identification.designation</code></li><li><code>cra.cra_identification.legal_name</code></li><li><code>cra.cra_qualified_donees</code></li><li><code>cra.cra_qualified_donees.donee_bn</code></li><li><code>cra.cra_qualified_donees.fpe</code></li><li><code>cra.cra_qualified_donees.total_gifts</code></li><li><code>cra.identified_hubs</code></li><li><code>cra.johnson_cycles</code></li><li><code>cra.loop_edges</code></li><li><code>cra.loop_financials</code></li><li><code>cra.loop_participants</code></li><li><code>cra.loop_universe</code></li><li><code>cra.loop_universe.score</code></li><li><code>cra.matrix_census</code></li><li><code>cra.overhead_by_charity</code></li><li><code>cra.overhead_by_charity.broad_overhead_pct</code></li><li><code>cra.overhead_by_charity.programs</code></li><li><code>cra.overhead_by_charity.total_expenditures</code></li><li><code>cra.partitioned_cycles</code></li><li><code>cra.scc_components</code></li><li><code>cra.scc_summary</code></li><li><code>general.entity_golden_records</code></li><li><code>general.entity_golden_records.aliases</code></li><li><code>general.entity_golden_records.bn_root</code></li><li><code>general.entity_golden_records.dataset_sources</code></li><li><code>general.vw_entity_funding</code></li><li><code>general.vw_entity_funding.cra_program_spending</code></li><li><code>general.vw_entity_funding.cra_total_revenue</code></li></ul></div>
+    <div><h3>Placeholder Signals</h3><p>None.</p></div>
+  </div>
+</section>
+
+<section class="card ok">
+  <h2>04-sole-source-amendment</h2>
+  <p><strong>Status:</strong> RUNNABLE_WITH_EXTRA_MATERIALIZATION</p>
+  <p><strong>Presentation sentence:</strong> We can identify contracts that grew over five-fold from their original value through amendments, and vendors who won competitive contracts only to receive ongoing sole-source follow-ons, by computing original versus current values directly from the grants table and joining Alberta contracts to sole-source awards.</p>
+  <p><strong>Correction log:</strong> === correction end rc=0 2026-04-29T13:36:53Z ===</p>
+  <p><strong>Brief SHA-256:</strong> <code>ac034581981f475975b582f6c984139e70519f72e5564c419ba6d3b6f50ee0f1</code></p>
+  <div class="grid">
+    <div><h3>Known Bad References</h3><p>None.</p></div>
+    <div><h3>Suspect Schema References</h3><p>None.</p></div>
+    <div><h3>Verified References</h3><ul><li><code>ab.ab_contracts</code></li><li><code>ab.ab_contracts.recipient</code></li><li><code>ab.ab_sole_source</code></li><li><code>ab.ab_sole_source.vendor</code></li><li><code>fed.grants_contributions</code></li><li><code>fed.grants_contributions.agreement_value</code></li><li><code>fed.grants_contributions.is_amendment</code></li><li><code>fed.grants_contributions.ref_number</code></li><li><code>general.entity_golden_records</code></li><li><code>general.entity_golden_records.bn_root</code></li></ul></div>
+    <div><h3>Placeholder Signals</h3><p>None.</p></div>
+  </div>
+</section>
+
+<section class="card ok">
+  <h2>05-vendor-concentration</h2>
+  <p><strong>Status:</strong> RUNNABLE_NOW</p>
+  <p><strong>Presentation sentence:</strong> High vendor concentration, measured by HHI, can be screened across federal and Alberta spending using existing data, though distinguishing natural monopolies from drifted incumbency requires external statutory and regulatory context.</p>
+  <p><strong>Correction log:</strong> === correction end rc=0 2026-04-29T13:36:19Z ===</p>
+  <p><strong>Brief SHA-256:</strong> <code>0ae7ec50f984ffbcbbd4ee2f00e918481cc52b7ec43d0412ba5714420e020383</code></p>
+  <div class="grid">
+    <div><h3>Known Bad References</h3><p>None.</p></div>
+    <div><h3>Suspect Schema References</h3><p>None.</p></div>
+    <div><h3>Verified References</h3><ul><li><code>ab.ab_contracts</code></li><li><code>ab.ab_sole_source</code></li><li><code>fed.grants_contributions</code></li><li><code>fed.grants_contributions.ref_number</code></li><li><code>general.entity_golden_records</code></li><li><code>general.entity_golden_records.bn_root</code></li><li><code>general.entity_golden_records.cra_profile</code></li><li><code>general.entity_golden_records.id</code></li><li><code>general.entity_source_links</code></li></ul></div>
+    <div><h3>Placeholder Signals</h3><p>None.</p></div>
+  </div>
+</section>
+
+<section class="card ok">
+  <h2>06-related-parties</h2>
+  <p><strong>Status:</strong> RUNNABLE_WITH_EXTRA_MATERIALIZATION</p>
+  <p><strong>Presentation sentence:</strong> Name-only director overlaps between charities that fund each other are review leads requiring identity validation, not confirmed control.</p>
+  <p><strong>Correction log:</strong> === correction end rc=0 2026-04-29T13:38:59Z ===</p>
+  <p><strong>Brief SHA-256:</strong> <code>5214dd290eaed1f8b69d8c0b379f9db411c4cc0a4fe04987ea039a158c2066c8</code></p>
+  <div class="grid">
+    <div><h3>Known Bad References</h3><p>None.</p></div>
+    <div><h3>Suspect Schema References</h3><p>None.</p></div>
+    <div><h3>Verified References</h3><ul><li><code>ab.ab_grants</code></li><li><code>ab.ab_grants.amount</code></li><li><code>ab.ab_grants.fiscal_year</code></li><li><code>ab.ab_grants.recipient</code></li><li><code>ab.ab_sole_source.vendor</code></li><li><code>cra.cra_directors</code></li><li><code>cra.cra_directors.at_arms_length</code></li><li><code>cra.cra_directors.bn</code></li><li><code>cra.cra_directors.end_date</code></li><li><code>cra.cra_directors.first_name</code></li><li><code>cra.cra_directors.last_name</code></li><li><code>cra.cra_directors.position</code></li><li><code>cra.cra_directors.start_date</code></li><li><code>fed.grants_contributions</code></li><li><code>fed.grants_contributions.agreement_end_date</code></li><li><code>fed.grants_contributions.agreement_start_date</code></li><li><code>fed.grants_contributions.agreement_value</code></li><li><code>fed.grants_contributions.recipient_business_number</code></li><li><code>fed.grants_contributions.recipient_legal_name</code></li><li><code>fed.grants_contributions.ref_number</code></li><li><code>general.entity_golden_records</code></li><li><code>general.entity_golden_records.aliases</code></li><li><code>general.entity_golden_records.bn_root</code></li><li><code>general.entity_golden_records.bn_variants</code></li><li><code>general.entity_golden_records.canonical_name</code></li><li><code>general.entity_golden_records.id</code></li><li><code>general.vw_entity_funding</code></li><li><code>general.vw_entity_funding.ab_total_grants</code></li><li><code>general.vw_entity_funding.canonical_name</code></li><li><code>general.vw_entity_funding.entity_id</code></li></ul></div>
+    <div><h3>Placeholder Signals</h3><p>None.</p></div>
+  </div>
+</section>
+
+<section class="card ok">
+  <h2>07-policy-misalignment</h2>
+  <p><strong>Status:</strong> NEEDS_EXTERNAL_DATA</p>
+  <p><strong>Presentation sentence:</strong> While federal spending data allows us to trace broadband funding flows, proving policy misalignment requires external policy commitment texts that are not present in the current schema.</p>
+  <p><strong>Correction log:</strong> === correction end rc=0 2026-04-29T13:36:23Z ===</p>
+  <p><strong>Brief SHA-256:</strong> <code>0c179d78fa8c00fb03ab1cbdb84b46b1ed8b7c689cef2660ab260860a03c49be</code></p>
+  <div class="grid">
+    <div><h3>Known Bad References</h3><p>None.</p></div>
+    <div><h3>Suspect Schema References</h3><p>None.</p></div>
+    <div><h3>Verified References</h3><ul><li><code>fed.grants_contributions</code></li><li><code>fed.grants_contributions.agreement_start_date</code></li><li><code>fed.grants_contributions.agreement_value</code></li><li><code>fed.grants_contributions.owner_org_title</code></li><li><code>fed.grants_contributions.prog_name_en</code></li><li><code>fed.grants_contributions.recipient_business_number</code></li><li><code>general.entity_golden_records</code></li><li><code>general.entity_golden_records.bn_root</code></li><li><code>general.entity_source_links</code></li></ul></div>
+    <div><h3>Placeholder Signals</h3><p>None.</p></div>
+  </div>
+</section>
+
+<section class="card ok">
+  <h2>08-duplicative-funding</h2>
+  <p><strong>Status:</strong> NEEDS_EXTERNAL_DATA</p>
+  <p><strong>Presentation sentence:</strong> Organizations receiving uncoordinated funds from multiple government levels for the same purpose represent overlap waste, while priority areas with zero funding across all levels represent systemic failure.</p>
+  <p><strong>Correction log:</strong> === correction end rc=0 2026-04-29T13:36:33Z ===</p>
+  <p><strong>Brief SHA-256:</strong> <code>ccc7667863c569eeb953916bffd65d333aea7de72ca4ce27d7cb19c8e7f201d6</code></p>
+  <div class="grid">
+    <div><h3>Known Bad References</h3><p>None.</p></div>
+    <div><h3>Suspect Schema References</h3><p>None.</p></div>
+    <div><h3>Verified References</h3><ul><li><code>ab.ab_grants</code></li><li><code>ab.ab_grants.ministry</code></li><li><code>ab.ab_grants.payment_date</code></li><li><code>ab.ab_grants.program</code></li><li><code>ab.ab_grants.recipient</code></li><li><code>cra.cra_identification</code></li><li><code>cra.cra_identification.bn</code></li><li><code>cra.cra_qualified_donees</code></li><li><code>fed.grants_contributions</code></li><li><code>fed.grants_contributions.agreement_number</code></li><li><code>fed.grants_contributions.agreement_start_date</code></li><li><code>fed.grants_contributions.prog_name_en</code></li><li><code>fed.grants_contributions.ref_number</code></li><li><code>general.entity_golden_records</code></li><li><code>general.entity_golden_records.id</code></li><li><code>general.entity_source_links</code></li><li><code>general.entity_source_links.entity_id</code></li><li><code>general.entity_source_links.source_pk</code></li><li><code>general.vw_entity_funding</code></li><li><code>general.vw_entity_funding.entity_id</code></li></ul></div>
+    <div><h3>Placeholder Signals</h3><p>None.</p></div>
+  </div>
+</section>
+
+<section class="card ok">
+  <h2>09-contract-intelligence</h2>
+  <p><strong>Status:</strong> RUNNABLE_WITH_EXTRA_MATERIALIZATION</p>
+  <p><strong>Presentation sentence:</strong> Federal professional services and IT programs show rising vendor concentration and spend growth, but without external PPI deflators and unit-deliverable counts, we cannot distinguish true unit-cost overpayment from inflation and volume scale-ups.</p>
+  <p><strong>Correction log:</strong> === correction end rc=0 2026-04-29T13:37:16Z ===</p>
+  <p><strong>Brief SHA-256:</strong> <code>1072da8bd7914fd660e0d29d70755e7f046f131f5676013f6056f47615658d09</code></p>
+  <div class="grid">
+    <div><h3>Known Bad References</h3><p>None.</p></div>
+    <div><h3>Suspect Schema References</h3><p>None.</p></div>
+    <div><h3>Verified References</h3><ul><li><code>ab.ab_contracts</code></li><li><code>ab.ab_contracts.amount</code></li><li><code>ab.ab_contracts.display_fiscal_year</code></li><li><code>ab.ab_contracts.recipient</code></li><li><code>ab.ab_grants</code></li><li><code>ab.ab_grants.amount</code></li><li><code>ab.ab_grants.display_fiscal_year</code></li><li><code>ab.ab_grants.ministry</code></li><li><code>ab.ab_grants.program</code></li><li><code>ab.ab_sole_source</code></li><li><code>ab.ab_sole_source.amount</code></li><li><code>ab.ab_sole_source.contract_services</code></li><li><code>ab.ab_sole_source.display_fiscal_year</code></li><li><code>ab.ab_sole_source.ministry</code></li><li><code>ab.ab_sole_source.start_date</code></li><li><code>ab.ab_sole_source.vendor</code></li><li><code>cra.cra_identification</code></li><li><code>fed.grants_contributions</code></li><li><code>fed.grants_contributions.agreement_start_date</code></li><li><code>fed.grants_contributions.agreement_value</code></li><li><code>fed.grants_contributions.owner_org_title</code></li><li><code>fed.grants_contributions.prog_name_en</code></li><li><code>fed.grants_contributions.recipient_business_number</code></li><li><code>fed.grants_contributions.recipient_legal_name</code></li><li><code>general.entity_golden_records</code></li><li><code>general.entity_golden_records.aliases</code></li><li><code>general.entity_golden_records.bn_root</code></li><li><code>general.entity_golden_records.dataset_sources</code></li><li><code>general.entity_source_links</code></li></ul></div>
+    <div><h3>Placeholder Signals</h3><p>None.</p></div>
+  </div>
+</section>
+
+<section class="card ok">
+  <h2>10-adverse-media</h2>
+  <p><strong>Status:</strong> NEEDS_EXTERNAL_DATA</p>
+  <p><strong>Presentation sentence:</strong> We can match funded entities against authoritative regulatory and court actions, but the adverse media data itself requires external ingestion and cannot be derived from the current internal datasets alone.</p>
+  <p><strong>Correction log:</strong> === correction end rc=0 2026-04-29T13:38:21Z ===</p>
+  <p><strong>Brief SHA-256:</strong> <code>292773cea7cb98fad35c5381b334ae4b38b455bf76e40c91caa5f8a12a400d94</code></p>
+  <div class="grid">
+    <div><h3>Known Bad References</h3><p>None.</p></div>
+    <div><h3>Suspect Schema References</h3><p>None.</p></div>
+    <div><h3>Verified References</h3><ul><li><code>ab.ab_grants</code></li><li><code>ab.ab_grants.amount</code></li><li><code>ab.ab_grants.fiscal_year</code></li><li><code>ab.ab_grants.recipient</code></li><li><code>cra.cra_identification.bn</code></li><li><code>cra.cra_identification.legal_name</code></li><li><code>fed.grants_contributions</code></li><li><code>fed.grants_contributions.agreement_value</code></li><li><code>fed.grants_contributions.recipient_business_number</code></li><li><code>fed.grants_contributions.recipient_legal_name</code></li><li><code>fed.grants_contributions.ref_number</code></li><li><code>general.entity_golden_records</code></li><li><code>general.entity_golden_records.aliases</code></li><li><code>general.entity_golden_records.bn_root</code></li><li><code>general.entity_golden_records.canonical_name</code></li><li><code>general.entity_golden_records.id</code></li><li><code>general.entity_source_links</code></li><li><code>general.entity_source_links.entity_id</code></li><li><code>general.entity_source_links.source_pk</code></li><li><code>general.entity_source_links.source_table</code></li></ul></div>
+    <div><h3>Placeholder Signals</h3><p>None.</p></div>
+  </div>
+</section>
+
+</main>
+</body>
+</html>
