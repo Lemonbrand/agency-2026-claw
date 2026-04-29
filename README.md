@@ -6,6 +6,14 @@ This was built for the Agency 2026 Ottawa hackathon. The goal is not to accuse a
 
 The presentation is a traditional HTML demo. The work runs before the presentation. The judges see the resulting dashboard, the evidence trail, the rejected checks, and the next actions.
 
+## Creator Note
+
+This repo is free. Use it, fork it, break it, and adapt it.
+
+It was built quickly because the foundation already existed. [Neotoma](https://neotoma.io), built by Mark, gave us a local truth ledger for entities, observations, sources, and replayable audit memory. [Lemonbrand](https://lemonbrand.io) is my studio for building practical agentic systems: local-first workflows, data products, internal tools, and automation that help teams move fast without losing the evidence trail.
+
+The point of publishing this is not to sell the hackathon code. The point is to make the underlying pattern visible: models are useful when they plan, challenge, and explain; databases and ledgers should hold the truth.
+
 ## Plain English
 
 A human reviewer usually starts with messy files and asks:
