@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -38,6 +39,8 @@ PRICING = {
     "claude-opus-4-7":      {"in": 15.00, "out": 75.00, "country": "US (Anthropic)"},
     "claude-opus-4-7[1m]":  {"in": 15.00, "out": 75.00, "country": "US (Anthropic, 1M context tier)"},
     "claude-haiku-4-5":     {"in": 1.00,  "out": 5.00,  "country": "US (Anthropic)"},
+    "gpt-5.5":              {"in": 2.00,  "out": 16.00, "country": "US (OpenAI, subscription API-equivalent)"},
+    "gpt-5.5-xhigh":        {"in": 2.00,  "out": 16.00, "country": "US (OpenAI, subscription API-equivalent)"},
     "gpt-5.2":              {"in": 1.25,  "out": 10.00, "country": "US (OpenAI)"},
     "gpt-5":                {"in": 1.25,  "out": 10.00, "country": "US (OpenAI)"},
     "codex":                {"in": 1.25,  "out": 10.00, "country": "US (OpenAI)"},
@@ -133,14 +136,44 @@ def estimate_cost(model: str, tokens_in: int, tokens_out: int) -> float:
     return (tokens_in * p["in"] + tokens_out * p["out"]) / 1_000_000
 
 
+def refresh_local_usage() -> None:
+    """Refresh Claude/Codex local usage before aggregating dashboard totals."""
+    poller = ROOT / "poll_local.py"
+    if not poller.exists():
+        return
+    try:
+        subprocess.run(
+            [sys.executable, str(poller)],
+            cwd=str(ROOT),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=90,
+            check=False,
+        )
+    except Exception:
+        return
+
+
 def aggregate(state: dict) -> dict:
     """Accumulate aider lines (idempotent via line hash) + manual entries.
 
     Returns: {totals_by_model, totals_overall, calls}
+
+    NOTE: poll_local.py writes .openrouter-today.json with the authoritative daily $
+    from OpenRouter's /auth/key endpoint. If that file exists we trust it as the
+    OpenRouter total and use aider lines only for token-volume estimation.
     """
     aider_lines = fetch_aider_cost_lines()
     seen = set(state.get("openrouter_calls_seen", []))
     totals: dict[str, dict] = state.get("totals_by_model", {}).copy()
+
+    or_authoritative = None
+    try:
+        _p = ROOT / ".openrouter-today.json"
+        if _p.exists():
+            or_authoritative = json.loads(_p.read_text())
+    except Exception:
+        or_authoritative = None
 
     new_count = 0
     for idx, line in enumerate(aider_lines):
@@ -154,11 +187,21 @@ def aggregate(state: dict) -> dict:
         model = "openrouter/z-ai/glm-5.1"
         bucket = totals.setdefault(
             model,
-            {"calls": 0, "tokens_in": 0, "tokens_out": 0, "cost_usd": 0.0, "country": PRICING[model]["country"]},
+            {
+                "calls": 0,
+                "tokens_in": 0,
+                "tokens_out": 0,
+                "cache_read_tokens": 0,
+                "uncached_input_tokens": 0,
+                "reasoning_tokens": 0,
+                "cost_usd": 0.0,
+                "country": PRICING[model]["country"],
+            },
         )
         bucket["calls"] += 1
         bucket["tokens_in"] += parsed["tokens_in"]
         bucket["tokens_out"] += parsed["tokens_out"]
+        bucket["uncached_input_tokens"] = bucket.get("uncached_input_tokens", 0) + parsed["tokens_in"]
         bucket["cost_usd"] += parsed["cost_usd"]
         seen.add(key)
         new_count += 1
@@ -171,6 +214,9 @@ def aggregate(state: dict) -> dict:
         model = entry.get("model", "unknown")
         tokens_in = int(entry.get("tokens_in", 0) or 0)
         tokens_out = int(entry.get("tokens_out", 0) or 0)
+        cache_read = int(entry.get("cache_read_tokens", 0) or 0)
+        uncached_in = int(entry.get("uncached_input_tokens", max(0, tokens_in - cache_read)) or 0)
+        reasoning = int(entry.get("reasoning_tokens", 0) or 0)
         cost = entry.get("cost_usd")
         if cost is None:
             cost = estimate_cost(model, tokens_in, tokens_out)
@@ -180,6 +226,9 @@ def aggregate(state: dict) -> dict:
                 "calls": 0,
                 "tokens_in": 0,
                 "tokens_out": 0,
+                "cache_read_tokens": 0,
+                "uncached_input_tokens": 0,
+                "reasoning_tokens": 0,
                 "cost_usd": 0.0,
                 "country": PRICING.get(model, {}).get("country", "Unknown"),
             },
@@ -187,6 +236,9 @@ def aggregate(state: dict) -> dict:
         bucket["calls"] += int(entry.get("calls", 1) or 1)
         bucket["tokens_in"] += tokens_in
         bucket["tokens_out"] += tokens_out
+        bucket["cache_read_tokens"] = bucket.get("cache_read_tokens", 0) + cache_read
+        bucket["uncached_input_tokens"] = bucket.get("uncached_input_tokens", 0) + uncached_in
+        bucket["reasoning_tokens"] = bucket.get("reasoning_tokens", 0) + reasoning
         bucket["cost_usd"] += float(cost)
         seen.add(key)
         new_count += 1
@@ -195,6 +247,25 @@ def aggregate(state: dict) -> dict:
     state["totals_by_model"] = totals
     state["last_run_ts"] = int(time.time())
     state["last_run_new_calls"] = new_count
+
+    # If OpenRouter /auth/key gave us the authoritative daily $, override the aider-derived bucket.
+    if or_authoritative and "usage_today_usd" in or_authoritative:
+        # Token estimate from $ assuming 70% of spend is input @ $0.55/M and 30% output @ $2.20/M for GLM 5.1.
+        d = float(or_authoritative["usage_today_usd"])
+        est_in = int((d * 0.70) / 0.55 * 1_000_000)
+        est_out = int((d * 0.30) / 2.20 * 1_000_000)
+        totals["openrouter/z-ai/glm-5.1"] = {
+            "calls": totals.get("openrouter/z-ai/glm-5.1", {}).get("calls", 0),
+            "tokens_in": est_in,
+            "tokens_out": est_out,
+            "cache_read_tokens": 0,
+            "uncached_input_tokens": est_in,
+            "reasoning_tokens": 0,
+            "cost_usd": d,
+            "country": PRICING["openrouter/z-ai/glm-5.1"]["country"],
+            "_authoritative": True,
+        }
+        state["totals_by_model"] = totals
 
     bw = fetch_vps_bandwidth()
     if bw:
@@ -209,8 +280,10 @@ def render_dashboard(state: dict) -> str:
     sum_calls = sum(b["calls"] for b in totals.values())
     sum_in = sum(b["tokens_in"] for b in totals.values())
     sum_out = sum(b["tokens_out"] for b in totals.values())
+    sum_cache = sum(b.get("cache_read_tokens", 0) for b in totals.values())
+    sum_uncached_in = sum(b.get("uncached_input_tokens", max(0, b["tokens_in"] - b.get("cache_read_tokens", 0))) for b in totals.values())
     sum_cost = sum(b["cost_usd"] for b in totals.values())
-    bytes_to_us = (sum_in + sum_out) * BYTES_PER_TOKEN
+    bytes_to_us = (sum_uncached_in + sum_out) * BYTES_PER_TOKEN
 
     bw = state.get("vps_bandwidth", {})
     rx_gb = bw.get("rx_bytes", 0) / 1e9
@@ -223,12 +296,18 @@ def render_dashboard(state: dict) -> str:
 
     rows = []
     for model, b in sorted(totals.items(), key=lambda kv: -kv[1]["cost_usd"]):
+        cache_read = b.get("cache_read_tokens", 0)
+        uncached_in = b.get("uncached_input_tokens", max(0, b["tokens_in"] - cache_read))
+        reasoning = b.get("reasoning_tokens", 0)
         rows.append(
             f"<tr><td>{model}</td>"
             f"<td>{b['country']}</td>"
             f"<td>{b['calls']:,}</td>"
             f"<td>{b['tokens_in']:,}</td>"
+            f"<td>{cache_read:,}</td>"
+            f"<td>{uncached_in:,}</td>"
             f"<td>{b['tokens_out']:,}</td>"
+            f"<td>{reasoning:,}</td>"
             f"<td>${b['cost_usd']:.4f}</td></tr>"
         )
 
@@ -252,7 +331,7 @@ def render_dashboard(state: dict) -> str:
   header.top h1 {{ margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -0.01em; }}
   header.top p {{ margin: 8px 0 0; color: #f1ddb6; max-width: 920px; font-size: 15px; }}
   main {{ padding: 24px 32px 64px; max-width: 1280px; margin: 0 auto; }}
-  .summary {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }}
+  .summary {{ display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }}
   .metric {{ background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }}
   .metric strong {{ display: block; font-size: 26px; line-height: 1; }}
   .metric span {{ display: block; margin-top: 6px; color: var(--muted); font-size: 13px; }}
@@ -279,16 +358,17 @@ def render_dashboard(state: dict) -> str:
 </header>
 <main>
   <section class="summary">
-    <div class="metric"><strong>{sum_calls:,}</strong><span>API calls today</span></div>
-    <div class="metric alert"><strong>{(sum_in + sum_out)/1000:.1f}k</strong><span>tokens sent to US-routed endpoints</span></div>
-    <div class="metric"><strong>{bytes_to_us/1024:.1f} KiB</strong><span>data crossing the border (token bytes only)</span></div>
+    <div class="metric"><strong>{sum_calls:,}</strong><span>model calls / turns tracked today</span></div>
+    <div class="metric alert"><strong>{(sum_in + sum_out)/1000:.1f}k</strong><span>tokens processed by US-routed endpoints</span></div>
+    <div class="metric"><strong>{sum_cache/1000:.1f}k</strong><span>cached input tokens reused server-side</span></div>
+    <div class="metric"><strong>{bytes_to_us/1024:.1f} KiB</strong><span>estimated uncached token bytes crossing border</span></div>
     <div class="metric"><strong>${sum_cost:.4f}</strong><span>API-equivalent spend today</span></div>
   </section>
 
   <h2>By provider</h2>
   <table>
-    <thead><tr><th>Model</th><th>Routing / Hosting</th><th>Calls</th><th>Tokens in</th><th>Tokens out</th><th>API-equiv $</th></tr></thead>
-    <tbody>{''.join(rows) or '<tr><td colspan="6" class="meta">No data yet.</td></tr>'}</tbody>
+    <thead><tr><th>Model</th><th>Routing / Hosting</th><th>Calls</th><th>Input</th><th>Cached input</th><th>Uncached input</th><th>Output</th><th>Reasoning out</th><th>API-equiv $</th></tr></thead>
+    <tbody>{''.join(rows) or '<tr><td colspan="9" class="meta">No data yet.</td></tr>'}</tbody>
   </table>
 
   <h2>VPS bandwidth (rough proxy for non-API traffic)</h2>
@@ -329,7 +409,7 @@ def render_dashboard(state: dict) -> str:
     <p>Frontier agentic models are at the point where attack surface scales with capability. Token-spend rate-limiting and monitored API endpoints are the temporary defence. The durable defence is baremetal infrastructure with controlled attack surface — sovereign datacentres, Canadian-hosted models, audited supply chain. That posture takes a decade to stand up and the GPU waitlists are the gating step. Get on them now.</p>
   </div>
 
-  <p class="meta">Tracker started {first_seen}. Last refreshed {last_run}. Data sources: aider <code>Cost:</code> lines from <code>/opt/lemon-agency/*/progress.log</code> on the LemonClaw VPS, plus manual entries in <code>sovereignty-tracker/manual-entries.jsonl</code>. Bandwidth is whole-VPS — over-counts US share but the API token totals are precise.</p>
+  <p class="meta">Tracker started {first_seen}. Last refreshed {last_run}. Data sources: aider <code>Cost:</code> lines from <code>/opt/lemon-agency/*/progress.log</code> on the LemonClaw VPS, local Claude Code JSONL usage, and local Codex rollout <code>token_count</code> counters from <code>~/.codex/sessions</code>. Codex cached input is counted separately: it is real model-side work, but not all of it crosses the network again. Reasoning tokens are reported as a subset of output where the local cache exposes them. Bandwidth is whole-VPS and intentionally rough.</p>
 </main>
 </body>
 </html>
@@ -337,6 +417,7 @@ def render_dashboard(state: dict) -> str:
 
 
 def main() -> int:
+    refresh_local_usage()
     state = load_state()
     state = aggregate(state)
     save_state(state)

@@ -18,6 +18,8 @@ web/dashboard.html
 web/sovereignty.html
 !web/.gitkeep
 sovereignty-tracker/.state.json
+sovereignty-tracker/.openrouter-today.json
+sovereignty-tracker/.real-usage.json
 sovereignty-tracker/dashboard.html
 __pycache__/
 *.pyc
