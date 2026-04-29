@@ -25,6 +25,8 @@ fi
 exec nono run \
   --profile claude-code \
   --allow "$ROOT" \
+  --allow "$HOME/.codex" \
+  --allow "$HOME/.claude" \
   --read "$HOME/lemon" \
   --allow-port "$NEOTOMA_PORT" \
   --allow-bind "$DASHBOARD_PORT" \

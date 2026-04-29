@@ -1,4 +1,4 @@
-.PHONY: bootstrap demo onboard run correlate verify promote ui neotoma-smoke test
+.PHONY: bootstrap demo demo-agentic onboard plan run-plan run correlate verify disconfirm resolve review promote ui neotoma-smoke test
 
 bootstrap:
 	./scripts/bootstrap.sh
@@ -6,16 +6,36 @@ bootstrap:
 demo:
 	./scripts/create-demo-data.py
 	./bin/agency onboard
-	./bin/agency run vendor-concentration
-	./bin/agency run amendment-creep
-	./bin/agency run related-parties
-	./bin/agency correlate
+	./bin/agency plan --brain heuristic
+	./bin/agency run-plan
 	./bin/agency verify
+	./bin/agency disconfirm --brain heuristic
+	./bin/agency resolve-entities --brain heuristic
+	./bin/agency correlate
+	./bin/agency review --reviewer heuristic
+	./bin/agency promote
+	./bin/agency ui
+
+demo-agentic:
+	./bin/agency onboard
+	./bin/agency plan --brain codex
+	./bin/agency run-plan
+	./bin/agency verify
+	./bin/agency disconfirm --brain codex
+	./bin/agency resolve-entities --brain codex
+	./bin/agency correlate
+	./bin/agency review --reviewer claude
 	./bin/agency promote
 	./bin/agency ui
 
 onboard:
 	./bin/agency onboard
+
+plan:
+	./bin/agency plan --brain heuristic
+
+run-plan:
+	./bin/agency run-plan
 
 run:
 	./bin/agency run vendor-concentration
@@ -27,6 +47,15 @@ correlate:
 
 verify:
 	./bin/agency verify
+
+disconfirm:
+	./bin/agency disconfirm --brain heuristic
+
+resolve:
+	./bin/agency resolve-entities --brain heuristic
+
+review:
+	./bin/agency review --reviewer heuristic
 
 promote:
 	./bin/agency promote

@@ -17,11 +17,13 @@ This repo is designed to run from a laptop at the event. No VPS dependency in th
 ./scripts/bootstrap.sh
 ./scripts/create-demo-data.py
 ./bin/agency onboard
-./bin/agency run vendor-concentration
-./bin/agency run amendment-creep
-./bin/agency run related-parties
-./bin/agency correlate
+./bin/agency plan --brain heuristic
+./bin/agency run-plan
 ./bin/agency verify
+./bin/agency disconfirm --brain heuristic
+./bin/agency resolve-entities --brain heuristic
+./bin/agency correlate
+./bin/agency review --reviewer heuristic
 ./bin/agency promote
 ./bin/agency ui
 ```
@@ -32,14 +34,16 @@ Open `web/dashboard.html` in a browser.
 
 1. Put provided datasets in `data/raw/`.
 2. Run `./bin/agency onboard`.
-3. Run the reliable SQL skills first:
-   - `vendor-concentration`
-   - `amendment-creep`
-4. Run the hero graph skill:
-   - `related-parties`
-5. Run `./bin/agency correlate`.
-6. Run `./bin/agency verify`.
-7. Use `./bin/agency promote` to write findings into the local Neotoma truth ledger.
+3. Run `./bin/agency plan --brain codex`.
+4. Run `./bin/agency run-plan`.
+5. Run `./bin/agency verify`.
+6. Run `./bin/agency disconfirm --brain codex`.
+7. Run `./bin/agency resolve-entities --brain codex`.
+8. Run `./bin/agency correlate`.
+9. Run `./bin/agency review --reviewer claude`.
+10. Use `./bin/agency promote` to write findings into the local Neotoma truth ledger.
+
+The `heuristic` brain and reviewer exist for smoke tests. The demo path uses Codex as the planning brain and Claude as the skeptical second pass through their subscription CLIs.
 
 ## Local Neotoma
 
@@ -73,6 +77,8 @@ Or run a command:
 
 The sandbox allows this repo, reads `~/lemon` for reference patterns, and allows the local Neotoma/dashboard ports.
 
+For the full agentic demo, run from a trusted shell or expand `bin/nono.sh` to allow `~/.codex` and `~/.claude`. Codex and Claude subscription CLIs read local auth state.
+
 ## What Counts As Truth
 
 No finding is trusted because a model said it.
@@ -87,3 +93,19 @@ A finding is trusted when it has:
 - human review status
 
 The model proposes. DuckDB checks. Neotoma remembers.
+
+## Agentic Loop
+
+Codex is the investigator:
+
+- reads the schema profile
+- selects runnable skills
+- rejects unsupported skills with reasons
+- proposes disconfirming checks
+- clusters surfaced entity names cautiously
+
+DuckDB is the calculator. It runs deterministic SQL against the local data.
+
+Claude is the reviewer. It challenges language and weak claims after the queue is built.
+
+Neotoma is the audit ledger. It stores the plan, rejections, runs, findings, checks, clusters, review, and final queue.

@@ -5,6 +5,11 @@ import sys
 
 from . import correlate as correlate_mod
 from . import dashboard, dataset, detectors, ledger, neotoma, paths
+from .disconfirm import disconfirm
+from .planner import create_plan
+from .resolution import resolve_entities
+from .reviewer import review
+from .runner import run_plan
 from .verify import verify_findings
 
 
@@ -40,6 +45,41 @@ def cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_plan(args: argparse.Namespace) -> int:
+    plan = create_plan(brain_name=args.brain)
+    print(
+        f"plan ({plan.get('brain')}): selected {len(plan.get('selected', []))}, rejected {len(plan.get('rejected', []))}"
+    )
+    for item in plan.get("selected", []):
+        print(f"- run {item.get('skill')}: {item.get('reason')}")
+    for item in plan.get("rejected", [])[:8]:
+        print(f"- reject {item.get('skill')}: {item.get('reason')}")
+    return 0
+
+
+def cmd_run_plan(args: argparse.Namespace) -> int:
+    out = run_plan(limit=args.limit)
+    print(f"ran {len(out['runs'])} planned skill(s)")
+    for run in out["runs"]:
+        print(f"- {run.get('skill')}: {run.get('status')} ({run.get('finding_count', 0)} findings)")
+    return 0
+
+
+def cmd_disconfirm(args: argparse.Namespace) -> int:
+    out = disconfirm(brain_name=args.brain)
+    summary = out["summary"]
+    print(
+        f"disconfirm ({out.get('brain')}): {summary['total']} checks, {summary['supported']} supported, {summary['contested']} contested, {summary['inconclusive']} inconclusive"
+    )
+    return 0
+
+
+def cmd_resolve_entities(args: argparse.Namespace) -> int:
+    out = resolve_entities(brain_name=args.brain)
+    print(f"entity resolution ({out.get('brain')}): {len(out.get('clusters', []))} cluster(s)")
+    return 0
+
+
 def cmd_correlate(_: argparse.Namespace) -> int:
     out = correlate_mod.correlate()
     print(f"correlated {len(out['entities'])} entities")
@@ -62,6 +102,13 @@ def cmd_promote(_: argparse.Namespace) -> int:
     return result.returncode
 
 
+def cmd_review(args: argparse.Namespace) -> int:
+    out = review(reviewer_name=args.reviewer)
+    print(f"review ({out.get('reviewer')}): {len(out.get('issues', []))} issue(s)")
+    print(out.get("recommended_language", ""))
+    return 0
+
+
 def cmd_ui(_: argparse.Namespace) -> int:
     out = dashboard.write_dashboard()
     print(out)
@@ -78,16 +125,36 @@ def build_parser() -> argparse.ArgumentParser:
     onboard = sub.add_parser("onboard")
     onboard.set_defaults(func=cmd_onboard)
 
+    plan = sub.add_parser("plan")
+    plan.add_argument("--brain", choices=["heuristic", "codex"], default="heuristic")
+    plan.set_defaults(func=cmd_plan)
+
     run = sub.add_parser("run")
     run.add_argument("skill", choices=["vendor-concentration", "amendment-creep", "related-parties"])
     run.add_argument("--limit", type=int, default=20)
     run.set_defaults(func=cmd_run)
+
+    run_plan_parser = sub.add_parser("run-plan")
+    run_plan_parser.add_argument("--limit", type=int, default=20)
+    run_plan_parser.set_defaults(func=cmd_run_plan)
 
     correlate = sub.add_parser("correlate")
     correlate.set_defaults(func=cmd_correlate)
 
     verify = sub.add_parser("verify")
     verify.set_defaults(func=cmd_verify)
+
+    disconfirm_parser = sub.add_parser("disconfirm")
+    disconfirm_parser.add_argument("--brain", choices=["heuristic", "codex"], default="heuristic")
+    disconfirm_parser.set_defaults(func=cmd_disconfirm)
+
+    resolve_parser = sub.add_parser("resolve-entities")
+    resolve_parser.add_argument("--brain", choices=["heuristic", "codex"], default="heuristic")
+    resolve_parser.set_defaults(func=cmd_resolve_entities)
+
+    review_parser = sub.add_parser("review")
+    review_parser.add_argument("--reviewer", choices=["heuristic", "claude"], default="heuristic")
+    review_parser.set_defaults(func=cmd_review)
 
     promote = sub.add_parser("promote")
     promote.set_defaults(func=cmd_promote)

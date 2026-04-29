@@ -1,44 +1,263 @@
 {
   "skills": [
     {
-      "name": "dataset-onboard",
-      "status": "implemented",
-      "purpose": "Scan data/raw, load supported files into DuckDB, emit schema profiles and source hashes."
-    },
-    {
       "name": "vendor-concentration",
+      "command": "vendor-concentration",
       "status": "implemented",
-      "purpose": "Find top vendor share by category or department using replayable SQL."
+      "priority": 10,
+      "description": "Find categories or departments where one vendor controls an unusually high share of spend.",
+      "why_it_matters": "Concentration is not wrongdoing, but it tells reviewers where competition or procurement design deserves attention.",
+      "table_scope": "single_table",
+      "requires": [
+        {
+          "semantic": "vendor",
+          "aliases": ["vendor_name", "supplier_name", "vendor", "supplier", "contractor", "organization_name"]
+        },
+        {
+          "semantic": "amount",
+          "aliases": ["current_value", "contract_value", "total_value", "award_amount", "amount", "value"]
+        }
+      ],
+      "optional": [
+        {
+          "semantic": "category",
+          "aliases": ["category", "commodity", "service", "department", "program", "buyer"]
+        }
+      ],
+      "disconfirming_checks": [
+        "Check whether the vendor's share is high only in a tiny category.",
+        "Check whether the same concentration exists across many departments, which may indicate a framework contract rather than a red flag."
+      ]
     },
     {
       "name": "amendment-creep",
+      "command": "amendment-creep",
       "status": "implemented",
-      "purpose": "Find contracts where current value is materially larger than original value."
+      "priority": 20,
+      "description": "Find contracts whose current value is materially larger than the original awarded value.",
+      "why_it_matters": "Large increases after award can point to scope changes, weak initial scoping, or threshold avoidance. They require document review.",
+      "table_scope": "single_table",
+      "requires": [
+        {
+          "semantic": "original_value",
+          "aliases": ["original_value", "initial_value", "original_amount", "initial_amount", "award_amount"]
+        },
+        {
+          "semantic": "current_value",
+          "aliases": ["current_value", "amended_value", "revised_value", "total_value", "contract_value"]
+        }
+      ],
+      "optional": [
+        {
+          "semantic": "vendor",
+          "aliases": ["vendor_name", "supplier_name", "vendor", "supplier", "contractor", "organization_name"]
+        },
+        {
+          "semantic": "contract_id",
+          "aliases": ["contract_id", "contract_number", "id", "reference"]
+        }
+      ],
+      "disconfirming_checks": [
+        "Compare the finding's multiple with the peer distribution for the same table.",
+        "Check whether the original value field is a placeholder or award ceiling rather than a true original contract value."
+      ]
     },
     {
       "name": "related-parties",
+      "command": "related-parties",
       "status": "implemented",
-      "purpose": "Find people appearing across multiple organizations in loaded files."
+      "priority": 30,
+      "description": "Find people appearing across multiple organizations in the loaded datasets.",
+      "why_it_matters": "Shared names are review leads only. They require identity validation before any governance claim is made.",
+      "table_scope": "multi_table",
+      "requires": [
+        {
+          "semantic": "person",
+          "aliases": ["director_name", "officer_name", "person_name", "principal_name", "board_member", "contact_name"]
+        },
+        {
+          "semantic": "organization",
+          "aliases": ["recipient_name", "charity_name", "organization_name", "vendor_name", "supplier_name", "company_name"]
+        }
+      ],
+      "optional": [
+        {
+          "semantic": "person_identifier",
+          "aliases": ["person_id", "director_id", "officer_id"]
+        }
+      ],
+      "disconfirming_checks": [
+        "Check whether the person match has an identifier beyond name.",
+        "Check whether the connected organizations overlap in time."
+      ]
+    },
+    {
+      "name": "zombie-recipients",
+      "command": null,
+      "status": "stub",
+      "priority": 40,
+      "description": "Find recipients receiving funding after dissolution, revocation, or last valid filing date.",
+      "why_it_matters": "A payment after an entity is no longer active is a clean audit lead if status dates are present.",
+      "table_scope": "single_table",
+      "requires": [
+        {
+          "semantic": "recipient",
+          "aliases": ["recipient_name", "organization_name", "charity_name", "vendor_name"]
+        },
+        {
+          "semantic": "funding_date",
+          "aliases": ["funding_date", "payment_date", "award_date", "contract_date"]
+        },
+        {
+          "semantic": "inactive_date",
+          "aliases": ["dissolution_date", "revocation_date", "inactive_date", "last_filing_date", "status_date"]
+        }
+      ],
+      "optional": [],
+      "disconfirming_checks": ["Check whether the inactive date postdates the award decision but predates payment for an administrative reason."]
+    },
+    {
+      "name": "ghost-capacity",
+      "command": null,
+      "status": "stub",
+      "priority": 50,
+      "description": "Find organizations with high government revenue and low apparent operating capacity.",
+      "why_it_matters": "Low staff and low program spend can reveal pass-through or shell-like patterns that need review.",
+      "table_scope": "single_table",
+      "requires": [
+        {
+          "semantic": "government_revenue",
+          "aliases": ["government_revenue", "gov_revenue", "public_funding", "government_funding"]
+        },
+        {
+          "semantic": "employees",
+          "aliases": ["employees", "staff_count", "fte", "employee_count"]
+        },
+        {
+          "semantic": "program_spend",
+          "aliases": ["program_spend", "program_expenses", "charitable_spend"]
+        }
+      ],
+      "optional": [],
+      "disconfirming_checks": ["Check whether the organization is intentionally a grantmaker or pass-through body."]
+    },
+    {
+      "name": "funding-loops",
+      "command": null,
+      "status": "stub",
+      "priority": 60,
+      "description": "Find circular transfers among funded organizations.",
+      "why_it_matters": "Cycles can indicate circular funding, fiscal opacity, or governance issues.",
+      "table_scope": "single_table",
+      "requires": [
+        {
+          "semantic": "source_entity",
+          "aliases": ["source_name", "from_org", "payer", "grantor"]
+        },
+        {
+          "semantic": "target_entity",
+          "aliases": ["target_name", "to_org", "recipient", "grantee"]
+        },
+        {
+          "semantic": "transfer_amount",
+          "aliases": ["transfer_amount", "amount", "grant_amount", "payment_amount"]
+        }
+      ],
+      "optional": [],
+      "disconfirming_checks": ["Check whether the apparent loop is expected fiscal-agent behavior."]
+    },
+    {
+      "name": "policy-misalignment",
+      "command": null,
+      "status": "stub",
+      "priority": 70,
+      "description": "Compare declared policy commitments with actual spending patterns.",
+      "why_it_matters": "Spending can drift away from stated priorities even when every individual transaction is valid.",
+      "table_scope": "document_and_table",
+      "requires": [
+        {
+          "semantic": "policy_text",
+          "aliases": ["policy_text", "commitment", "mandate", "objective"]
+        },
+        {
+          "semantic": "allocation_amount",
+          "aliases": ["amount", "allocation", "spend", "budget"]
+        }
+      ],
+      "optional": [],
+      "disconfirming_checks": ["Check whether the spending category maps to the policy through a different program label."]
+    },
+    {
+      "name": "duplicative-funding",
+      "command": null,
+      "status": "stub",
+      "priority": 80,
+      "description": "Find similar grants to the same recipient across overlapping periods or jurisdictions.",
+      "why_it_matters": "Duplicate or overlapping funding can reveal coordination gaps.",
+      "table_scope": "multi_table",
+      "requires": [
+        {
+          "semantic": "recipient",
+          "aliases": ["recipient_name", "organization_name", "charity_name"]
+        },
+        {
+          "semantic": "purpose",
+          "aliases": ["purpose", "description", "project_description", "program_description"]
+        },
+        {
+          "semantic": "period",
+          "aliases": ["fiscal_year", "year", "start_date", "end_date"]
+        }
+      ],
+      "optional": [
+        {
+          "semantic": "jurisdiction",
+          "aliases": ["jurisdiction", "department", "province", "municipality"]
+        }
+      ],
+      "disconfirming_checks": ["Check whether the similar grants fund distinct phases or distinct eligible cost categories."]
+    },
+    {
+      "name": "contract-intelligence",
+      "command": null,
+      "status": "stub",
+      "priority": 90,
+      "description": "Decompose spend growth by volume, price, and concentration.",
+      "why_it_matters": "Rising spend can be benign volume growth or a unit-cost problem. The difference matters.",
+      "table_scope": "single_table",
+      "requires": [
+        {
+          "semantic": "amount",
+          "aliases": ["amount", "value", "contract_value", "current_value"]
+        },
+        {
+          "semantic": "time_period",
+          "aliases": ["year", "fiscal_year", "date", "award_date"]
+        },
+        {
+          "semantic": "category",
+          "aliases": ["category", "commodity", "service"]
+        }
+      ],
+      "optional": [],
+      "disconfirming_checks": ["Check whether growth is explained by volume rather than unit cost."]
     },
     {
       "name": "adverse-media",
+      "command": null,
       "status": "stub",
-      "purpose": "Attach cited external signals only after source discipline is in place."
-    },
-    {
-      "name": "correlate",
-      "status": "implemented",
-      "purpose": "Rank entities by independent challenge signals."
-    },
-    {
-      "name": "verify",
-      "status": "implemented",
-      "purpose": "Replay every saved SQL query and mark findings as reproducible or not."
-    },
-    {
-      "name": "promote",
-      "status": "implemented",
-      "purpose": "Write investigation, dataset sources, and findings into the local Neotoma ledger."
+      "priority": 100,
+      "description": "Attach cited adverse public-record signals to surfaced entities.",
+      "why_it_matters": "External context can prioritize review, but it must be cited and treated as unverified until checked.",
+      "table_scope": "external",
+      "requires": [
+        {
+          "semantic": "entity_name",
+          "aliases": ["recipient_name", "organization_name", "vendor_name", "charity_name"]
+        }
+      ],
+      "optional": [],
+      "disconfirming_checks": ["Require direct source citations and distinguish same-name noise from actual entity matches."]
     }
   ]
 }

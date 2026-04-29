@@ -17,11 +17,13 @@ Core rule: optimize for auditable truth, not demo magic.
 
 1. Onboard datasets.
 2. Profile schemas and file hashes.
-3. Run skills against DuckDB.
-4. Save findings with SQL and evidence.
+3. Ask Codex to select runnable skills and reject unsupported ones.
+4. Run selected deterministic skills against DuckDB.
 5. Verify by replay.
-6. Promote verified or reviewable findings to Neotoma.
-7. Present only claims with provenance.
+6. Ask Codex for disconfirming checks and cautious entity clusters.
+7. Ask Claude for skeptical second-pass review.
+8. Promote plan, rejections, findings, checks, clusters, review, and queue to Neotoma.
+9. Present only claims with provenance.
 
 ## Language Discipline
 

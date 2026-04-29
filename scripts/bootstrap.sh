@@ -35,7 +35,7 @@ fi
   --configure-mcp no \
   --configure-cli no >/dev/null
 
-chmod +x bin/agency bin/nono.sh scripts/*.sh scripts/*.py
+chmod +x bin/*.sh bin/agency scripts/*.sh scripts/*.py
 
 echo "ready: $ROOT"
 echo "next: ./scripts/create-demo-data.py && make demo"

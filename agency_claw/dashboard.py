@@ -58,6 +58,8 @@ def proof_line(finding: dict[str, Any]) -> str:
 def action_for_case(case: dict[str, Any], findings: list[dict[str, Any]]) -> tuple[str, str, str]:
     challenges = set(case.get("challenges", []))
     entity = str(case.get("entity", "Unknown"))
+    support = case.get("support", {})
+    contested = int(support.get("contested", 0) or 0)
 
     if {"amendment_creep", "vendor_concentration"}.issubset(challenges):
         contract_ref = first_metric(findings, "amendment_creep", "contract_ref")
@@ -69,7 +71,10 @@ def action_for_case(case: dict[str, Any], findings: list[dict[str, Any]]) -> tup
             f"{entity} has two independent signals: contract {contract_ref} grew "
             f"{multiple(multiple_value)} and the vendor holds {pct(share)} of {group} spend."
         )
-        action = "Pull the contract file, amendment approvals, procurement method, and competing bids."
+        if contested:
+            action = "Pull the contract file, amendment approvals, procurement method, competing bids, and resolve the contested countercheck before escalation."
+        else:
+            action = "Pull the contract file, amendment approvals, procurement method, and competing bids."
         return decision, why, action
 
     if "related_parties" in challenges:
@@ -86,6 +91,9 @@ def action_for_case(case: dict[str, Any], findings: list[dict[str, Any]]) -> tup
 
 
 def priority_label(case: dict[str, Any]) -> str:
+    support = case.get("support", {})
+    if int(support.get("contested", 0) or 0) > 0:
+        return "Validate"
     score = int(case.get("score", 0))
     if score >= 25:
         return "Immediate"
@@ -103,7 +111,12 @@ def render_action_queue(correlated: dict[str, Any], findings_by_id: dict[str, di
             f"<span>{esc(CHALLENGE_LABELS.get(ch, ch))}</span>" for ch in case.get("challenges", [])
         )
         proof_items = "".join(f"<li>{esc(proof_line(finding))}</li>" for finding in case_findings)
+        check_items = "".join(
+            f"<li>{esc(finding.get('support_status', 'not_checked'))}: {esc((finding.get('disconfirming_checks') or [{}])[0].get('question', 'No countercheck recorded'))}</li>"
+            for finding in case_findings
+        )
         claims = "".join(f"<li>{esc(claim)}</li>" for claim in case.get("claims", []))
+        support = case.get("support", {})
         cards.append(
             f"""
       <article class="action-card">
@@ -112,6 +125,7 @@ def render_action_queue(correlated: dict[str, Any], findings_by_id: dict[str, di
           <div class="action-top">
             <span class="priority">{esc(priority_label(case))}</span>
             <span class="score">score {esc(case.get("score"))}</span>
+            <span class="score">{esc(support.get("supported", 0))} supported · {esc(support.get("contested", 0))} contested</span>
             <div class="tags">{challenge_tags}</div>
           </div>
           <h3>{esc(decision)}</h3>
@@ -131,6 +145,10 @@ def render_action_queue(correlated: dict[str, Any], findings_by_id: dict[str, di
                 <h4>Replay status</h4>
                 <ul>{proof_items}</ul>
               </div>
+              <div>
+                <h4>Counterchecks</h4>
+                <ul>{check_items}</ul>
+              </div>
             </div>
           </details>
         </div>
@@ -142,15 +160,24 @@ def render_action_queue(correlated: dict[str, Any], findings_by_id: dict[str, di
     return "".join(cards)
 
 
-def render_decision(immediate_count: int, correlated: dict[str, Any]) -> str:
-    immediate = [row for row in correlated.get("entities", []) if int(row.get("score", 0)) >= 25]
-    validate = [row for row in correlated.get("entities", []) if int(row.get("score", 0)) < 25]
-    names = ", ".join(str(row.get("entity")) for row in immediate[:3]) or "none"
+def render_decision(correlated: dict[str, Any]) -> str:
+    clean = [
+        row
+        for row in correlated.get("entities", [])
+        if int(row.get("score", 0)) >= 25 and int(row.get("support", {}).get("contested", 0) or 0) == 0
+    ]
+    vendor_leads = [
+        row
+        for row in correlated.get("entities", [])
+        if {"amendment_creep", "vendor_concentration"}.issubset(set(row.get("challenges", [])))
+    ]
+    validate = [row for row in correlated.get("entities", []) if row not in clean]
+    names = ", ".join(str(row.get("entity")) for row in vendor_leads[:3]) or "none yet"
     return (
         "<section class='decision'>"
         "<div class='decision-label'>Decision</div>"
-        f"<h2>Review {immediate_count} vendor leads now: {esc(names)}.</h2>"
-        f"<p>Then validate {len(validate)} person or relationship leads. Keep every item as a review lead until a human checks the source documents.</p>"
+        f"<h2>Start with {len(vendor_leads)} vendor leads: {esc(names)}.</h2>"
+        f"<p>{len(clean)} leads are clean escalation-ready. Validate {len(validate)} before escalation. Contested does not mean wrong. It means the next human action is narrower.</p>"
         "</section>"
     )
 
@@ -175,7 +202,7 @@ def render_evidence_table(findings: list[dict[str, Any]]) -> str:
             f"<td>{esc(finding.get('entity'))}</td>"
             f"<td>{esc(finding.get('severity'))}</td>"
             f"<td>{esc(metric_text)}</td>"
-            f"<td>{'replayed' if replayed else 'not replayed'}</td>"
+            f"<td>{'replayed' if replayed else 'not replayed'} · {esc(finding.get('support_status', 'not_checked'))}</td>"
             "</tr>"
         )
     return "".join(rows)
@@ -194,18 +221,71 @@ def render_sql_details(findings: list[dict[str, Any]]) -> str:
     return "".join(blocks)
 
 
+def render_plan(plan: dict[str, Any]) -> str:
+    if not plan:
+        return "<p class='note'>No investigation plan yet.</p>"
+    selected = "".join(
+        f"<li><strong>{esc(item.get('skill'))}</strong>: {esc(item.get('reason'))}</li>"
+        for item in plan.get("selected", [])
+    )
+    rejected = "".join(
+        f"<li><strong>{esc(item.get('skill'))}</strong>: {esc(item.get('reason'))}</li>"
+        for item in plan.get("rejected", [])
+    )
+    return (
+        "<div class='plan-grid'>"
+        f"<section class='panel'><h3>Selected by {esc(plan.get('brain'))}</h3><ul>{selected}</ul></section>"
+        f"<section class='panel'><h3>Rejected with reasons</h3><ul>{rejected}</ul></section>"
+        "</div>"
+    )
+
+
+def render_reviewer(review: dict[str, Any]) -> str:
+    if not review:
+        return "<p class='note'>No second-pass review yet.</p>"
+    issues = review.get("issues", [])
+    if issues:
+        items = "".join(
+            f"<li><strong>{esc(item.get('severity'))}</strong>: {esc(item.get('critique'))}</li>"
+            for item in issues
+        )
+    else:
+        items = "<li>No reviewer issues recorded.</li>"
+    return (
+        "<section class='panel'>"
+        f"<h3>{esc(review.get('reviewer'))} second pass</h3>"
+        f"<p>{esc(review.get('recommended_language', ''))}</p>"
+        f"<ul>{items}</ul>"
+        "</section>"
+    )
+
+
 def render() -> str:
     correlated = read_json(paths.findings_dir() / "correlated.json", {"entities": []})
     verified = read_json(paths.findings_dir() / "verified.json", {"findings": []})
     schema = read_json(paths.state_dir() / "discovered.schema.json", [])
+    plan = read_json(paths.state_dir() / "investigation-plan.json", {})
+    review = read_json(paths.state_dir() / "review.json", {})
     findings = verified.get("findings", [])
     findings_by_id = by_id(findings)
-    immediate_count = sum(1 for row in correlated.get("entities", []) if int(row.get("score", 0)) >= 25)
+    clean_count = sum(
+        1
+        for row in correlated.get("entities", [])
+        if int(row.get("score", 0)) >= 25 and int(row.get("support", {}).get("contested", 0) or 0) == 0
+    )
+    vendor_lead_count = sum(
+        1
+        for row in correlated.get("entities", [])
+        if {"amendment_creep", "vendor_concentration"}.issubset(set(row.get("challenges", [])))
+    )
+    contested_count = sum(1 for row in findings if row.get("support_status") == "contested")
     replayed_count = sum(1 for row in findings if row.get("verification", {}).get("replayed"))
-    decision = render_decision(immediate_count, correlated)
+    decision = render_decision(correlated)
     action_queue = render_action_queue(correlated, findings_by_id)
     evidence_rows = render_evidence_table(findings)
     sql_details = render_sql_details(findings)
+    plan_html = render_plan(plan)
+    reviewer_html = render_reviewer(review)
     schema_json = esc(json.dumps(schema, indent=2)[:6000])
 
     return f"""<!doctype html>
@@ -240,6 +320,9 @@ def render() -> str:
     .decision-label {{ color: var(--red); font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }}
     .decision h2 {{ margin: 6px 0; font-size: 26px; line-height: 1.2; }}
     .decision p {{ margin: 0; color: var(--muted); line-height: 1.5; }}
+    .plan-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }}
+    .panel {{ background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }}
+    .panel h3 {{ font-size: 17px; margin-top: 0; }}
     h2 {{ margin: 28px 0 12px; font-size: 20px; }}
     .action-card {{ display: grid; grid-template-columns: 42px 1fr; gap: 14px; background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--red); border-radius: 8px; padding: 16px; margin-bottom: 14px; }}
     .rank {{ width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: var(--paper); display: grid; place-items: center; font-weight: 700; }}
@@ -267,6 +350,7 @@ def render() -> str:
     @media (max-width: 820px) {{
       header, main {{ padding-left: 18px; padding-right: 18px; }}
       .summary {{ grid-template-columns: 1fr 1fr; }}
+      .plan-grid {{ grid-template-columns: 1fr; }}
       .action-card {{ grid-template-columns: 1fr; }}
       .detail-grid {{ grid-template-columns: 1fr; }}
     }}
@@ -279,13 +363,19 @@ def render() -> str:
   </header>
   <main>
     <section class="summary">
-      <div class="metric"><strong>{immediate_count}</strong><span>immediate review leads</span></div>
-      <div class="metric"><strong>{len(correlated.get('entities', []))}</strong><span>entities surfaced</span></div>
+      <div class="metric"><strong>{vendor_lead_count}</strong><span>vendor leads to start with</span></div>
+      <div class="metric"><strong>{clean_count}</strong><span>clean escalation-ready</span></div>
       <div class="metric"><strong>{replayed_count}/{len(findings)}</strong><span>findings replayed</span></div>
-      <div class="metric"><strong>{len(schema)}</strong><span>tables loaded</span></div>
+      <div class="metric"><strong>{contested_count}</strong><span>contested findings</span></div>
     </section>
 
     {decision}
+
+    <h2>Agent Plan</h2>
+    {plan_html}
+
+    <h2>Second Pass</h2>
+    {reviewer_html}
 
     <h2>Action Queue</h2>
     {action_queue}

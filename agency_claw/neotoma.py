@@ -26,6 +26,11 @@ def build_payload() -> list[dict[str, Any]]:
 
     manifest = read_json(paths.state_dir() / "dataset-manifest.json", [])
     profiles = read_json(paths.state_dir() / "discovered.schema.json", [])
+    plan = read_json(paths.state_dir() / "investigation-plan.json", {})
+    clusters = read_json(paths.state_dir() / "entity-clusters.json", {})
+    review = read_json(paths.state_dir() / "review.json", {})
+    disconfirming = read_json(paths.findings_dir() / "disconfirming-checks.json", {})
+    correlated = read_json(paths.findings_dir() / "correlated.json", {})
 
     entities: list[dict[str, Any]] = [
         {
@@ -35,6 +40,11 @@ def build_payload() -> list[dict[str, Any]]:
             "occurred_at": now_iso(),
             "dataset_count": len(manifest),
             "profile_count": len(profiles),
+            "plan": plan,
+            "entity_clusters": clusters,
+            "review": review,
+            "disconfirming_checks": disconfirming,
+            "correlated_queue": correlated,
         }
     ]
 
@@ -62,8 +72,10 @@ def build_payload() -> list[dict[str, Any]]:
                 "severity": finding.get("severity"),
                 "confidence": finding.get("confidence"),
                 "status": finding.get("status"),
+                "support_status": finding.get("support_status"),
                 "evidence": finding.get("evidence", []),
                 "verification": finding.get("verification", {}),
+                "disconfirming_checks": finding.get("disconfirming_checks", []),
             }
         )
 
