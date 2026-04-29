@@ -504,9 +504,27 @@ async function handleAsk(req, res) {
       const evidence = compactEvidence(intent, data, sqlResult, scope);
       add('done', 'Built answer packet', 'Compressed the data into citations, rows, proof levels, and roadblocks.');
       add('active', 'Asked Kimi to write the answer', 'The model receives the evidence packet, not raw unrestricted data.');
-      const modelResult = await askModel({ question, model: body.model || 'kimi', evidence });
-      trace[trace.length - 1].status = 'done';
-      trace[trace.length - 1].detail = `Returned ${modelResult.tokens_out || 0} output tokens.`;
+      let modelResult;
+      let modelWarning = false;
+      try {
+        modelResult = await askModel({ question, model: body.model || 'kimi', evidence });
+      } catch (err) {
+        const meta = MODEL[body.model || 'kimi'] || MODEL.kimi;
+        modelResult = {
+          answer: deterministicAnswer({ question, evidence }),
+          model: meta.id,
+          tokens_in: 0,
+          tokens_out: 0,
+          cost_usd: 0,
+        };
+        modelWarning = true;
+        trace[trace.length - 1].status = 'warning';
+        trace[trace.length - 1].detail = `Model call did not complete: ${err.message}. Used deterministic answer from verified rows.`;
+      }
+      if (!modelWarning) {
+        trace[trace.length - 1].status = 'done';
+        trace[trace.length - 1].detail = `Returned ${modelResult.tokens_out || 0} output tokens.`;
+      }
       if (!String(modelResult.answer || '').trim()) {
         trace[trace.length - 1].status = 'warning';
         trace[trace.length - 1].detail = `Model returned ${modelResult.tokens_out || 0} output tokens but no displayable answer. Used deterministic answer from verified rows.`;
