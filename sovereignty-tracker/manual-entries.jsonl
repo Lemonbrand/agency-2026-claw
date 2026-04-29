@@ -1,0 +1,15 @@
+# Manual log of Claude / Codex / direct-API sessions today.
+# One JSON object per line. Comments allowed at top with #.
+# Schema:
+#   ts: ISO-8601 timestamp
+#   provider: "claude" | "codex" | "openai" | "anthropic" | "other"
+#   model: model name (must match PRICING in tracker.py for auto-cost, else supply cost_usd)
+#   tokens_in: integer (estimate)
+#   tokens_out: integer (estimate)
+#   calls: integer (default 1)
+#   cost_usd: float (optional; computed from tokens if absent)
+#   purpose: short string
+#   destination_country: "US" | "Canada" | "Other"
+#   subscription_paid: bool
+{"ts":"2026-04-29T08:00:00-04:00","provider":"claude","model":"claude-opus-4-7[1m]","tokens_in":250000,"tokens_out":40000,"calls":40,"purpose":"LemonClaw demo prep + agency loop scaffolding (Claude Code, Opus 4.7 1M)","destination_country":"US","subscription_paid":true}
+{"ts":"2026-04-29T08:30:00-04:00","provider":"codex","model":"gpt-5.2","tokens_in":120000,"tokens_out":18000,"calls":15,"purpose":"Codex CLI working directly with the GovAlta SQL database (entity exploration, schema probes)","destination_country":"US","subscription_paid":true}

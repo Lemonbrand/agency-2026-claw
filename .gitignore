@@ -15,6 +15,9 @@ state/*.json
 state/*.jsonl
 !state/.gitkeep
 web/dashboard.html
+web/sovereignty.html
 !web/.gitkeep
+sovereignty-tracker/.state.json
+sovereignty-tracker/dashboard.html
 __pycache__/
 *.pyc
