@@ -1,0 +1,44 @@
+{
+  "skills": [
+    {
+      "name": "dataset-onboard",
+      "status": "implemented",
+      "purpose": "Scan data/raw, load supported files into DuckDB, emit schema profiles and source hashes."
+    },
+    {
+      "name": "vendor-concentration",
+      "status": "implemented",
+      "purpose": "Find top vendor share by category or department using replayable SQL."
+    },
+    {
+      "name": "amendment-creep",
+      "status": "implemented",
+      "purpose": "Find contracts where current value is materially larger than original value."
+    },
+    {
+      "name": "related-parties",
+      "status": "implemented",
+      "purpose": "Find people appearing across multiple organizations in loaded files."
+    },
+    {
+      "name": "adverse-media",
+      "status": "stub",
+      "purpose": "Attach cited external signals only after source discipline is in place."
+    },
+    {
+      "name": "correlate",
+      "status": "implemented",
+      "purpose": "Rank entities by independent challenge signals."
+    },
+    {
+      "name": "verify",
+      "status": "implemented",
+      "purpose": "Replay every saved SQL query and mark findings as reproducible or not."
+    },
+    {
+      "name": "promote",
+      "status": "implemented",
+      "purpose": "Write investigation, dataset sources, and findings into the local Neotoma ledger."
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+[project]
+name = "agency-2026-claw"
+version = "0.1.0"
+description = "Local-first Claw environment for auditable Agency 2026 investigations"
+requires-python = ">=3.11"
+dependencies = [
+  "duckdb>=1.2.0",
+]
+
+[project.scripts]
+agency = "agency_claw.cli:main"
+
+[tool.uv]
+package = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["agency_claw"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

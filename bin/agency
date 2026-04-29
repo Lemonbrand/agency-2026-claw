@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export AGENCY_ROOT="${AGENCY_ROOT:-$ROOT}"
+
+if [ -f "$ROOT/.env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/.env"
+  set +a
+fi
+
+if [ ! -x "$ROOT/.venv/bin/python" ]; then
+  echo "Missing .venv. Run ./scripts/bootstrap.sh first." >&2
+  exit 1
+fi
+
+exec "$ROOT/.venv/bin/python" -m agency_claw.cli "$@"
