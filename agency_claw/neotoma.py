@@ -52,11 +52,14 @@ def build_payload() -> list[dict[str, Any]]:
         entities.append(
             {
                 "entity_type": "dataset_source",
-                "name": source["source_name"],
-                "table": source["table"],
-                "sha256": source["source_sha256"],
-                "bytes": source["source_bytes"],
-                "parquet_path": source["parquet_path"],
+                "name": source.get("source_name") or source.get("table") or "unknown",
+                "table": source.get("table"),
+                "sha256": source.get("source_sha256"),
+                "bytes": source.get("source_bytes"),
+                "parquet_path": source.get("parquet_path"),
+                "source_schema": source.get("source_schema"),
+                "row_count": source.get("row_count"),
+                "elapsed_s": source.get("elapsed_s"),
             }
         )
 

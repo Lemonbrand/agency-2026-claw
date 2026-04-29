@@ -1,4 +1,4 @@
-.PHONY: bootstrap demo presentation demo-agentic hackathon hackathon-agentic onboard plan run-plan run correlate verify disconfirm resolve review promote ui neotoma-smoke test
+.PHONY: bootstrap demo presentation demo-agentic hackathon hackathon-offline hackathon-agentic onboard plan run-plan run correlate verify disconfirm resolve review promote ui neotoma-smoke test
 
 bootstrap:
 	./scripts/bootstrap.sh
@@ -41,6 +41,19 @@ hackathon:
 	./bin/agency review --reviewer heuristic
 	./bin/agency promote
 	./bin/agency ui
+
+# Offline rerun against the cached DuckDB. No Postgres attach, no venue Wi-Fi.
+# Promote is best-effort here so a Neotoma hiccup never blocks the dashboard.
+hackathon-offline:
+	./bin/agency plan --brain heuristic
+	./bin/agency run-plan
+	./bin/agency verify
+	./bin/agency disconfirm --brain heuristic
+	./bin/agency resolve-entities --brain heuristic
+	./bin/agency correlate
+	./bin/agency review --reviewer heuristic
+	./bin/agency ui
+	-./bin/agency promote
 
 hackathon-agentic:
 	./bin/agency hackathon-onboard
