@@ -5,6 +5,8 @@
       "command": "vendor-concentration",
       "status": "implemented",
       "priority": 10,
+      "story_type": "risk",
+      "lens": "concentration",
       "description": "Find categories or departments where one vendor controls an unusually high share of spend.",
       "why_it_matters": "Concentration is not wrongdoing, but it tells reviewers where competition or procurement design deserves attention.",
       "table_scope": "single_table",
@@ -34,6 +36,8 @@
       "command": "amendment-creep",
       "status": "implemented",
       "priority": 20,
+      "story_type": "risk",
+      "lens": "post_award_growth",
       "description": "Find contracts whose current value is materially larger than the original awarded value.",
       "why_it_matters": "Large increases after award can point to scope changes, weak initial scoping, or threshold avoidance. They require document review.",
       "table_scope": "single_table",
@@ -67,6 +71,8 @@
       "command": "related-parties",
       "status": "implemented",
       "priority": 30,
+      "story_type": "operating_insight",
+      "lens": "name_overlap_review",
       "description": "Find people appearing across multiple organizations in the loaded datasets.",
       "why_it_matters": "Shared names are review leads only. They require identity validation before any governance claim is made.",
       "table_scope": "multi_table",
@@ -96,6 +102,8 @@
       "command": null,
       "status": "stub",
       "priority": 40,
+      "story_type": "risk",
+      "lens": "post_dissolution_payment",
       "description": "Find recipients receiving funding after dissolution, revocation, or last valid filing date.",
       "why_it_matters": "A payment after an entity is no longer active is a clean audit lead if status dates are present.",
       "table_scope": "single_table",
@@ -121,6 +129,8 @@
       "command": null,
       "status": "stub",
       "priority": 50,
+      "story_type": "capacity",
+      "lens": "thin_delivery_capacity",
       "description": "Find organizations with high government revenue and low apparent operating capacity.",
       "why_it_matters": "Low staff and low program spend can reveal pass-through or shell-like patterns that need review.",
       "table_scope": "single_table",
@@ -146,6 +156,8 @@
       "command": null,
       "status": "stub",
       "priority": 60,
+      "story_type": "risk",
+      "lens": "circular_transfer",
       "description": "Find circular transfers among funded organizations.",
       "why_it_matters": "Cycles can indicate circular funding, fiscal opacity, or governance issues.",
       "table_scope": "single_table",
@@ -171,6 +183,8 @@
       "command": null,
       "status": "stub",
       "priority": 70,
+      "story_type": "policy_gap",
+      "lens": "commitment_vs_allocation",
       "description": "Compare declared policy commitments with actual spending patterns.",
       "why_it_matters": "Spending can drift away from stated priorities even when every individual transaction is valid.",
       "table_scope": "document_and_table",
@@ -192,6 +206,8 @@
       "command": null,
       "status": "stub",
       "priority": 80,
+      "story_type": "policy_gap",
+      "lens": "uncoordinated_overlap",
       "description": "Find similar grants to the same recipient across overlapping periods or jurisdictions.",
       "why_it_matters": "Duplicate or overlapping funding can reveal coordination gaps.",
       "table_scope": "multi_table",
@@ -222,6 +238,8 @@
       "command": null,
       "status": "stub",
       "priority": 90,
+      "story_type": "operating_insight",
+      "lens": "spend_decomposition",
       "description": "Decompose spend growth by volume, price, and concentration.",
       "why_it_matters": "Rising spend can be benign volume growth or a unit-cost problem. The difference matters.",
       "table_scope": "single_table",
@@ -247,6 +265,8 @@
       "command": null,
       "status": "stub",
       "priority": 100,
+      "story_type": "risk",
+      "lens": "external_record_signal",
       "description": "Attach cited adverse public-record signals to surfaced entities.",
       "why_it_matters": "External context can prioritize review, but it must be cited and treated as unverified until checked.",
       "table_scope": "external",
@@ -258,6 +278,154 @@
       ],
       "optional": [],
       "disconfirming_checks": ["Require direct source citations and distinguish same-name noise from actual entity matches."]
+    },
+    {
+      "name": "geographic-coverage",
+      "command": null,
+      "status": "stub",
+      "priority": 110,
+      "story_type": "opportunity",
+      "lens": "underserved_region",
+      "description": "Compare delivery footprint across regions, weighted by population, to find areas that may be underserved.",
+      "why_it_matters": "Funding can cluster in capital regions even when policy commits to rural or remote access. Coverage gaps are policy stories, not red flags.",
+      "table_scope": "single_table",
+      "requires": [
+        {
+          "semantic": "region",
+          "aliases": ["region", "province", "city", "postal_code", "fsa", "municipality", "riding"]
+        },
+        {
+          "semantic": "amount",
+          "aliases": ["amount", "value", "spend", "allocation", "grant_amount"]
+        }
+      ],
+      "optional": [
+        {
+          "semantic": "population",
+          "aliases": ["population", "pop", "headcount"]
+        }
+      ],
+      "disconfirming_checks": ["Check whether the region label is a service catchment rather than a residence region.", "Check whether per-capita is the right normalization for this program."]
+    },
+    {
+      "name": "program-stability",
+      "command": null,
+      "status": "stub",
+      "priority": 120,
+      "story_type": "success",
+      "lens": "consistent_delivery",
+      "description": "Surface programs or recipients with steady multi-year support and consistent delivery footprint.",
+      "why_it_matters": "Stable programs with diverse partners and steady metrics are worth documenting and protecting. Success stories matter as much as risk stories.",
+      "table_scope": "single_table",
+      "requires": [
+        {
+          "semantic": "program",
+          "aliases": ["program", "program_name", "initiative", "stream"]
+        },
+        {
+          "semantic": "year",
+          "aliases": ["year", "fiscal_year", "award_year"]
+        },
+        {
+          "semantic": "amount",
+          "aliases": ["amount", "value", "allocation"]
+        }
+      ],
+      "optional": [
+        {
+          "semantic": "recipient",
+          "aliases": ["recipient_name", "organization_name", "vendor_name"]
+        }
+      ],
+      "disconfirming_checks": ["Check whether stability is just inertia in a program nobody reviewed.", "Check whether outcomes data exists or only inputs."]
+    },
+    {
+      "name": "delivery-diversity",
+      "command": null,
+      "status": "stub",
+      "priority": 130,
+      "story_type": "opportunity",
+      "lens": "provider_diversity",
+      "description": "Find programs delivered by many distinct providers across many regions, signaling healthy market structure.",
+      "why_it_matters": "Diversity of delivery is the inverse of vendor concentration. It tells leaders where competition or community capacity is working.",
+      "table_scope": "single_table",
+      "requires": [
+        {
+          "semantic": "program",
+          "aliases": ["program", "program_name", "category"]
+        },
+        {
+          "semantic": "provider",
+          "aliases": ["vendor_name", "supplier_name", "recipient_name", "organization_name"]
+        }
+      ],
+      "optional": [
+        {
+          "semantic": "region",
+          "aliases": ["region", "province", "city"]
+        }
+      ],
+      "disconfirming_checks": ["Check whether providers are formally distinct but related under the same parent.", "Check whether diversity is gamed by splitting contracts."]
+    },
+    {
+      "name": "scale-readiness",
+      "command": null,
+      "status": "stub",
+      "priority": 140,
+      "story_type": "opportunity",
+      "lens": "scale_up_potential",
+      "description": "Identify small recipients with consistent delivery metrics that could absorb more support without governance risk.",
+      "why_it_matters": "Underfunded performers are the inverse of capacity risks. Surfacing them lets ministers make growth decisions, not just defensive ones.",
+      "table_scope": "single_table",
+      "requires": [
+        {
+          "semantic": "recipient",
+          "aliases": ["recipient_name", "organization_name", "charity_name"]
+        },
+        {
+          "semantic": "amount",
+          "aliases": ["amount", "value", "grant_amount"]
+        },
+        {
+          "semantic": "year",
+          "aliases": ["year", "fiscal_year", "award_year"]
+        }
+      ],
+      "optional": [
+        {
+          "semantic": "outcome_metric",
+          "aliases": ["beneficiaries_served", "participants", "outcomes", "delivered_units"]
+        }
+      ],
+      "disconfirming_checks": ["Check whether the recipient has the governance maturity to scale.", "Check whether outcome metrics are self-reported only."]
+    },
+    {
+      "name": "commitment-alignment",
+      "command": null,
+      "status": "stub",
+      "priority": 150,
+      "story_type": "success",
+      "lens": "policy_to_spend_match",
+      "description": "Find programs where stated policy commitments and actual spending move together over time.",
+      "why_it_matters": "When policy and spend align, the story is that the system worked. That belongs in briefing notes as much as the gaps do.",
+      "table_scope": "document_and_table",
+      "requires": [
+        {
+          "semantic": "policy_text",
+          "aliases": ["policy_text", "commitment", "mandate", "objective"]
+        },
+        {
+          "semantic": "allocation_amount",
+          "aliases": ["amount", "allocation", "spend", "budget"]
+        }
+      ],
+      "optional": [
+        {
+          "semantic": "year",
+          "aliases": ["year", "fiscal_year"]
+        }
+      ],
+      "disconfirming_checks": ["Check whether the spend label maps to the commitment through a different program name.", "Check whether the alignment is recent or sustained."]
     }
   ]
 }

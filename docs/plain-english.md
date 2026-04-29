@@ -1,8 +1,8 @@
 # Plain English Explainer
 
-Agency 2026 Claw is an audit workbench.
+LemonClaw is an accountability story engine.
 
-It helps a reviewer take a folder of government datasets and turn it into a short, defensible list of things a human should look at next.
+It helps a reviewer take a folder of government datasets and turn it into a short, defensible list of stories worth telling. Some stories are risks worth reviewing. Some are opportunities worth scaling. Some are operating insights that change how a system is understood. The job is to surface them all, classify them honestly, and refuse the ones the data does not support.
 
 It does not replace judgment. It organizes judgment.
 
@@ -31,11 +31,11 @@ The system does the same job, but faster:
 4. It records rejected checks with reasons.
 5. It runs deterministic SQL skills.
 6. It replays the SQL to verify the findings.
-7. It asks for counterchecks.
+7. It asks for counterchecks designed to weaken its own findings.
 8. It groups likely related entities.
-9. It asks Claude to review the claims and language.
+9. It asks Claude to classify each finding into a story type and write a seven-field story packet.
 10. It stores the whole trail in Neotoma.
-11. It builds a static HTML dashboard.
+11. It builds a static HTML dashboard organized into three columns: risks, operating insight, opportunities.
 
 ## What Makes It Agentic
 

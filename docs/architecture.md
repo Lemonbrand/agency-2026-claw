@@ -1,6 +1,6 @@
 # Architecture
 
-Agency 2026 Claw separates speed from truth.
+LemonClaw separates speed from truth.
 
 DuckDB is the speed layer. It handles raw files and large joins locally.
 

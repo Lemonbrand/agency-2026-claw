@@ -7,202 +7,226 @@ from typing import Any
 from . import paths
 from .jsonio import read_json
 
+
 CHALLENGE_LABELS = {
     "amendment_creep": "Amendment creep",
     "vendor_concentration": "Vendor concentration",
     "related_parties": "Related parties",
 }
 
+STORY_TYPE_LABELS = {
+    "risk": "Risk",
+    "opportunity": "Opportunity",
+    "capacity": "Capacity",
+    "policy_gap": "Policy gap",
+    "success": "Success",
+    "operating_insight": "Operating insight",
+}
+
+COLUMN_DEFS = [
+    {
+        "key": "risks",
+        "title": "Risks worth reviewing",
+        "subtitle": "Stories that suggest someone should pull a file.",
+        "story_types": {"risk"},
+        "accent": "red",
+    },
+    {
+        "key": "operating",
+        "title": "Operating insight",
+        "subtitle": "Stories that change how a system is understood, not just what to flag.",
+        "story_types": {"operating_insight", "capacity", "policy_gap"},
+        "accent": "gold",
+    },
+    {
+        "key": "opportunities",
+        "title": "Opportunities and success",
+        "subtitle": "Stories that point to programs to scale or document.",
+        "story_types": {"opportunity", "success"},
+        "accent": "green",
+    },
+]
+
 
 def esc(value: object) -> str:
     return html.escape(str(value if value is not None else ""))
-
-
-def pct(value: Any) -> str:
-    try:
-        return "{:.1%}".format(float(value))
-    except (TypeError, ValueError):
-        return "unknown"
-
-
-def multiple(value: Any) -> str:
-    try:
-        return "{:.1f}x".format(float(value))
-    except (TypeError, ValueError):
-        return "unknown multiple"
 
 
 def by_id(findings: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return {str(row.get("finding_id")): row for row in findings}
 
 
-def first_metric(findings: list[dict[str, Any]], challenge: str, key: str) -> Any:
-    for finding in findings:
-        if finding.get("challenge") != challenge:
-            continue
-        evidence = (finding.get("evidence") or [{}])[0]
-        metrics = evidence.get("metrics") or {}
-        if key in metrics:
-            return metrics[key]
-    return None
+def column_for_story_type(story_type: str) -> str:
+    for column in COLUMN_DEFS:
+        if story_type in column["story_types"]:
+            return column["key"]
+    return "operating"
 
 
-def proof_line(finding: dict[str, Any]) -> str:
-    evidence = (finding.get("evidence") or [{}])[0]
-    table = evidence.get("table", "unknown table")
-    replayed = finding.get("verification", {}).get("replayed")
-    status = "SQL replay passed" if replayed else "SQL replay missing"
-    return f"{status}. Source table: {table}. Evidence hash recorded."
+def _stories_with_evidence(stories: list[dict[str, Any]], findings_by_id: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    out = []
+    for story in stories:
+        finding = findings_by_id.get(str(story.get("finding_id")), {})
+        merged = dict(story)
+        merged["challenge"] = finding.get("challenge")
+        merged["severity"] = finding.get("severity")
+        merged["support_status"] = finding.get("support_status")
+        merged["replayed"] = bool(finding.get("verification", {}).get("replayed"))
+        merged["evidence"] = (finding.get("evidence") or [{}])[0]
+        out.append(merged)
+    return out
 
 
-def action_for_case(case: dict[str, Any], findings: list[dict[str, Any]]) -> tuple[str, str, str]:
-    challenges = set(case.get("challenges", []))
-    entity = str(case.get("entity", "Unknown"))
-    support = case.get("support", {})
-    contested = int(support.get("contested", 0) or 0)
+def render_plan_panel(plan: dict[str, Any]) -> str:
+    selected = plan.get("selected", [])
+    rejected = plan.get("rejected", [])
+    considered = len(selected) + len(rejected)
 
-    if {"amendment_creep", "vendor_concentration"}.issubset(challenges):
-        contract_ref = first_metric(findings, "amendment_creep", "contract_ref")
-        multiple_value = first_metric(findings, "amendment_creep", "multiple")
-        share = first_metric(findings, "vendor_concentration", "share")
-        group = first_metric(findings, "vendor_concentration", "group_key")
-        decision = f"Put {entity} into procurement review."
-        why = (
-            f"{entity} has two independent signals: contract {contract_ref} grew "
-            f"{multiple(multiple_value)} and the vendor holds {pct(share)} of {group} spend."
-        )
-        if contested:
-            action = "Pull the contract file, amendment approvals, procurement method, competing bids, and resolve the contested countercheck before escalation."
-        else:
-            action = "Pull the contract file, amendment approvals, procurement method, and competing bids."
-        return decision, why, action
-
-    if "related_parties" in challenges:
-        orgs = first_metric(findings, "related_parties", "orgs")
-        decision = f"Validate identity for {entity}."
-        why = f"{entity} appears across multiple organizations: {orgs}."
-        action = "Confirm this is the same person, then check declared conflicts and board relationships."
-        return decision, why, action
-
-    decision = f"Review {entity}."
-    why = "The system found a reproducible review lead."
-    action = "Open the evidence trail, replay the SQL, and assign a human reviewer."
-    return decision, why, action
-
-
-def priority_label(case: dict[str, Any]) -> str:
-    support = case.get("support", {})
-    if int(support.get("contested", 0) or 0) > 0:
-        return "Validate"
-    score = int(case.get("score", 0))
-    if score >= 25:
-        return "Immediate"
-    if score >= 15:
-        return "Review"
-    return "Validate"
-
-
-def render_action_queue(correlated: dict[str, Any], findings_by_id: dict[str, dict[str, Any]]) -> str:
-    cards = []
-    for index, case in enumerate(correlated.get("entities", [])[:8], start=1):
-        case_findings = [findings_by_id[fid] for fid in case.get("finding_ids", []) if fid in findings_by_id]
-        decision, why, action = action_for_case(case, case_findings)
-        challenge_tags = "".join(
-            f"<span>{esc(CHALLENGE_LABELS.get(ch, ch))}</span>" for ch in case.get("challenges", [])
-        )
-        proof_items = "".join(f"<li>{esc(proof_line(finding))}</li>" for finding in case_findings)
-        check_items = "".join(
-            f"<li>{esc(finding.get('support_status', 'not_checked'))}: {esc((finding.get('disconfirming_checks') or [{}])[0].get('question', 'No countercheck recorded'))}</li>"
-            for finding in case_findings
-        )
-        claims = "".join(f"<li>{esc(claim)}</li>" for claim in case.get("claims", []))
-        support = case.get("support", {})
-        cards.append(
-            f"""
-      <article class="action-card">
-        <div class="rank">{index}</div>
-        <div class="action-main">
-          <div class="action-top">
-            <span class="priority">{esc(priority_label(case))}</span>
-            <span class="score">score {esc(case.get("score"))}</span>
-            <span class="score">{esc(support.get("supported", 0))} supported · {esc(support.get("contested", 0))} contested</span>
-            <div class="tags">{challenge_tags}</div>
-          </div>
-          <h3>{esc(decision)}</h3>
-          <p class="why">{esc(why)}</p>
-          <div class="next-action">
-            <strong>Next action</strong>
-            <p>{esc(action)}</p>
-          </div>
-          <details>
-            <summary>Evidence behind this lead</summary>
-            <div class="detail-grid">
-              <div>
-                <h4>Signals</h4>
-                <ul>{claims}</ul>
-              </div>
-              <div>
-                <h4>Replay status</h4>
-                <ul>{proof_items}</ul>
-              </div>
-              <div>
-                <h4>Counterchecks</h4>
-                <ul>{check_items}</ul>
-              </div>
-            </div>
-          </details>
-        </div>
-      </article>
-"""
-        )
-    if not cards:
-        return "<p class='note'>No review leads yet. Load data, run detectors, then verify findings.</p>"
-    return "".join(cards)
-
-
-def render_decision(correlated: dict[str, Any]) -> str:
-    clean = [
-        row
-        for row in correlated.get("entities", [])
-        if int(row.get("score", 0)) >= 25 and int(row.get("support", {}).get("contested", 0) or 0) == 0
-    ]
-    vendor_leads = [
-        row
-        for row in correlated.get("entities", [])
-        if {"amendment_creep", "vendor_concentration"}.issubset(set(row.get("challenges", [])))
-    ]
-    validate = [row for row in correlated.get("entities", []) if row not in clean]
-    names = ", ".join(str(row.get("entity")) for row in vendor_leads[:3]) or "none yet"
-    return (
-        "<section class='decision'>"
-        "<div class='decision-label'>Decision</div>"
-        f"<h2>Start with {len(vendor_leads)} vendor leads: {esc(names)}.</h2>"
-        f"<p>{len(clean)} leads are clean escalation-ready. Validate {len(validate)} before escalation. Contested does not mean wrong. It means the next human action is narrower.</p>"
-        "</section>"
+    selected_items = "".join(
+        f"<li><strong>{esc(item.get('skill'))}</strong> &mdash; {esc(item.get('reason') or '')}</li>"
+        for item in selected
+    )
+    rejected_items = "".join(
+        f"<li><strong>{esc(item.get('skill'))}</strong> &mdash; {esc(item.get('reason') or '')}</li>"
+        for item in rejected
     )
 
+    return f"""
+    <section class="plan">
+      <div class="plan-head">
+        <div class="plan-counts">
+          <div><strong>{considered}</strong><span>stories considered</span></div>
+          <div><strong>{len(selected)}</strong><span>told</span></div>
+          <div><strong>{len(rejected)}</strong><span>rejected with reasons</span></div>
+        </div>
+        <p class="plan-note">
+          The agentic move is choosing what to investigate from unknown data, and refusing to investigate
+          what the data does not support. Selection and rejection are both deliverables.
+        </p>
+      </div>
+      <div class="plan-grid">
+        <details open>
+          <summary>Told</summary>
+          <ul class="plan-list selected">{selected_items or '<li class="empty">No skills selected.</li>'}</ul>
+        </details>
+        <details>
+          <summary>Rejected</summary>
+          <ul class="plan-list rejected">{rejected_items or '<li class="empty">No skills rejected.</li>'}</ul>
+        </details>
+      </div>
+    </section>
+    """
 
-def render_evidence_table(findings: list[dict[str, Any]]) -> str:
+
+def render_cross_signal(correlated: dict[str, Any]) -> str:
+    multi = [item for item in correlated.get("entities", []) if int(item.get("challenge_count", 0)) >= 2]
+    if not multi:
+        return ""
+    cards = []
+    for item in multi[:3]:
+        challenges = ", ".join(CHALLENGE_LABELS.get(ch, ch) for ch in item.get("challenges", []))
+        members = item.get("members", [])
+        member_text = (
+            f"Includes name variants: {esc(', '.join(members))}." if len(members) > 1 else ""
+        )
+        cards.append(
+            f"""
+            <article class="cross-card">
+              <div class="cross-rank">{esc(item.get('score'))}</div>
+              <div>
+                <h3>{esc(item.get('entity'))}</h3>
+                <p>Surfaces in: {esc(challenges)}.</p>
+                <p class="member-note">{member_text}</p>
+              </div>
+            </article>
+            """
+        )
+    return f"""
+    <section class="cross-signal">
+      <h2>Cross-signal entities</h2>
+      <p class="note">Entities that appear in more than one independent story. Reviewers usually start here.</p>
+      <div class="cross-grid">{''.join(cards)}</div>
+    </section>
+    """
+
+
+def render_story_card(story: dict[str, Any]) -> str:
+    support_label = {
+        "supported": "supported",
+        "contested": "contested",
+        "inconclusive": "inconclusive",
+    }.get(story.get("support_status"), "not_checked")
+    severity = story.get("severity") or "review"
+    challenge = CHALLENGE_LABELS.get(story.get("challenge"), story.get("challenge") or "")
+    evidence = story.get("evidence") or {}
+    evidence_summary = story.get("evidence_summary") or evidence.get("summary", "")
+
+    return f"""
+    <article class="story-card">
+      <header>
+        <span class="story-type">{esc(STORY_TYPE_LABELS.get(story.get('story_type'), story.get('story_type')))}</span>
+        <span class="story-lens">{esc(story.get('lens') or '')}</span>
+      </header>
+      <h3>{esc(story.get('what_happened'))}</h3>
+      <p class="why">{esc(story.get('why_it_matters'))}</p>
+      <dl>
+        <dt>Who is affected</dt><dd>{esc(story.get('who_is_affected'))}</dd>
+        <dt>Evidence</dt><dd>{esc(evidence_summary)}</dd>
+        <dt>What could disprove this</dt><dd>{esc(story.get('what_could_disprove'))}</dd>
+        <dt>What to check next</dt><dd>{esc(story.get('what_to_check_next'))}</dd>
+        <dt>Decision this enables</dt><dd>{esc(story.get('decision_enabled'))}</dd>
+      </dl>
+      <footer>
+        <span class="tag">{esc(challenge)}</span>
+        <span class="tag">{esc(severity)} severity</span>
+        <span class="tag support-{esc(support_label)}">{esc(support_label.replace('_', ' '))}</span>
+        <span class="tag {'replayed' if story.get('replayed') else 'unreplayed'}">{'replay ok' if story.get('replayed') else 'replay missing'}</span>
+      </footer>
+    </article>
+    """
+
+
+def render_columns(stories: list[dict[str, Any]]) -> str:
+    grouped: dict[str, list[dict[str, Any]]] = {col["key"]: [] for col in COLUMN_DEFS}
+    for story in stories:
+        key = column_for_story_type(story.get("story_type", ""))
+        grouped[key].append(story)
+
+    columns_html = []
+    for column in COLUMN_DEFS:
+        items = grouped.get(column["key"], [])
+        cards = "".join(render_story_card(story) for story in items)
+        if not cards:
+            cards = "<p class='empty'>No stories of this type were told from the loaded data.</p>"
+        columns_html.append(
+            f"""
+            <section class="column accent-{column['accent']}">
+              <header>
+                <h2>{esc(column['title'])}</h2>
+                <p>{esc(column['subtitle'])}</p>
+                <span class="count">{len(items)}</span>
+              </header>
+              <div class="cards">{cards}</div>
+            </section>
+            """
+        )
+    return f"<div class='columns'>{''.join(columns_html)}</div>"
+
+
+def render_finding_register(findings: list[dict[str, Any]]) -> str:
     rows = []
     for finding in findings:
         evidence = (finding.get("evidence") or [{}])[0]
-        metrics = evidence.get("metrics") or {}
-        metric_bits = []
-        if "multiple" in metrics:
-            metric_bits.append(f"{float(metrics['multiple']):.1f}x growth")
-        if "share" in metrics:
-            metric_bits.append(f"{pct(metrics['share'])} share")
-        if "org_count" in metrics:
-            metric_bits.append(f"{metrics['org_count']} orgs")
-        metric_text = ", ".join(metric_bits) or evidence.get("summary", "")
         replayed = finding.get("verification", {}).get("replayed")
         rows.append(
             "<tr>"
+            f"<td>{esc(STORY_TYPE_LABELS.get(finding.get('story_type'), finding.get('story_type')))}</td>"
             f"<td>{esc(CHALLENGE_LABELS.get(finding.get('challenge'), finding.get('challenge')))}</td>"
             f"<td>{esc(finding.get('entity'))}</td>"
             f"<td>{esc(finding.get('severity'))}</td>"
-            f"<td>{esc(metric_text)}</td>"
-            f"<td>{'replayed' if replayed else 'not replayed'} · {esc(finding.get('support_status', 'not_checked'))}</td>"
+            f"<td>{esc(finding.get('support_status') or 'not_checked')}</td>"
+            f"<td>{'replayed' if replayed else 'not replayed'}</td>"
+            f"<td>{esc(evidence.get('summary', ''))}</td>"
             "</tr>"
         )
     return "".join(rows)
@@ -212,188 +236,163 @@ def render_sql_details(findings: list[dict[str, Any]]) -> str:
     blocks = []
     for finding in findings:
         evidence = (finding.get("evidence") or [{}])[0]
+        sql = evidence.get("sql", "")
+        if not sql:
+            continue
         blocks.append(
             "<details class='sql-block'>"
             f"<summary>{esc(finding.get('claim'))}</summary>"
-            f"<pre>{esc(evidence.get('sql', ''))}</pre>"
+            f"<pre>{esc(sql)}</pre>"
             "</details>"
         )
-    return "".join(blocks)
-
-
-def render_plan(plan: dict[str, Any]) -> str:
-    if not plan:
-        return "<p class='note'>No investigation plan yet.</p>"
-    selected = "".join(
-        f"<li><strong>{esc(item.get('skill'))}</strong>: {esc(item.get('reason'))}</li>"
-        for item in plan.get("selected", [])
-    )
-    rejected = "".join(
-        f"<li><strong>{esc(item.get('skill'))}</strong>: {esc(item.get('reason'))}</li>"
-        for item in plan.get("rejected", [])
-    )
-    return (
-        "<div class='plan-grid'>"
-        f"<section class='panel'><h3>Selected by {esc(plan.get('brain'))}</h3><ul>{selected}</ul></section>"
-        f"<section class='panel'><h3>Rejected with reasons</h3><ul>{rejected}</ul></section>"
-        "</div>"
-    )
-
-
-def render_reviewer(review: dict[str, Any]) -> str:
-    if not review:
-        return "<p class='note'>No second-pass review yet.</p>"
-    issues = review.get("issues", [])
-    if issues:
-        items = "".join(
-            f"<li><strong>{esc(item.get('severity'))}</strong>: {esc(item.get('critique'))}</li>"
-            for item in issues
-        )
-    else:
-        items = "<li>No reviewer issues recorded.</li>"
-    return (
-        "<section class='panel'>"
-        f"<h3>{esc(review.get('reviewer'))} second pass</h3>"
-        f"<p>{esc(review.get('recommended_language', ''))}</p>"
-        f"<ul>{items}</ul>"
-        "</section>"
-    )
+    return "".join(blocks) or "<p class='note'>No replayable SQL captured yet.</p>"
 
 
 def render() -> str:
+    plan = read_json(paths.state_dir() / "investigation-plan.json", {"selected": [], "rejected": []})
     correlated = read_json(paths.findings_dir() / "correlated.json", {"entities": []})
     verified = read_json(paths.findings_dir() / "verified.json", {"findings": []})
+    review = read_json(paths.state_dir() / "review.json", {"stories": [], "issues": [], "recommended_language": ""})
     schema = read_json(paths.state_dir() / "discovered.schema.json", [])
-    plan = read_json(paths.state_dir() / "investigation-plan.json", {})
-    review = read_json(paths.state_dir() / "review.json", {})
+
     findings = verified.get("findings", [])
     findings_by_id = by_id(findings)
-    clean_count = sum(
-        1
-        for row in correlated.get("entities", [])
-        if int(row.get("score", 0)) >= 25 and int(row.get("support", {}).get("contested", 0) or 0) == 0
-    )
-    vendor_lead_count = sum(
-        1
-        for row in correlated.get("entities", [])
-        if {"amendment_creep", "vendor_concentration"}.issubset(set(row.get("challenges", [])))
-    )
-    contested_count = sum(1 for row in findings if row.get("support_status") == "contested")
+    stories = _stories_with_evidence(review.get("stories", []), findings_by_id)
     replayed_count = sum(1 for row in findings if row.get("verification", {}).get("replayed"))
-    decision = render_decision(correlated)
-    action_queue = render_action_queue(correlated, findings_by_id)
-    evidence_rows = render_evidence_table(findings)
-    sql_details = render_sql_details(findings)
-    plan_html = render_plan(plan)
-    reviewer_html = render_reviewer(review)
     schema_json = esc(json.dumps(schema, indent=2)[:6000])
 
     return f"""<!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Agency 2026 Action Queue</title>
+  <title>LemonClaw &mdash; Accountability Stories</title>
   <style>
     :root {{
-      --ink: #191715;
-      --muted: #625f59;
-      --line: #d8d2c5;
-      --paper: #fbfaf7;
+      --ink: #18130c;
+      --paper: #fbf7ed;
       --panel: #ffffff;
-      --gold: #9f6b17;
-      --red: #9b2f2f;
-      --green: #315f49;
-      --blue: #254f73;
+      --line: #e0d6c1;
+      --muted: #6b6354;
+      --gold: #c47a1d;
+      --red: #993f3f;
+      --green: #2c684f;
+      --blue: #2a5277;
     }}
     * {{ box-sizing: border-box; }}
-    body {{ margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--paper); color: var(--ink); }}
-    header {{ padding: 24px 32px; background: var(--ink); color: var(--paper); }}
-    h1 {{ margin: 0 0 8px; font-size: 30px; line-height: 1.1; letter-spacing: 0; }}
-    header p {{ margin: 0; max-width: 900px; color: #e5dfd1; font-size: 15px; line-height: 1.5; }}
-    main {{ padding: 24px 32px 48px; max-width: 1280px; margin: 0 auto; }}
-    .summary {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 24px; }}
-    .metric {{ background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }}
+    body {{ margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif; background: var(--paper); color: var(--ink); }}
+    header.top {{ padding: 28px 32px 22px; background: var(--ink); color: var(--paper); }}
+    header.top h1 {{ margin: 0; font-size: 32px; letter-spacing: -0.01em; font-weight: 800; }}
+    header.top .tagline {{ margin: 6px 0 0; color: #f1ddb6; font-size: 15px; max-width: 920px; line-height: 1.45; }}
+    main {{ padding: 24px 32px 64px; max-width: 1480px; margin: 0 auto; }}
+    .summary {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }}
+    .metric {{ background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }}
     .metric strong {{ display: block; font-size: 26px; line-height: 1; }}
-    .metric span {{ display: block; margin-top: 8px; color: var(--muted); font-size: 13px; }}
-    .decision {{ background: #fff; border: 2px solid var(--red); border-radius: 8px; padding: 18px 20px; margin-bottom: 24px; }}
-    .decision-label {{ color: var(--red); font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }}
-    .decision h2 {{ margin: 6px 0; font-size: 26px; line-height: 1.2; }}
-    .decision p {{ margin: 0; color: var(--muted); line-height: 1.5; }}
-    .plan-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }}
-    .panel {{ background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }}
-    .panel h3 {{ font-size: 17px; margin-top: 0; }}
-    h2 {{ margin: 28px 0 12px; font-size: 20px; }}
-    .action-card {{ display: grid; grid-template-columns: 42px 1fr; gap: 14px; background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--red); border-radius: 8px; padding: 16px; margin-bottom: 14px; }}
-    .rank {{ width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: var(--paper); display: grid; place-items: center; font-weight: 700; }}
-    .action-top {{ display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }}
-    .priority {{ background: #f5dfdf; color: var(--red); border: 1px solid #ddb7b7; border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 700; }}
-    .score {{ color: var(--muted); font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }}
-    .tags {{ display: flex; gap: 6px; flex-wrap: wrap; }}
-    .tags span {{ background: #eef4f1; color: var(--green); border: 1px solid #c8d9d0; border-radius: 999px; padding: 4px 8px; font-size: 12px; }}
-    h3 {{ margin: 10px 0 6px; font-size: 22px; line-height: 1.25; }}
-    .why {{ margin: 0 0 12px; color: var(--muted); font-size: 15px; line-height: 1.5; }}
-    .next-action {{ background: #f4f7fb; border: 1px solid #c9d7e5; border-radius: 8px; padding: 12px; margin: 12px 0; }}
-    .next-action strong {{ color: var(--blue); font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }}
-    .next-action p {{ margin: 6px 0 0; line-height: 1.45; }}
-    details {{ margin-top: 10px; }}
-    summary {{ cursor: pointer; color: var(--gold); font-weight: 700; }}
-    .detail-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 10px; }}
-    h4 {{ margin: 0 0 6px; font-size: 14px; }}
-    ul {{ margin: 0; padding-left: 18px; color: var(--muted); line-height: 1.45; }}
-    table {{ width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }}
-    th, td {{ text-align: left; padding: 10px; border-bottom: 1px solid var(--line); font-size: 14px; vertical-align: top; }}
-    th {{ background: #efede7; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }}
-    .sql-block {{ background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }}
-    pre {{ max-height: 260px; overflow: auto; background: #111; color: #f5f2ea; padding: 12px; border-radius: 6px; font-size: 12px; line-height: 1.45; }}
-    .note {{ color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 900px; }}
-    @media (max-width: 820px) {{
-      header, main {{ padding-left: 18px; padding-right: 18px; }}
+    .metric span {{ display: block; margin-top: 6px; color: var(--muted); font-size: 13px; }}
+    .plan {{ background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-bottom: 22px; }}
+    .plan-head {{ display: grid; grid-template-columns: minmax(220px, auto) 1fr; gap: 24px; align-items: center; }}
+    .plan-counts {{ display: flex; gap: 12px; flex-wrap: wrap; }}
+    .plan-counts div {{ background: var(--paper); border: 1px solid var(--line); padding: 10px 14px; border-radius: 8px; }}
+    .plan-counts strong {{ font-size: 22px; display: block; line-height: 1; }}
+    .plan-counts span {{ color: var(--muted); font-size: 12px; }}
+    .plan-note {{ margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }}
+    .plan-grid {{ margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }}
+    .plan-grid summary {{ cursor: pointer; font-weight: 700; }}
+    .plan-list {{ list-style: none; padding-left: 0; margin: 8px 0 0; }}
+    .plan-list li {{ padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: 14px; line-height: 1.45; }}
+    .plan-list li:last-child {{ border-bottom: 0; }}
+    .plan-list li.empty {{ color: var(--muted); font-style: italic; }}
+    .cross-signal {{ margin-bottom: 22px; }}
+    .cross-signal h2 {{ margin: 0 0 6px; font-size: 18px; }}
+    .cross-signal .note {{ margin: 0 0 10px; color: var(--muted); font-size: 13px; }}
+    .cross-grid {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }}
+    .cross-card {{ display: grid; grid-template-columns: 48px 1fr; gap: 12px; padding: 12px; background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--blue); border-radius: 10px; }}
+    .cross-rank {{ background: var(--blue); color: var(--paper); font-weight: 700; border-radius: 8px; display: grid; place-items: center; }}
+    .cross-card h3 {{ margin: 0 0 4px; font-size: 15px; }}
+    .cross-card p {{ margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }}
+    .cross-card .member-note {{ font-style: italic; }}
+    .columns {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 28px; }}
+    .column {{ background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }}
+    .column.accent-red {{ border-top: 4px solid var(--red); }}
+    .column.accent-gold {{ border-top: 4px solid var(--gold); }}
+    .column.accent-green {{ border-top: 4px solid var(--green); }}
+    .column header {{ padding: 14px 16px 10px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 6px; }}
+    .column header h2 {{ margin: 0; font-size: 17px; }}
+    .column header p {{ margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.4; grid-column: 1 / span 2; }}
+    .column header .count {{ color: var(--muted); font-size: 13px; }}
+    .column .cards {{ padding: 14px; display: grid; gap: 12px; }}
+    .column .empty {{ color: var(--muted); font-size: 13px; font-style: italic; padding: 18px 0; text-align: center; }}
+    .story-card {{ background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }}
+    .story-card header {{ display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; padding: 0; border: 0; background: transparent; color: inherit; }}
+    .story-card .story-type {{ font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--ink); color: var(--paper); }}
+    .story-card .story-lens {{ font-size: 12px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }}
+    .story-card h3 {{ margin: 4px 0 6px; font-size: 16px; line-height: 1.3; }}
+    .story-card .why {{ margin: 0 0 10px; color: var(--muted); font-size: 13px; line-height: 1.5; }}
+    .story-card dl {{ margin: 0; display: grid; grid-template-columns: 1fr; gap: 6px; }}
+    .story-card dt {{ font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--blue); font-weight: 700; }}
+    .story-card dd {{ margin: 0 0 6px; font-size: 13px; line-height: 1.5; }}
+    .story-card footer {{ margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; border: 0; background: transparent; color: inherit; }}
+    .tag {{ font-size: 11px; padding: 3px 8px; border-radius: 999px; background: #efe6cf; color: var(--ink); }}
+    .tag.support-supported {{ background: #d6e9d8; color: var(--green); }}
+    .tag.support-contested {{ background: #f1d6d6; color: var(--red); }}
+    .tag.support-inconclusive {{ background: #efe6cf; color: var(--gold); }}
+    .tag.support-not_checked {{ background: #e7e2d4; color: var(--muted); }}
+    .tag.replayed {{ background: #d6e9d8; color: var(--green); }}
+    .tag.unreplayed {{ background: #f1d6d6; color: var(--red); }}
+    h2.section {{ margin: 28px 0 10px; font-size: 17px; }}
+    .audit {{ background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }}
+    .audit summary {{ cursor: pointer; font-weight: 700; }}
+    table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+    th, td {{ text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: 13px; vertical-align: top; }}
+    th {{ background: var(--paper); color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }}
+    .sql-block {{ margin-top: 8px; }}
+    .sql-block summary {{ font-weight: 600; color: var(--gold); }}
+    pre {{ max-height: 280px; overflow: auto; background: #1a160d; color: #f5e9c8; padding: 12px; border-radius: 8px; font-size: 12px; line-height: 1.45; }}
+    .note {{ color: var(--muted); font-size: 13px; line-height: 1.5; max-width: 920px; margin: 0; }}
+    @media (max-width: 1100px) {{
+      .columns {{ grid-template-columns: 1fr; }}
+      .cross-grid {{ grid-template-columns: 1fr; }}
       .summary {{ grid-template-columns: 1fr 1fr; }}
+      .plan-head {{ grid-template-columns: 1fr; }}
       .plan-grid {{ grid-template-columns: 1fr; }}
-      .action-card {{ grid-template-columns: 1fr; }}
-      .detail-grid {{ grid-template-columns: 1fr; }}
     }}
   </style>
 </head>
 <body>
-  <header>
-    <h1>Review these leads first</h1>
-    <p>The system converted raw files into a ranked action queue. These are not accusations. They are reproducible review leads with saved SQL, source hashes, and human-review status.</p>
+  <header class="top">
+    <h1>LemonClaw</h1>
+    <p class="tagline">An accountability story engine. The agent looks at unknown public-sector data, decides what stories the data can tell, tells them with evidence and caveats, and refuses the rest with reasons.</p>
   </header>
   <main>
     <section class="summary">
-      <div class="metric"><strong>{vendor_lead_count}</strong><span>vendor leads to start with</span></div>
-      <div class="metric"><strong>{clean_count}</strong><span>clean escalation-ready</span></div>
+      <div class="metric"><strong>{len(plan.get('selected', [])) + len(plan.get('rejected', []))}</strong><span>stories considered</span></div>
+      <div class="metric"><strong>{len(stories)}</strong><span>stories told</span></div>
       <div class="metric"><strong>{replayed_count}/{len(findings)}</strong><span>findings replayed</span></div>
-      <div class="metric"><strong>{contested_count}</strong><span>contested findings</span></div>
+      <div class="metric"><strong>{len(schema)}</strong><span>tables loaded</span></div>
     </section>
 
-    {decision}
+    {render_plan_panel(plan)}
 
-    <h2>Agent Plan</h2>
-    {plan_html}
+    {render_cross_signal(correlated)}
 
-    <h2>Second Pass</h2>
-    {reviewer_html}
+    {render_columns(stories)}
 
-    <h2>Action Queue</h2>
-    {action_queue}
-
-    <h2>Finding Register</h2>
-    <p class="note">This is the audit register behind the action queue. Every row should be traceable back to a source file and a saved SQL query.</p>
-    <table>
-      <thead><tr><th>Signal</th><th>Subject</th><th>Severity</th><th>Measured fact</th><th>Replay</th></tr></thead>
-      <tbody>{evidence_rows}</tbody>
-    </table>
-
-    <h2>Replay Pack</h2>
-    <p class="note">Open these only when someone asks how a lead was produced. The pitch should stay on the action queue.</p>
-    {sql_details}
-
-    <h2>Loaded Data Shape</h2>
-    <details class="sql-block">
-      <summary>Schema profile</summary>
+    <h2 class="section">Audit trail</h2>
+    <details class="audit">
+      <summary>Finding register</summary>
+      <p class="note">Every story above has a row here. Every row should be traceable back to a source file and a saved SQL query.</p>
+      <table>
+        <thead><tr><th>Story</th><th>Skill</th><th>Subject</th><th>Severity</th><th>Support</th><th>Replay</th><th>Summary</th></tr></thead>
+        <tbody>{render_finding_register(findings)}</tbody>
+      </table>
+    </details>
+    <details class="audit" style="margin-top: 12px;">
+      <summary>SQL replay pack</summary>
+      <p class="note">Open these only when someone asks how a story was produced. The pitch should stay on the columns above.</p>
+      {render_sql_details(findings)}
+    </details>
+    <details class="audit" style="margin-top: 12px;">
+      <summary>Loaded data shape</summary>
       <pre>{schema_json}</pre>
     </details>
   </main>

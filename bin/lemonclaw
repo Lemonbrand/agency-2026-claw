@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# LemonClaw entry point. Thin wrapper around bin/agency for branded usage.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+exec "$ROOT/bin/agency" "$@"

@@ -47,7 +47,7 @@ def heuristic_clusters() -> dict[str, Any]:
 def codex_clusters() -> dict[str, Any]:
     names = surfaced_entities()
     prompt = f"""
-You are doing cautious entity resolution for an audit workbench.
+You are doing cautious entity resolution for LemonClaw, a public-interest accountability story engine.
 
 Return JSON only. Do not use markdown.
 

@@ -113,7 +113,7 @@ WHERE CAST({quote_ident(category)} AS VARCHAR) = {sql_literal(group)}
 def codex_check_plan(findings: list[dict[str, Any]], plan: dict[str, Any]) -> list[dict[str, Any]]:
     schema = read_json(paths.state_dir() / "discovered.schema.json", [])
     prompt = f"""
-You are the disconfirming-check brain for a government accountability review.
+You are the disconfirming-check brain for LemonClaw, a public-interest accountability story engine.
 
 Return JSON only. Do not use markdown.
 

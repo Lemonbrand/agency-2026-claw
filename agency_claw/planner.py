@@ -70,7 +70,7 @@ def codex_plan() -> dict[str, Any]:
     skills = registry()
     matrix = applicability_matrix(profiles)
     prompt = f"""
-You are the planning brain for a local government accountability audit workbench.
+You are the planning brain for LemonClaw, a public-interest accountability story engine.
 
 Return JSON only. Do not wrap it in markdown.
 
