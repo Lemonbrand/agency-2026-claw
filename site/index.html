@@ -187,8 +187,14 @@
   <div class="cost-row">
     <div class="cost-cta">
       <div class="eyebrow">Cost &amp; sovereignty</div>
-      <h2><img src="/icons/dollar.png" alt=""> <span id="cost-headline">Forty-three cents.</span></h2>
-      <p>All of it routed through US infrastructure. This is the sovereignty argument as a line on a bill. Every byte of every prompt and every response crossed the border. Multiply by every Canadian government workload running similar shapes and the policy ask writes itself.</p>
+      <h2><img src="/icons/dollar.png" alt=""> <span id="cost-headline">$0 today.</span></h2>
+      <p>All of it routed through US infrastructure. This is the sovereignty argument as a line on a bill. Every byte of every prompt and every response crossed the border.</p>
+      <div id="cost-breakdown" class="grid grid--3" style="margin: 12px 0; gap: 8px;">
+        <div class="metric"><strong id="c-claude">—</strong><span>claude · US</span></div>
+        <div class="metric"><strong id="c-codex">—</strong><span>codex · US</span></div>
+        <div class="metric"><strong id="c-openrouter">—</strong><span>openrouter · US-routed</span></div>
+      </div>
+      <p class="note note--small" id="c-source">Updates every minute from the sovereignty tracker. Freezes at 14:00 ET.</p>
       <a class="btn" href="/explore/sovereignty.html">Open the cost tracker</a>
     </div>
     <div class="cost-chart">
@@ -293,6 +299,16 @@
     if (n.dollars_today != null) {
       document.getElementById('cost-headline').textContent =
         `${fmtUSD(n.dollars_today)} today.`;
+    }
+
+    // Per-provider sovereignty breakdown from tracker (source of truth).
+    const sov = ov.sovereignty || {};
+    document.getElementById('c-claude').textContent = fmtUSD(sov.claude_cost_usd ?? 0);
+    document.getElementById('c-codex').textContent = fmtUSD(sov.codex_cost_usd ?? 0);
+    document.getElementById('c-openrouter').textContent = fmtUSD(sov.openrouter_cost_usd ?? 0);
+    if (sov.date) {
+      document.getElementById('c-source').textContent =
+        `Tracker for ${escText(sov.date)}. Updates every minute. Freezes at 14:00 ET.`;
     }
 
     const meta = ov.build_meta || {};

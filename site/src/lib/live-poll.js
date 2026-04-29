@@ -12,7 +12,7 @@ import { fmtUSD, fmtInt } from './data-format.js';
 import { renderCostOverTime, renderHHI } from './charts.js';
 
 const FREEZE_AT_UTC = '2026-04-29T18:00:00Z';
-const POLL_INTERVAL_MS = 90 * 1000;
+const POLL_INTERVAL_MS = 60 * 1000;
 
 let _timer = null;
 let _frozen = false;
@@ -96,11 +96,17 @@ async function refreshNumbers() {
   if (!ov) return;
 
   const n = ov.headline_numbers || {};
+  const sov = ov.sovereignty || {};
   const map = {
     'm-rows': fmtInt(n.rows_scanned),
     'm-findings': fmtInt(n.findings),
     'm-dollars': fmtUSD(n.dollars_today),
     'cost-headline': n.dollars_today != null ? `${fmtUSD(n.dollars_today)} today.` : null,
+    'sov-headline': n.dollars_today != null ? `${fmtUSD(n.dollars_today)} today.` : null,
+    // Per-provider breakdown from sovereignty tracker
+    'c-claude': sov.claude_cost_usd != null ? fmtUSD(sov.claude_cost_usd) : null,
+    'c-codex': sov.codex_cost_usd != null ? fmtUSD(sov.codex_cost_usd) : null,
+    'c-openrouter': sov.openrouter_cost_usd != null ? fmtUSD(sov.openrouter_cost_usd) : null,
   };
   for (const [id, val] of Object.entries(map)) {
     const el = document.getElementById(id);
@@ -111,17 +117,30 @@ async function refreshNumbers() {
     }
   }
 
-  const sb = ov.status_breakdown || {};
-  const sMap = {
-    's-sql': fmtInt(sb.sql_executed),
-    's-mat': fmtInt(sb.materialized),
-    's-ext': fmtInt(sb.external_needed),
-    's-safe': fmtInt(sb.schema_safe),
-  };
-  for (const [id, val] of Object.entries(sMap)) {
-    const el = document.getElementById(id);
-    if (el && val != null) el.textContent = val;
-  }
+  // Status strip is derived from challenges.json, not overview.status_breakdown.
+  // Refresh it from the live challenge bundle.
+  try {
+    const chRes = await fetch(`/data/challenges.json?t=${Date.now()}`, { cache: 'no-store' });
+    if (chRes.ok) {
+      const challenges = await chRes.json();
+      const counts = { 'sql-executed': 0, materialized: 0, 'external-needed': 0, 'schema-safe': 0 };
+      for (const c of challenges) {
+        for (const lv of (c.proof_levels || [])) {
+          if (lv in counts) counts[lv]++;
+        }
+      }
+      const sMap = {
+        's-sql': counts['sql-executed'],
+        's-mat': counts.materialized,
+        's-ext': counts['external-needed'],
+        's-safe': counts['schema-safe'],
+      };
+      for (const [id, val] of Object.entries(sMap)) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = fmtInt(val);
+      }
+    }
+  } catch { /* keep prior */ }
 }
 
 async function refreshCostChart() {
