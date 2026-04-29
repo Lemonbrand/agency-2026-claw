@@ -33,7 +33,7 @@
   <span class="chip primary">Your decisions</span>
 </div>
 <h1>Mark what is worth escalating. Take it with you.</h1>
-<p class="lede">One JSON, one printable sheet. Your call, your record. Decisions are stored in your browser only. Nothing leaves your machine until you export.</p>
+<p class="lede">One downloadable file. One printable sheet. Your call, your record. Stored in your browser only. Nothing leaves until you export it.</p>
 
 <div class="judge-form">
   <div>
@@ -55,7 +55,7 @@
 </div>
 
 <div class="row sp-md">
-  <button class="btn btn--primary" id="export-json">Download JSON</button>
+  <button class="btn btn--primary" id="export-json">Download my review</button>
   <button class="btn" id="print-sheet">Print sheet</button>
   <span class="note note--small" style="margin-left: auto;">Total Q&amp;A spend this session: <code id="r-cost">$0.00</code></span>
 </div>
@@ -78,7 +78,7 @@
 import '/src/lib/nav.js';
 import { loadStore, setJudge, summary, exportJson, emitChange } from '/src/lib/decisions.js';
 import { loadChallenges } from '/src/lib/manifest.js';
-import { fmtUSD, fmtInt, escText, relativeTime } from '/src/lib/data-format.js';
+import { fmtUSD, fmtCAD, fmtInt, escText, relativeTime } from '/src/lib/data-format.js';
 import { startLivePoll } from '/src/lib/live-poll.js';
 
 function vCls(v) {
@@ -101,7 +101,7 @@ async function paint() {
   document.getElementById('r-review').textContent = s.review;
   document.getElementById('r-reject').textContent = s.reject;
   document.getElementById('r-total').textContent = s.total;
-  document.getElementById('r-cost').textContent = fmtUSD(s.total_qa_cost_usd);
+  document.getElementById('r-cost').textContent = `${fmtCAD(s.total_qa_cost_usd)} (${fmtUSD(s.total_qa_cost_usd)})`;
 
   const tbody = document.querySelector('#decisions-table tbody');
   const decisions = Object.entries(store.decisions);
@@ -124,7 +124,7 @@ async function paint() {
   } else {
     log.innerHTML = store.questions_asked.slice().reverse().map(q => `
       <div class="qa-log__row">
-        <div class="ts">${escText(q.ts)} · ${escText(q.model)} · ${fmtInt(q.tokens_in)}/${fmtInt(q.tokens_out)} tok · ${fmtUSD(q.cost_usd, 4)}</div>
+        <div class="ts">${escText(q.ts)} · answered by ${escText(q.model)} · ${fmtCAD(q.cost_usd, 4)}</div>
         <div><strong>Q:</strong> ${escText(q.question)}</div>
         <div style="color: var(--ink-2);"><strong>A:</strong> ${escText(q.answer_snippet)}…</div>
       </div>

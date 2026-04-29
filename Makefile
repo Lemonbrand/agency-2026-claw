@@ -1,4 +1,4 @@
-.PHONY: bootstrap demo presentation demo-agentic hackathon hackathon-offline hackathon-agentic onboard plan run-plan run correlate verify disconfirm resolve review promote ui neotoma-smoke test
+.PHONY: bootstrap demo presentation demo-agentic hackathon hackathon-offline hackathon-agentic onboard plan run-plan run correlate verify disconfirm resolve review promote ui execution-proof public-export judge-backend judge-app-init judge-refresh neotoma-smoke test
 
 bootstrap:
 	./scripts/bootstrap.sh
@@ -101,6 +101,21 @@ promote:
 
 ui:
 	./bin/agency ui
+
+execution-proof:
+	./bin/agency execution-proof
+
+public-export:
+	./bin/agency public-export
+
+judge-backend:
+	./bin/agency judge-bundle
+
+judge-app-init:
+	./bin/agency judge-app-init
+
+judge-refresh:
+	./scripts/refresh-public-until-freeze.sh
 
 neotoma-smoke:
 	./scripts/smoke-neotoma.sh

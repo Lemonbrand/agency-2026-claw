@@ -16,17 +16,28 @@ import { logQuestion } from './decisions.js';
 let _eventKey = null;
 
 const MODELS = {
+  kimi:   { id: 'moonshotai/kimi-k2.6',         label: 'Kimi K2.6',        country: 'OpenRouter' },
   sonnet: { id: 'anthropic/claude-sonnet-4.5', label: 'Claude Sonnet 4.5', country: 'US' },
   opus:   { id: 'anthropic/claude-opus-4.1',   label: 'Claude Opus 4.1',   country: 'US' },
   cohere: { id: 'cohere/command-a',            label: 'Cohere Command A',  country: 'CA', sovereign: true },
 };
 
-const DEFAULT_MODEL = 'sonnet';
+const DEFAULT_MODEL = 'kimi';
 
 let _dropletReachable = null;
 
 async function loadEventKey() {
   if (_eventKey !== null) return _eventKey;
+  try {
+    const local = await fetch('/env.local.json', { cache: 'no-store' });
+    if (local.ok) {
+      const env = await local.json();
+      _eventKey = env.openrouter_key || '';
+      if (_eventKey) return _eventKey;
+    }
+  } catch {
+    // Optional local demo file. Fall through to the public stub.
+  }
   try {
     const res = await fetch('/env.json', { cache: 'no-store' });
     if (res.ok) {
@@ -47,7 +58,13 @@ export async function checkDroplet() {
     const ctrl = new AbortController();
     setTimeout(() => ctrl.abort(), 1500);
     const res = await fetch('/api/health', { signal: ctrl.signal, cache: 'no-store' });
-    _dropletReachable = res.ok;
+    const type = res.headers.get('content-type') || '';
+    if (!res.ok || !type.includes('application/json')) {
+      _dropletReachable = false;
+      return _dropletReachable;
+    }
+    const data = await res.json().catch(() => null);
+    _dropletReachable = !!data && data.ok !== false;
   } catch {
     _dropletReachable = false;
   }
@@ -62,14 +79,14 @@ export function modelMeta(key) { return MODELS[key] || MODELS[DEFAULT_MODEL]; }
  * Ask a question. Returns { answer, model, tokens_in, tokens_out, cost_usd, citations, refused }.
  * If onChunk is provided, streams chunks of the answer as they arrive.
  */
-export async function ask({ question, scope = 'home', model = DEFAULT_MODEL, onChunk = null, decisionsSnapshot = null }) {
+export async function ask({ question, scope = 'home', model = DEFAULT_MODEL, onChunk = null, onTrace = null, decisionsSnapshot = null }) {
   if (!question || !question.trim()) {
     throw new Error('Question is empty.');
   }
 
   const useDroplet = await checkDroplet();
   const result = useDroplet
-    ? await askDroplet({ question, scope, model, decisionsSnapshot, onChunk })
+    ? await askDroplet({ question, scope, model, decisionsSnapshot, onChunk, onTrace })
     : await askDirect({ question, scope, model, onChunk });
 
   // Log to judge's session
@@ -83,17 +100,20 @@ export async function ask({ question, scope = 'home', model = DEFAULT_MODEL, onC
   return result;
 }
 
-async function askDroplet({ question, scope, model, decisionsSnapshot, onChunk }) {
+async function askDroplet({ question, scope, model, decisionsSnapshot, onChunk, onTrace }) {
   const res = await fetch('/api/ask', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question, scope, model, decisions_so_far: decisionsSnapshot }),
   });
   if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText);
-    throw new Error(`Droplet /api/ask failed (${res.status}): ${text}`);
+    let payload = null;
+    try { payload = await res.json(); } catch { /* use status text below */ }
+    if (payload?.trace && onTrace) onTrace(payload.trace);
+    throw new Error(payload?.error || `Local /api/ask failed (${res.status})`);
   }
   const data = await res.json();
+  if (data.trace && onTrace) onTrace(data.trace);
   // Non-streaming through droplet for simplicity. Stream emulation:
   if (onChunk && data.answer) onChunk(data.answer);
   return {
@@ -105,6 +125,8 @@ async function askDroplet({ question, scope, model, decisionsSnapshot, onChunk }
     citations: data.citations || [],
     refused: !!data.refused,
     refusal_reason: data.refusal_reason || null,
+    trace: data.trace || [],
+    evidence: data.evidence || null,
     via: 'droplet',
   };
 }
@@ -117,25 +139,36 @@ async function askDirect({ question, scope, model, onChunk }) {
   const ctx = await loadQAContext();
   const messages = buildMessages(question, scope, ctx);
   const modelId = modelMeta(model).id;
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort(), 60_000);
 
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${key}`,
-      'HTTP-Referer': 'https://agency2026.lemonbrand.io',
-      'X-Title': 'Agency 2026 LemonClaw',
-    },
-    body: JSON.stringify({
-      model: modelId,
-      messages,
-      stream: !!onChunk,
-      temperature: 0.2,
-      max_tokens: 1200,
-    }),
-  });
+  let res;
+  try {
+    res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`,
+        'HTTP-Referer': 'https://agency2026.lemonbrand.io',
+        'X-Title': 'Agency 2026 LemonClaw',
+      },
+      body: JSON.stringify({
+        model: modelId,
+        messages,
+        stream: !!onChunk,
+        temperature: 0.2,
+        max_tokens: 1200,
+      }),
+    });
+  } catch (err) {
+    clearTimeout(timeout);
+    if (err?.name === 'AbortError') throw new Error('Model request timed out after 60 seconds.');
+    throw err;
+  }
 
   if (!res.ok) {
+    clearTimeout(timeout);
     const text = await res.text().catch(() => res.statusText);
     if (res.status === 401) throw new Error('Event key rejected. Try again later or ask Simon to rotate.');
     if (res.status === 429) throw new Error('Rate limited. Try again in a few seconds.');
@@ -149,6 +182,7 @@ async function askDirect({ question, scope, model, onChunk }) {
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    let streamDone = false;
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
@@ -159,7 +193,11 @@ async function askDirect({ question, scope, model, onChunk }) {
         const trimmed = line.trim();
         if (!trimmed.startsWith('data:')) continue;
         const payload = trimmed.slice(5).trim();
-        if (payload === '[DONE]') break;
+        if (payload === '[DONE]') {
+          streamDone = true;
+          await reader.cancel().catch(() => {});
+          break;
+        }
         try {
           const json = JSON.parse(payload);
           const delta = json.choices?.[0]?.delta?.content;
@@ -170,6 +208,7 @@ async function askDirect({ question, scope, model, onChunk }) {
           }
         } catch { /* ignore bad chunk */ }
       }
+      if (streamDone) break;
     }
   } else {
     const data = await res.json();
@@ -177,6 +216,7 @@ async function askDirect({ question, scope, model, onChunk }) {
     usage.in = data.usage?.prompt_tokens || 0;
     usage.out = data.usage?.completion_tokens || 0;
   }
+  clearTimeout(timeout);
 
   // Best-effort cost derivation. OpenRouter posts cost in /api/v1/generation/{id} but we
   // do not block on it; estimate from list pricing.
@@ -202,10 +242,12 @@ Cite findings by id, SHA, or source URL. Refuse to speculate past the evidence.
 When you do not know, say so and name what data would change the answer.`;
 
   const ctxBundle = JSON.stringify({
-    schema: ctx.schema,
-    audit: ctx.audit,
-    story_packets: ctx.story_packets,
+    schema: ctx.schema || ctx.schema_summary,
+    audit: ctx.audit || ctx.audit_summary,
+    story_packets: ctx.story_packets || ctx.review_stories,
     top_findings: ctx.top_findings,
+    challenges: ctx.challenges,
+    system_rules: ctx.system_rules,
     citations: ctx.citations,
     scope,
   }).slice(0, 240_000); // hard cap by character to dodge runaway context
@@ -220,6 +262,7 @@ When you do not know, say so and name what data would change the answer.`;
 function estimateCost(modelId, tokensIn, tokensOut) {
   // Per-1M list rates. Direct OpenRouter pass-through pricing.
   const rates = {
+    'moonshotai/kimi-k2.6':         { in: 0.75, out: 3.50 },
     'anthropic/claude-sonnet-4.5': { in: 3.00, out: 15.00 },
     'anthropic/claude-opus-4.1':   { in: 15.00, out: 75.00 },
     'cohere/command-a':            { in: 2.50, out: 10.00 },

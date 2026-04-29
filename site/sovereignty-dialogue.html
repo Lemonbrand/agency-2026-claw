@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canadian AI Compute Lane · Agency 2026</title>
+<meta name="description" content="A practical path from zero to a Canadian AI data centre launch.">
+<link rel="icon" href="/icons/shield.png" type="image/png">
+<link rel="stylesheet" href="/src/styles/lemon.css">
+<style>
+  body { padding: 0; }
+  .page { max-width: 1280px; padding: 0; box-shadow: none; background: transparent; }
+  .nav { margin: 24px 24px 0; border-radius: 14px; padding: 16px 24px; }
+  .stage {
+    background: var(--paper);
+    border-radius: 14px;
+    margin: 18px 24px 24px;
+    padding: clamp(28px, 4vw, 56px);
+    box-shadow: var(--shadow-lg);
+  }
+  @media (max-width: 720px) {
+    .nav { margin: 8px 8px 0; }
+    .stage { margin: 12px 8px 18px; padding: 28px 24px 34px; border-radius: 12px; }
+  }
+
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) 340px;
+    gap: 34px;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+  @media (max-width: 900px) { .hero { grid-template-columns: 1fr; } }
+  .hero h1 {
+    max-width: 820px;
+    margin-bottom: 14px;
+  }
+  .hero p {
+    color: var(--ink-2);
+    font-size: clamp(17px, 1.8vw, 21px);
+    line-height: 1.45;
+    max-width: 780px;
+  }
+  .hero strong { color: var(--ink); }
+  .hero-visual {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: hsl(200, 12%, 96%);
+    padding: 24px;
+    min-height: 280px;
+    display: grid;
+    place-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-visual::before {
+    content: "";
+    position: absolute;
+    inset: 24px;
+    border: 1px dashed var(--border-s);
+    border-radius: 14px;
+  }
+  .hero-visual img { width: min(190px, 52vw); position: relative; z-index: 1; }
+  .receipt-pill {
+    position: absolute;
+    left: 22px;
+    bottom: 22px;
+    z-index: 2;
+    background: var(--paper);
+    border: 1px solid var(--orange-border);
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--orange-deep);
+  }
+
+  .metric-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin: 20px 0 34px;
+  }
+  @media (max-width: 860px) { .metric-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .metric-strip { grid-template-columns: 1fr; } }
+  .stat {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--paper);
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 46px 1fr;
+    gap: 12px;
+    align-items: center;
+  }
+  .stat img { width: 46px; height: 46px; object-fit: contain; }
+  .stat strong { display: block; font-family: "Outfit", sans-serif; font-size: 21px; line-height: 1.05; }
+  .stat span { display: block; color: var(--ink-2); font-size: 12.5px; line-height: 1.35; margin-top: 3px; }
+
+  .section-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 30px 0 12px;
+  }
+  .section-head p { color: var(--ink-2); max-width: 620px; font-size: 14px; line-height: 1.45; }
+  @media (max-width: 720px) { .section-head { display: block; } .section-head p { margin-top: 6px; } }
+
+  .flow {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+  }
+  @media (max-width: 920px) { .flow { grid-template-columns: 1fr; } }
+  .flow-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--paper);
+    padding: 16px;
+    position: relative;
+    min-height: 158px;
+  }
+  .flow-card::after {
+    content: "";
+    position: absolute;
+    top: 34px;
+    right: -11px;
+    width: 12px;
+    height: 2px;
+    background: var(--orange);
+  }
+  .flow-card:last-child::after { display: none; }
+  @media (max-width: 920px) { .flow-card::after { display: none; } }
+  .flow-card img { width: 38px; height: 38px; margin-bottom: 10px; }
+  .flow-card .when { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--orange-deep); margin-bottom: 5px; }
+  .flow-card h3 { font-size: 17px; margin-bottom: 6px; }
+  .flow-card p { color: var(--ink-2); font-size: 13px; line-height: 1.42; }
+
+  .graph-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 880px) { .graph-grid { grid-template-columns: 1fr; } }
+  .graph-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--paper);
+    padding: 20px;
+  }
+  .graph-card h3 { font-size: 20px; margin-bottom: 4px; }
+  .graph-card .sub { color: var(--ink-2); font-size: 13px; line-height: 1.45; margin-bottom: 16px; }
+  .stack {
+    height: 34px;
+    display: flex;
+    overflow: hidden;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+  .seg { height: 100%; }
+  .seg.anchor { width: 35%; background: var(--orange); }
+  .seg.private { width: 40%; background: var(--navy); }
+  .seg.public { width: 15%; background: var(--green); }
+  .seg.site { width: 10%; background: var(--amber); }
+  .legend-list { display: grid; gap: 8px; }
+  .legend-item {
+    display: grid;
+    grid-template-columns: 12px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    color: var(--ink-2);
+    font-size: 13px;
+  }
+  .swatch { width: 12px; height: 12px; border-radius: 50%; }
+  .swatch.anchor { background: var(--orange); }
+  .swatch.private { background: var(--navy); }
+  .swatch.public { background: var(--green); }
+  .swatch.site { background: var(--amber); }
+  .bar-list { display: grid; gap: 10px; }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 42px;
+    gap: 10px;
+    align-items: center;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .track {
+    height: 10px;
+    border-radius: 999px;
+    background: var(--paper-2);
+    overflow: hidden;
+  }
+  .fill { height: 100%; border-radius: inherit; background: var(--orange); }
+  .fill.navy { background: var(--navy); }
+  .fill.green { background: var(--green); }
+  .fill.amber { background: var(--amber); }
+
+  .constraints {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  @media (max-width: 980px) { .constraints { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .constraints { grid-template-columns: 1fr; } }
+  .constraint {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--paper);
+    padding: 18px;
+  }
+  .constraint img { width: 42px; height: 42px; margin-bottom: 8px; }
+  .constraint h3 { font-size: 17px; margin-bottom: 5px; }
+  .constraint p { color: var(--ink-2); font-size: 13px; line-height: 1.42; }
+
+  .close-panel {
+    margin-top: 32px;
+    border-radius: 14px;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 18px;
+    align-items: center;
+  }
+  @media (max-width: 760px) { .close-panel { grid-template-columns: 1fr; } }
+  .close-panel h2 { color: var(--paper); margin-bottom: 6px; }
+  .close-panel p { color: hsl(200, 12%, 82%); max-width: 760px; line-height: 1.45; }
+</style>
+</head>
+<body>
+<div class="page">
+<nav class="nav"></nav>
+
+<main class="stage fade-in">
+  <section class="hero">
+    <div>
+      <div class="row" style="margin-bottom: 16px;">
+        <span class="chip primary">Dialogue brief</span>
+        <span class="chip orange">Zero to launch</span>
+      </div>
+      <h1>Launch a Canadian AI compute lane.</h1>
+      <p><strong>The demo proves demand.</strong> Government teams can use AI today. The gap is not imagination. The gap is a practical Canadian route for sensitive work.</p>
+    </div>
+    <div class="hero-visual">
+      <img src="/img/3dicons/rocket.png" alt="">
+      <div class="receipt-pill"><span id="dialogue-cost">CA$1,605</span> routed outside Canada today</div>
+    </div>
+  </section>
+
+  <section class="metric-strip" aria-label="Why now">
+    <div class="stat"><img src="/img/3dicons/chart.png" alt=""><div><strong>Demand is here</strong><span>AI is already useful for accountability work.</span></div></div>
+    <div class="stat"><img src="/img/3dicons/lock.png" alt=""><div><strong>Data is sensitive</strong><span>Routing and logs must be explainable.</span></div></div>
+    <div class="stat"><img src="/img/3dicons/money-bag.png" alt=""><div><strong>Money can stack</strong><span>Anchor demand makes capital possible.</span></div></div>
+    <div class="stat"><img src="/img/3dicons/tools.png" alt=""><div><strong>Build is known</strong><span>Power, fibre, cooling, tenants, operations.</span></div></div>
+  </section>
+
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">Path to launch</div>
+      <h2>From zero to operating lane.</h2>
+    </div>
+    <p>Start with demand, not concrete. A data centre becomes financeable when enough credible workloads are attached to it.</p>
+  </div>
+  <section class="flow" aria-label="Timeline from zero to launch">
+    <article class="flow-card"><img src="/img/3dicons/folder.png" alt=""><div class="when">0 to 90 days</div><h3>Demand map</h3><p>List public workloads, sensitivity level, volume, latency, and audit needs.</p></article>
+    <article class="flow-card"><img src="/img/3dicons/location.png" alt=""><div class="when">3 to 6 months</div><h3>Site and power</h3><p>Shortlist sites with grid capacity, fibre, cooling, zoning, and resilience.</p></article>
+    <article class="flow-card"><img src="/img/3dicons/dollar.png" alt=""><div class="when">6 to 12 months</div><h3>Anchor deal</h3><p>Blend tenant commitments, public guarantees, and infrastructure capital.</p></article>
+    <article class="flow-card"><img src="/img/3dicons/shield.png" alt=""><div class="when">12 to 24 months</div><h3>Build and certify</h3><p>Commission secure operations, audit logs, routing controls, and model access.</p></article>
+    <article class="flow-card"><img src="/img/3dicons/rocket.png" alt=""><div class="when">24 months plus</div><h3>Launch lane</h3><p>Run the first government AI workloads with published cost and evidence metrics.</p></article>
+  </section>
+
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">Money and constraints</div>
+      <h2>What has to pencil.</h2>
+    </div>
+    <p>The public sector does not need to build everything. It needs to create a credible demand signal that builders and capital can underwrite.</p>
+  </div>
+  <section class="graph-grid">
+    <article class="graph-card">
+      <h3>Funding stack</h3>
+      <p class="sub">Illustrative structure for a first Canadian public-sector AI compute lane.</p>
+      <div class="stack" aria-hidden="true">
+        <div class="seg anchor"></div><div class="seg private"></div><div class="seg public"></div><div class="seg site"></div>
+      </div>
+      <div class="legend-list">
+        <div class="legend-item"><span class="swatch anchor"></span><span>Government anchor workload commitments</span><strong>35%</strong></div>
+        <div class="legend-item"><span class="swatch private"></span><span>Private infrastructure capital</span><strong>40%</strong></div>
+        <div class="legend-item"><span class="swatch public"></span><span>Federal and provincial guarantees</span><strong>15%</strong></div>
+        <div class="legend-item"><span class="swatch site"></span><span>Utility, site, and training incentives</span><strong>10%</strong></div>
+      </div>
+    </article>
+
+    <article class="graph-card">
+      <h3>Constraint pressure</h3>
+      <p class="sub">The hard parts are operational. The meeting has to surface these early.</p>
+      <div class="bar-list">
+        <div class="bar-row"><span>Power</span><div class="track"><div class="fill" style="width: 95%;"></div></div><strong>high</strong></div>
+        <div class="bar-row"><span>Anchor tenants</span><div class="track"><div class="fill navy" style="width: 88%;"></div></div><strong>high</strong></div>
+        <div class="bar-row"><span>Cooling</span><div class="track"><div class="fill amber" style="width: 76%;"></div></div><strong>med</strong></div>
+        <div class="bar-row"><span>Fibre</span><div class="track"><div class="fill green" style="width: 70%;"></div></div><strong>med</strong></div>
+        <div class="bar-row"><span>Security</span><div class="track"><div class="fill navy" style="width: 82%;"></div></div><strong>high</strong></div>
+        <div class="bar-row"><span>Procurement</span><div class="track"><div class="fill" style="width: 84%;"></div></div><strong>high</strong></div>
+      </div>
+    </article>
+  </section>
+
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">First meeting agenda</div>
+      <h2>Four questions, one room.</h2>
+    </div>
+    <p>Useful for a CAO, CIO, deputy minister, builder, utility, privacy lead, and procurement lead.</p>
+  </div>
+  <section class="constraints">
+    <article class="constraint"><img src="/img/3dicons/chart.png" alt=""><h3>What work moves first?</h3><p>Pick three workflows with real volume: grants, procurement, permits, records, or service triage.</p></article>
+    <article class="constraint"><img src="/img/3dicons/lock.png" alt=""><h3>What must stay Canadian?</h3><p>Classify public, sensitive, protected, regulated, and confidential workloads.</p></article>
+    <article class="constraint"><img src="/img/3dicons/money-bag.png" alt=""><h3>Who signs demand?</h3><p>Name the anchor tenants, budget owners, and minimum spend that makes financing real.</p></article>
+    <article class="constraint"><img src="/img/3dicons/tools.png" alt=""><h3>What blocks launch?</h3><p>Power, interconnect, cooling, security certification, procurement, GPUs, and model availability.</p></article>
+  </section>
+
+  <section class="close-panel">
+    <div>
+      <h2>The ask is a pilot lane.</h2>
+      <p>One Canadian route. One sensitive government workflow. Published cost, latency, quality, routing, and audit metrics. If it works, expand it.</p>
+    </div>
+    <a class="btn btn--primary" href="/index.html">Back to the receipt</a>
+  </section>
+</main>
+</div>
+
+<script type="module">
+import '/src/lib/nav.js';
+import { startLivePoll } from '/src/lib/live-poll.js';
+import { loadOverview } from '/src/lib/manifest.js';
+
+function fmtBigDollar(n) {
+  if (n == null || isNaN(n)) return '0';
+  if (n < 10) return n.toFixed(2);
+  if (n < 1000) return Math.round(n).toString();
+  return Math.round(n).toLocaleString('en-US');
+}
+
+(async () => {
+  const ov = await loadOverview();
+  const sov = ov.sovereignty || {};
+  const total = (sov.claude_cost_usd || 0) + (sov.codex_cost_usd || 0) + (sov.openrouter_cost_usd || 0);
+  const cost = document.getElementById('dialogue-cost');
+  if (cost) cost.textContent = `CA$${fmtBigDollar(total * 1.385)}`;
+})();
+
+startLivePoll({ includeCostChart: false, includeHHIChart: false });
+</script>
+</body>
+</html>

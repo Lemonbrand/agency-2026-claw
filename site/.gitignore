@@ -8,6 +8,7 @@ public/briefs/
 .DS_Store
 
 # Generated chart payloads (backend writes these on each public-export)
+public/env.local.json
 public/charts/
 public/data/
 public/embeds/

@@ -4,7 +4,7 @@ import argparse
 import sys
 
 from . import correlate as correlate_mod
-from . import dashboard, dataset, detectors, hackathon, ledger, neotoma, paths
+from . import dashboard, dataset, detectors, execution_proof, hackathon, judge_app, ledger, neotoma, paths, public_export
 from .disconfirm import disconfirm
 from .planner import create_plan
 from .resolution import resolve_entities
@@ -123,6 +123,36 @@ def cmd_ui(_: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_execution_proof(args: argparse.Namespace) -> int:
+    out = execution_proof.run_execution_proof(max_rows=args.max_rows, timeout_s=args.timeout)
+    ok = sum(1 for proof in out.get("proofs", []) if proof.get("result", {}).get("ok"))
+    print(f"execution proof: {ok}/{out.get('count', 0)} probes executed")
+    print(paths.findings_dir() / "execution-proof.json")
+    return 0
+
+
+def cmd_public_export(_: argparse.Namespace) -> int:
+    out = public_export.public_export()
+    print(f"public export: {out['artifact_count']} artifacts")
+    print(out["manifest"])
+    return 0
+
+
+def cmd_judge_bundle(args: argparse.Namespace) -> int:
+    proof = execution_proof.run_execution_proof(max_rows=args.max_rows, timeout_s=args.timeout)
+    ok = sum(1 for item in proof.get("proofs", []) if item.get("result", {}).get("ok"))
+    export = public_export.public_export()
+    print(f"judge bundle: {ok}/{proof.get('count', 0)} probes executed, {export['artifact_count']} artifacts")
+    print(export["manifest"])
+    return 0
+
+
+def cmd_judge_app_init(_: argparse.Namespace) -> int:
+    out = judge_app.init_shared_runtime()
+    print(out["runtime"])
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="agency")
     sub = parser.add_subparsers(required=True)
@@ -172,6 +202,22 @@ def build_parser() -> argparse.ArgumentParser:
 
     ui = sub.add_parser("ui")
     ui.set_defaults(func=cmd_ui)
+
+    proof = sub.add_parser("execution-proof")
+    proof.add_argument("--max-rows", type=int, default=25)
+    proof.add_argument("--timeout", type=int, default=8)
+    proof.set_defaults(func=cmd_execution_proof)
+
+    export = sub.add_parser("public-export")
+    export.set_defaults(func=cmd_public_export)
+
+    bundle = sub.add_parser("judge-bundle")
+    bundle.add_argument("--max-rows", type=int, default=25)
+    bundle.add_argument("--timeout", type=int, default=8)
+    bundle.set_defaults(func=cmd_judge_bundle)
+
+    shared = sub.add_parser("judge-app-init")
+    shared.set_defaults(func=cmd_judge_app_init)
 
     return parser
 

@@ -22,7 +22,7 @@
   <span class="chip">review leads</span>
 </div>
 <h1>Every review lead the system surfaced.</h1>
-<p class="lede">Searchable index of review leads across the accountability checks. Click a row to open the check. Severity and evidence status come from the evidence trail.</p>
+<p class="lede">Click any row for the full detail. Severity and support status come from the evidence trail.</p>
 
 <div class="filter-row">
   <input type="text" id="filter-input" placeholder="Search by entity, source table, headline, or check id...">
@@ -52,7 +52,7 @@
       <th>Severity</th>
       <th>Support</th>
       <th>Source data</th>
-      <th>Evidence hash</th>
+      <th>Receipt</th>
     </tr>
   </thead>
   <tbody><tr><td colspan="8" class="empty">Loading review leads...</td></tr></tbody>
@@ -65,11 +65,14 @@
 </div>
 <script type="module">
 import '/src/lib/nav.js';
-import { loadFindingsIndex } from '/src/lib/manifest.js';
+import { loadFindingsIndex, loadChallenges } from '/src/lib/manifest.js';
 import { fmtInt, escText, escAttr, shortHash } from '/src/lib/data-format.js';
 import { startLivePoll } from '/src/lib/live-poll.js';
+import { openFindingDrawer } from '/src/lib/finding-drawer.js';
 
 let _all = [];
+let _byId = new Map();
+let _challenges = [];
 
 function sevCls(s) {
   switch ((s || '').toLowerCase()) { case 'high': return 'red'; case 'medium': return 'amber'; case 'low': return 'green'; default: return 'gray'; }
@@ -77,24 +80,47 @@ function sevCls(s) {
 function supCls(s) {
   switch ((s || '').toLowerCase()) { case 'supported': return 'green'; case 'contested': return 'red'; case 'inconclusive': return 'amber'; default: return 'gray'; }
 }
+function supLabel(s) {
+  switch ((s || '').toLowerCase()) {
+    case 'supported': return 'Supported';
+    case 'contested': return 'Contested';
+    case 'inconclusive': return 'Inconclusive';
+    case 'not_checked': return 'Needs reviewer check';
+    default: return s ? String(s).replaceAll('_', ' ') : '';
+  }
+}
 
 function paint(rows) {
   const tbody = document.querySelector('#findings-table tbody');
   if (!rows.length) {
     tbody.innerHTML = '<tr><td colspan="8" class="empty">No review leads match your filter.</td></tr>';
   } else {
-    tbody.innerHTML = rows.map(f => `
-      <tr>
-        <td><a href="/challenges/${escAttr(f.challenge_id)}.html">${escText(f.challenge_id)}</a></td>
-        <td><strong>${escText(f.entity)}</strong></td>
-        <td>${escText(f.headline || '')}</td>
-        <td>${f.top_metric ? `${escText(f.top_metric.label || '')}: <strong>${escText(f.top_metric.value || '')}</strong>` : ''}</td>
-        <td><span class="chip ${sevCls(f.severity)}">${escText(f.severity || '')}</span></td>
-        <td><span class="chip ${supCls(f.support_status)}">${escText(f.support_status || '')}</span></td>
-        <td>${(f.source_tables || []).slice(0, 2).map(t => `<a href="?q=${escAttr(encodeURIComponent(t))}"><code>${escText(t)}</code></a>`).join(' ')}</td>
-        <td><span class="pill">${escText(shortHash(f.sha))}</span></td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = rows.map((f, i) => {
+      const id = f.finding_id || `${f.challenge_id}-${i}`;
+      return `
+        <tr data-finding="${escAttr(id)}" tabindex="0" role="button" aria-label="Open details for ${escAttr(f.entity || 'finding')}">
+          <td><strong>${escText(f.challenge_id)}</strong></td>
+          <td><strong>${escText(f.entity)}</strong></td>
+          <td>${escText(f.headline || '')}</td>
+          <td>${f.top_metric ? `${escText(f.top_metric.label || '')}: <strong>${escText(f.top_metric.value || '')}</strong>` : ''}</td>
+          <td><span class="chip ${sevCls(f.severity)}">${escText(f.severity || '')}</span></td>
+          <td><span class="chip ${supCls(f.support_status)}">${escText(supLabel(f.support_status))}</span></td>
+          <td>${(f.source_tables || []).slice(0, 2).map(t => `<code>${escText(t)}</code>`).join(' ')}</td>
+          <td><span class="pill">${escText(shortHash(f.sha))}</span></td>
+        </tr>
+      `;
+    }).join('');
+    tbody.querySelectorAll('tr[data-finding]').forEach(tr => {
+      const id = tr.getAttribute('data-finding');
+      const open = () => {
+        const f = _byId.get(id);
+        if (f) openFindingDrawer(f, { challenges: _challenges });
+      };
+      tr.addEventListener('click', open);
+      tr.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+      });
+    });
   }
   document.getElementById('filter-count').textContent = `${rows.length} review leads`;
 }
@@ -116,7 +142,10 @@ function applyFilters() {
 }
 
 (async () => {
-  _all = await loadFindingsIndex();
+  const [findings, challenges] = await Promise.all([loadFindingsIndex(), loadChallenges()]);
+  _challenges = challenges;
+  _all = findings.map((f, i) => ({ ...f, finding_id: f.finding_id || `${f.challenge_id}-${i}` }));
+  for (const f of _all) _byId.set(f.finding_id, f);
   const params = new URLSearchParams(location.search);
   const initialQ = params.get('q') || params.get('source') || '';
   if (initialQ) document.getElementById('filter-input').value = initialQ;

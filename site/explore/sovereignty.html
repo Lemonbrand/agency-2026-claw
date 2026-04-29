@@ -25,15 +25,15 @@
   <span class="chip">cost</span>
   <span class="chip orange" id="cost-live-chip">live</span>
 </div>
-<h1><span id="sov-headline">Forty-three cents.</span> All routed through Virginia.</h1>
-<p class="lede">This is the sovereignty argument as a line on a bill. Every byte of every prompt and every response crossed the border. Multiply by every Canadian government workload running similar shapes and the policy ask writes itself.</p>
+<h1><span id="sov-headline">Tracked spend today.</span> All routed through US-controlled infrastructure.</h1>
+<p class="lede">A visible bill, with a clear destination. Every prompt and every answer crossed the border. Multiply this by every Canadian government workload doing the same and the policy question writes itself.</p>
 
 <div class="live-card">
   <div class="metric accent-navy"><strong id="m-rows">0</strong><span>rows scanned</span></div>
   <div class="metric accent-orange"><strong id="m-findings">0</strong><span>review leads surfaced</span></div>
 </div>
 <div class="live-card">
-  <div class="metric accent-green"><strong id="m-dollars">$0.00</strong><span>API-equivalent today</span></div>
+  <div class="metric accent-green"><strong id="m-dollars">CA$0.00</strong><span>spent on AI today (CAD)</span></div>
   <div class="live-chart">
     <div class="eyebrow">Spend over time · stacked by provider</div>
     <div class="live-chart-canvas"><canvas id="chart-cost"></canvas></div>
@@ -41,11 +41,10 @@
   </div>
 </div>
 
-<h2 class="sp-md">Underlying tracker</h2>
-<p class="note sp-md">The classic cost dashboard, embedded. Refreshes when the backend regenerates <code>web/sovereignty.html</code>.</p>
+<h2 class="sp-md">The full tracker</h2>
+<p class="note sp-md">The detailed cost view. Updates when the underlying numbers change.</p>
 <div class="iframe-shell">
   <div class="iframe-meta">
-    <span>source: <code>web/sovereignty.html</code></span>
     <a href="/embeds/sovereignty.html" target="_blank" rel="noopener">Open in own tab ↗</a>
   </div>
   <iframe src="/embeds/sovereignty.html" title="Sovereignty tracker"></iframe>
@@ -53,14 +52,14 @@
 
 <footer class="footer">
   <div class="footer__close">If the auditors won't, the system will, and it will show its work.</div>
-  <div class="footer__meta"><a href="/index.html">Home</a> · <a href="/explore/audit.html">Audit</a></div>
+  <div class="footer__meta"><a href="/index.html">Home</a> · <a href="/explore/audit.html">Evidence</a></div>
 </footer>
 </div>
 <script type="module">
 import '/src/lib/nav.js';
 import { loadOverview } from '/src/lib/manifest.js';
 import { renderCostOverTime } from '/src/lib/charts.js';
-import { fmtUSD, fmtInt } from '/src/lib/data-format.js';
+import { fmtUSD, fmtCAD, fmtInt } from '/src/lib/data-format.js';
 import { startLivePoll } from '/src/lib/live-poll.js';
 
 async function paint() {
@@ -68,9 +67,9 @@ async function paint() {
   const n = ov.headline_numbers || {};
   document.getElementById('m-rows').textContent = fmtInt(n.rows_scanned);
   document.getElementById('m-findings').textContent = fmtInt(n.findings);
-  document.getElementById('m-dollars').textContent = fmtUSD(n.dollars_today);
+  document.getElementById('m-dollars').textContent = fmtCAD(n.dollars_today);
   if (n.dollars_today != null) {
-    document.getElementById('sov-headline').textContent = `${fmtUSD(n.dollars_today)} today.`;
+    document.getElementById('sov-headline').textContent = `${fmtCAD(n.dollars_today)} today.`;
   }
   await renderCostOverTime(document.getElementById('chart-cost'), document.getElementById('cap-cost'));
 }

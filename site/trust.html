@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Evidence Trail · Agency 2026</title>
-<meta name="description" content="Three review assistants. One evidence trail. Every claim hashed and replayable.">
+<meta name="description" content="Three AI reviewers. One trail of receipts. Every claim verifiable.">
 <link rel="icon" href="/icons/shield.png" type="image/png">
 <link rel="stylesheet" href="/src/styles/lemon.css">
 <style>
@@ -108,8 +108,8 @@
     <span class="chip green" id="audit-clean-chip">loading</span>
   </div>
 
-  <h1 class="h1">Every claim checked. <span class="accent">Every receipt hashed.</span></h1>
-  <p class="lede">Three review assistants, one evidence trail. The system was not asked to guess. It assembled evidence, ran queries, and refused claims the data could not support. The numbers below are the review verdict.</p>
+  <h1 class="h1">Every claim checked. <span class="accent">Every receipt kept.</span></h1>
+  <p class="lede">Three AI reviewers, one trail of receipts. The system was not asked to guess. It read the data, ran the queries, and refused any claim the data could not support. The verdict is below.</p>
 
   <div class="verdict-row">
     <div class="vmetric green"><div class="num" id="v-clean">0</div><div class="lab">Clean</div></div>
@@ -130,27 +130,27 @@
     </div>
     <div class="legend-card">
       <div class="term">Query proof</div>
-      <p>The reproducible receipt: read-only query, record count, runtime, and hash. It proves what the system actually checked.</p>
+      <p>The receipt: the exact query, how many records came back, how long it took, and a fingerprint another reviewer can re-run.</p>
     </div>
   </div>
 
-  <h2 class="h2">Three review assistants. Three jobs.</h2>
-  <p class="sub">Each model was used for the job it is good at, then checked against the others. The architecture is the evidence discipline.</p>
+  <h2 class="h2">Three reviewers. Three jobs.</h2>
+  <p class="sub">Each AI is used for the job it is good at, then checked against the others. The discipline is in the hand-off, not the model.</p>
   <div class="brain-row">
     <div class="brain">
-      <h3><img src="/icons/bulb.png" alt="">GLM 5.1</h3>
-      <div class="role">Discovery</div>
-      <p>Drafts research briefs for each accountability question in parallel. Cheap, fast, eleven checks at once.</p>
+      <h3><img src="/icons/bulb.png" alt="">First reviewer</h3>
+      <div class="role">Discovery · GLM 5.1</div>
+      <p>Reads each accountability question and drafts a research brief. Eleven questions, all at once.</p>
     </div>
     <div class="brain b-codex">
-      <h3><img src="/icons/tick.png" alt="">Codex GPT-5.5</h3>
-      <div class="role">Query &amp; verify</div>
-      <p>Connects directly to the GovAlta Postgres. Verifies every reference, runs the read-only query, captures runtime, record count, and query hash for replay.</p>
+      <h3><img src="/icons/tick.png" alt="">Second reviewer</h3>
+      <div class="role">Query &amp; verify · Codex GPT-5.5</div>
+      <p>Connects to the Alberta database. Checks every reference, runs the query, and captures the receipt: runtime, record count, and a fingerprint another reviewer can re-run.</p>
     </div>
     <div class="brain b-claude">
-      <h3><img src="/icons/shield.png" alt="">Claude Opus 4.7</h3>
-      <div class="role">Review &amp; explain</div>
-      <p>Runs the evidence review, assembles the presentation, refuses claims past the data, and explains what is missing.</p>
+      <h3><img src="/icons/shield.png" alt="">Final reviewer</h3>
+      <div class="role">Review &amp; explain · Claude Opus 4.7</div>
+      <p>Reviews the evidence, writes the explanation, refuses any claim the data does not support, and names what is missing.</p>
     </div>
   </div>
 
@@ -192,7 +192,7 @@ function vCls(v) {
   const titleById = Object.fromEntries(challenges.map(c => [c.id, c.title]));
   const grid = document.getElementById('audit-grid');
   if (!audit.per_challenge?.length) {
-    grid.innerHTML = '<p class="empty">Audit will populate as the lexical pass completes.</p>';
+    grid.innerHTML = '<p class="empty">The verdict will appear once the review completes.</p>';
     return;
   }
   grid.innerHTML = audit.per_challenge.map(p => {

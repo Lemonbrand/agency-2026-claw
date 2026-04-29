@@ -9,6 +9,7 @@ const LINKS = [
   { label: 'Cost',      path: '/index.html',     match: ['/', '/index.html'] },
   { label: 'Findings',  path: '/stories.html',   match: ['/stories.html'] },
   { label: 'Evidence',  path: '/trust.html',     match: ['/trust.html'] },
+  { label: 'Sovereign AI',  path: '/sovereignty-dialogue.html', match: ['/sovereignty-dialogue.html'] },
   { label: 'Ask',      path: '/explore/ask.html', match: ['/explore/ask.html'] },
 ];
 

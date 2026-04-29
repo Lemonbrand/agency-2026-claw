@@ -23,6 +23,7 @@ const inputs = {
   home: resolve(root, 'index.html'),
   stories: resolve(root, 'stories.html'),
   trust: resolve(root, 'trust.html'),
+  dialogue: resolve(root, 'sovereignty-dialogue.html'),
 };
 for (const slug of challenges) {
   inputs[`challenge_${slug}`] = resolve(root, `challenges/${slug}.html`);

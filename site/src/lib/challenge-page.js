@@ -4,11 +4,11 @@
  * and provides the empty mount points. This module fills them.
  */
 
-import { loadChallenge, loadAuditSummary, loadExecutionProof } from './manifest.js';
+import { loadChallenge, loadAuditSummary, loadExecutionProof, loadFindingsIndex, loadChallenges } from './manifest.js';
 import { renderProofChips, statusLabel } from './proof.js';
 import { setDecision, getDecision } from './decisions.js';
-import { ask } from './openrouter.js';
-import { escText, escAttr, fmtInt, fmtUSD, shortHash } from './data-format.js';
+import { openFindingDrawer } from './finding-drawer.js';
+import { escText, escAttr, fmtInt, fmtUSD, fmtCAD, shortHash } from './data-format.js';
 
 function getChallengeId() {
   const meta = document.querySelector('meta[name="lc-challenge"]');
@@ -32,7 +32,7 @@ function renderRelated(related = []) {
   if (!related.length) return '';
   return `
     <div class="card sp-md">
-      <div class="eyebrow">Related review leads</div>
+      <div class="eyebrow">Related leads in other checks</div>
       ${related.map(r => `
         <div class="row" style="padding: 6px 0; border-bottom: 1px dashed var(--border);">
           <a href="/challenges/${escAttr(r.challenge_id)}.html" class="mono" style="font-size: 12px;">${escText(r.challenge_id)}</a>
@@ -42,6 +42,101 @@ function renderRelated(related = []) {
       `).join('')}
     </div>
   `;
+}
+
+function sevCls(s) {
+  switch ((s || '').toLowerCase()) {
+    case 'high':   return 'red';
+    case 'medium': return 'amber';
+    case 'low':    return 'green';
+    default:       return 'gray';
+  }
+}
+
+function emptyMessageForStatus(challenge) {
+  const status = (challenge.status || '').toLowerCase();
+  const proofs = (challenge.proof_levels || []).map(p => (p || '').toLowerCase());
+  if (status === 'refused' || proofs.includes('refused')) {
+    return {
+      headline: 'The system refused to claim a finding here.',
+      body: 'The data did not contain what was needed to answer this check. Each refusal names the data that would change the answer. See the roadblocks above.',
+    };
+  }
+  if (status === 'external' || proofs.includes('external-needed')) {
+    return {
+      headline: 'No findings yet — outside data is needed.',
+      body: 'This check needs data the GovAlta dataset does not include. Once the outside source lands, leads will populate here.',
+    };
+  }
+  if (status === 'materialized' || proofs.includes('materialized')) {
+    return {
+      headline: 'No findings yet — needs a materialized dataset.',
+      body: 'This check needs a prepared subset or computed column to run. Once that materializes, leads will populate here.',
+    };
+  }
+  return {
+    headline: 'No findings yet for this check.',
+    body: 'Either the run did not produce a lead, or the index has not caught up. Reload in a minute.',
+  };
+}
+
+function renderChallengeFindings(findings, challenge, allChallenges) {
+  const byId = new Map();
+  for (const f of findings) byId.set(f.finding_id, f);
+
+  if (!findings.length) {
+    const msg = emptyMessageForStatus(challenge);
+    return `
+      <div class="card accent-gray sp-md">
+        <div class="eyebrow">Review leads in this check</div>
+        <h3 style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 18px; line-height: 1.25; color: var(--ink); margin-top: 6px;">${escText(msg.headline)}</h3>
+        <p class="note" style="margin-top: 8px; line-height: 1.55;">${escText(msg.body)}</p>
+      </div>
+    `;
+  }
+
+  const rows = findings.map((f, i) => {
+    const id = f.finding_id || `${f.challenge_id}-${i}`;
+    const sev = (f.severity || '').toLowerCase();
+    const metric = f.top_metric ? `<span class="note note--small" style="font-family: 'JetBrains Mono', monospace;">${escText(f.top_metric.label || '')}: <strong style="color: var(--ink);">${escText(f.top_metric.value || '')}</strong></span>` : '';
+    return `
+      <div class="lead-row" data-finding="${escAttr(id)}" tabindex="0" role="button" aria-label="Open details for ${escAttr(f.entity || 'finding')}">
+        <div class="lead-row__head">
+          <strong class="lead-row__entity">${escText(f.entity || 'Unnamed entity')}</strong>
+          ${sev ? `<span class="chip ${sevCls(sev)}" style="font-size: 10px; padding: 1px 7px;">${escText(sev)}</span>` : ''}
+          <span class="lead-row__cta">Open ›</span>
+        </div>
+        ${f.headline ? `<p class="lead-row__line">${escText(f.headline)}</p>` : ''}
+        ${metric ? `<div style="margin-top: 6px;">${metric}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="lead-list sp-md">
+      <div class="row" style="margin-bottom: 10px; align-items: baseline;">
+        <div class="eyebrow">Review leads in this check</div>
+        <span class="note note--small" style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px;">${findings.length} lead${findings.length === 1 ? '' : 's'} · click any row for the full detail</span>
+      </div>
+      <div class="lead-list__grid">${rows}</div>
+    </div>
+  `;
+}
+
+function wireChallengeFindings(root, findings, allChallenges) {
+  const byId = new Map();
+  for (const f of findings) byId.set(f.finding_id, f);
+  root.querySelectorAll('.lead-row[data-finding]').forEach(el => {
+    const id = el.getAttribute('data-finding');
+    const open = () => {
+      const f = byId.get(id);
+      if (f) openFindingDrawer(f, { challenges: allChallenges });
+    };
+    el.addEventListener('click', open);
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+    });
+  });
 }
 
 function renderHeroFinding(c) {
@@ -69,7 +164,7 @@ function renderReplay(c) {
   if (status.ran) meta.push(`<span class="chip green">query ran</span>`);
   if (status.row_count != null) meta.push(`<span class="chip">${fmtInt(status.row_count)} records returned</span>`);
   if (status.runtime_ms != null) meta.push(`<span class="chip">${status.runtime_ms} ms runtime</span>`);
-  if (status.sql_hash) meta.push(`<span class="chip">query hash: <code>${escText(shortHash(status.sql_hash))}</code></span>`);
+  if (status.sql_hash) meta.push(`<span class="chip">fingerprint: <code>${escText(shortHash(status.sql_hash))}</code></span>`);
 
   if (!sql && meta.length === 0) return '';
 
@@ -120,7 +215,7 @@ function renderEvidenceLegend(c) {
       <div style="display: grid; gap: 10px; margin-top: 10px; font-size: 13px; line-height: 1.45; color: var(--ink-2);">
         <div><strong style="color: var(--ink);">Source data</strong> means the tables or datasets the check read. ${tableCount ? `${fmtInt(tableCount)} source ${tableCount === 1 ? 'table is' : 'tables are'} linked below.` : 'No source table is attached yet.'}</div>
         <div><strong style="color: var(--ink);">Evidence status</strong> says whether the data fields were verified, the query ran, or an outside source is still needed.</div>
-        <div><strong style="color: var(--ink);">Query proof</strong> is the reproducible record: ${query.sql_hash ? `hash ${escText(shortHash(query.sql_hash))}, ` : ''}${query.runtime_ms != null ? `${query.runtime_ms} ms runtime, ` : ''}${query.row_count != null ? `${fmtInt(query.row_count)} returned records.` : 'not yet executed.'}</div>
+        <div><strong style="color: var(--ink);">Query proof</strong> is the receipt: ${query.sql_hash ? `fingerprint ${escText(shortHash(query.sql_hash))}, ` : ''}${query.runtime_ms != null ? `${query.runtime_ms} ms runtime, ` : ''}${query.row_count != null ? `${fmtInt(query.row_count)} records came back.` : 'not yet run.'}</div>
       </div>
     </div>
   `;
@@ -141,6 +236,50 @@ function renderDecisionPanel(challengeId, prompt) {
           <span class="note note--small" style="margin-left: auto;" data-decided-at>${existing.decided_at ? 'last saved ' + new Date(existing.decided_at).toLocaleTimeString() : ''}</span>
         </div>
         <textarea class="decision__note" placeholder="Optional note (saved as you type)">${escText(existing.note || '')}</textarea>
+      </div>
+    </div>
+  `;
+}
+
+function askUrl(challenge, question, { autorun = true } = {}) {
+  const params = new URLSearchParams();
+  params.set('scope', `challenge:${challenge.id}`);
+  params.set('q', question);
+  if (autorun) params.set('ask', '1');
+  return `/explore/ask.html?${params.toString()}`;
+}
+
+function renderAskPanel(challenge) {
+  const label = `Check ${challenge.id} ${challenge.title}`;
+  const questions = [
+    {
+      label: 'Explain this check',
+      q: `For ${label}, explain what this check found in plain English, with the source tables and proof level.`,
+    },
+    {
+      label: 'Strongest evidence',
+      q: `For ${label}, what is the strongest evidence in the current packet, and what receipt proves it?`,
+    },
+    {
+      label: 'Countercheck',
+      q: `For ${label}, what countercheck could weaken or disprove the review lead?`,
+    },
+    {
+      label: 'Missing evidence',
+      q: `For ${label}, what data is still missing before a reviewer should escalate this?`,
+    },
+  ];
+  return `
+    <div class="card sp-md" style="background: var(--paper-2);">
+      <div class="row" style="align-items: flex-start; gap: 14px;">
+        <div style="flex: 1 1 280px;">
+          <div class="eyebrow">Ask about this check</div>
+          <p class="note" style="margin-top: 6px;">Open the evidence chat with this check already scoped. The question is carried into the Ask page and submitted with its proof trail.</p>
+        </div>
+        <a class="btn" data-ask-open="true" href="${escAttr(askUrl(challenge, `For ${label}, what should a reviewer ask next?`, { autorun: false }))}">Open Ask ›</a>
+      </div>
+      <div class="row" style="margin-top: 14px;">
+        ${questions.map(item => `<a class="btn btn--primary" href="${escAttr(askUrl(challenge, item.q))}" data-ask-question="${escAttr(item.q)}">${escText(item.label)}</a>`).join('')}
       </div>
     </div>
   `;
@@ -193,72 +332,6 @@ function toast(message) {
   setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 2200);
 }
 
-function renderQARail(challengeId, challengeTitle) {
-  const q1 = `Why does ${challengeTitle} matter?`;
-  const q2 = `What is the strongest evidence for ${challengeTitle}?`;
-  const q3 = `What countercheck would disprove the review lead in ${challengeTitle}?`;
-  return `
-    <aside class="card sp-md" id="qa-rail">
-      <div class="eyebrow">Ask about this check</div>
-      <div class="row" style="gap: 6px; margin: 10px 0;">
-        <button class="qa-inline__chip-btn" data-q="${escAttr(q1)}">Why it matters</button>
-        <button class="qa-inline__chip-btn" data-q="${escAttr(q2)}">Strongest evidence</button>
-        <button class="qa-inline__chip-btn" data-q="${escAttr(q3)}">Countercheck</button>
-      </div>
-      <select id="qa-rail-model" style="font-size: 13px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; width: 100%;">
-        <option value="sonnet">Claude Sonnet 4.5 · US</option>
-        <option value="opus">Claude Opus 4.1 · US (deep)</option>
-        <option value="cohere">Cohere Command A · Sovereign / Canadian</option>
-      </select>
-      <textarea id="qa-rail-input" rows="2" placeholder="Or type a question scoped to this accountability check." style="width: 100%; font-family: 'DM Sans'; font-size: 13px; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; resize: vertical;"></textarea>
-      <button class="btn btn--primary" id="qa-rail-submit" style="margin-top: 8px; width: 100%;">Ask</button>
-      <div id="qa-rail-answer" style="margin-top: 12px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; color: var(--ink-2);"></div>
-      <div id="qa-rail-meta" class="qa-inline__meta" style="margin-top: 8px;"></div>
-    </aside>
-  `;
-}
-
-function wireQARail(root, challengeId) {
-  const input = root.querySelector('#qa-rail-input');
-  const sel = root.querySelector('#qa-rail-model');
-  const submit = root.querySelector('#qa-rail-submit');
-  const answer = root.querySelector('#qa-rail-answer');
-  const meta = root.querySelector('#qa-rail-meta');
-
-  root.querySelectorAll('.qa-inline__chip-btn').forEach(btn => {
-    btn.addEventListener('click', () => { input.value = btn.dataset.q; run(); });
-  });
-  submit.addEventListener('click', run);
-
-  async function run() {
-    const q = input.value.trim();
-    if (!q) return;
-    answer.textContent = '';
-    meta.textContent = `Asking · ${sel.value}`;
-    submit.disabled = true;
-    try {
-      const r = await ask({
-        question: q,
-        scope: `challenge:${challengeId}`,
-        model: sel.value,
-        onChunk: chunk => { answer.textContent += chunk; },
-      });
-      if (!answer.textContent) answer.textContent = r.answer || '(no answer)';
-      meta.innerHTML = [
-        `<span>via <code>${escText(r.via)}</code></span>`,
-        `<span>${escText(r.model)}</span>`,
-        `<span>in ${fmtInt(r.tokens_in)} · out ${fmtInt(r.tokens_out)}</span>`,
-        `<span>${fmtUSD(r.cost_usd, 4)}</span>`,
-      ].join('');
-    } catch (err) {
-      answer.textContent = `Could not ask: ${err.message}`;
-      meta.textContent = '';
-    } finally {
-      submit.disabled = false;
-    }
-  }
-}
-
 export async function renderChallengePage() {
   const id = getChallengeId();
   if (!id) {
@@ -266,10 +339,12 @@ export async function renderChallengePage() {
     return;
   }
 
-  const [challenge, audit, proofs] = await Promise.all([
+  const [challenge, audit, proofs, findings, allChallenges] = await Promise.all([
     loadChallenge(id),
     loadAuditSummary(),
     loadExecutionProof(),
+    loadFindingsIndex(),
+    loadChallenges(),
   ]);
 
   if (!challenge) {
@@ -283,6 +358,16 @@ export async function renderChallengePage() {
 
   const auditEntry = findAuditEntry(audit, challenge.id);
   const proofEntry = findExecutionProof(proofs, challenge.id);
+  // Findings index uses combined "<id>-<slug>" form (e.g. "03-funding-loops"),
+  // while challenges.json keys by short id ("03") + separate slug ("funding-loops").
+  const idSlug = challenge.slug ? `${challenge.id}-${challenge.slug}` : challenge.id;
+  const challengeFindings = (findings || []).filter(f => {
+    const cid = f.challenge_id;
+    return cid === challenge.id
+      || cid === String(challenge.id)
+      || cid === idSlug
+      || cid === challenge.slug;
+  });
 
   document.title = `${challenge.title} | Agency 2026`;
 
@@ -299,58 +384,46 @@ export async function renderChallengePage() {
     <h1 class="sp-md">${escText(challenge.title)}</h1>
     ${challenge.subtitle ? `<p class="lede">${escText(challenge.subtitle)}</p>` : ''}
 
-    <div class="grid" style="grid-template-columns: 1fr 320px; gap: 24px;" id="challenge-grid">
-      <div>
-        ${challenge.brief_excerpt ? `
-          <div class="card sp-md" style="background: var(--navy-wash); border-color: var(--navy-border);">
-            <div class="eyebrow" style="color: var(--navy);">Accountability question</div>
-            <p style="font-style: italic; color: var(--navy-deep); line-height: 1.55; margin-top: 6px;">${escText(challenge.brief_excerpt)}</p>
-          </div>
-        ` : ''}
+    <div id="challenge-body">
+      ${challenge.brief_excerpt ? `
+        <div class="card sp-md" style="background: var(--navy-wash); border-color: var(--navy-border);">
+          <div class="eyebrow" style="color: var(--navy);">Accountability question</div>
+          <p style="font-style: italic; color: var(--navy-deep); line-height: 1.55; margin-top: 6px;">${escText(challenge.brief_excerpt)}</p>
+        </div>
+      ` : ''}
 
-        ${challenge.presentation_sentence ? `
-          <div class="sp-md">
-            <div class="eyebrow">How this check works</div>
-            <p style="margin-top: 6px; line-height: 1.6;">${escText(challenge.presentation_sentence)}</p>
-          </div>
-        ` : ''}
+      ${challenge.presentation_sentence ? `
+        <div class="sp-md">
+          <div class="eyebrow">How this check works</div>
+          <p style="margin-top: 6px; line-height: 1.6;">${escText(challenge.presentation_sentence)}</p>
+        </div>
+      ` : ''}
 
-        ${renderEvidenceLegend(challenge)}
-        ${renderHeroFinding(challenge)}
-        ${renderRoadblocks(challenge.roadblocks)}
-        ${renderReplay(challenge)}
-        ${renderDisconfirm(challenge)}
+      ${renderEvidenceLegend(challenge)}
+      ${renderHeroFinding(challenge)}
+      ${renderChallengeFindings(challengeFindings, challenge, allChallenges)}
+      ${renderRoadblocks(challenge.roadblocks)}
+      ${renderReplay(challenge)}
+      ${renderDisconfirm(challenge)}
 
-        ${proofEntry?.missing && (proofEntry.missing.tables?.length || proofEntry.missing.fields?.length || proofEntry.missing.external_sources?.length) ? `
-          <div class="card accent-gray sp-md">
-            <div class="eyebrow">Missing evidence</div>
-            ${proofEntry.missing.tables?.length ? `<p style="margin-top: 8px;"><strong>Source tables:</strong> ${proofEntry.missing.tables.map(sourceLink).join(' ')}</p>` : ''}
-            ${proofEntry.missing.fields?.length ? `<p><strong>Fields:</strong> ${proofEntry.missing.fields.map(t => `<code>${escText(t)}</code>`).join(' ')}</p>` : ''}
-            ${proofEntry.missing.external_sources?.length ? `<p><strong>Outside sources:</strong> ${proofEntry.missing.external_sources.map(s => escText(s)).join(' · ')}</p>` : ''}
-          </div>
-        ` : ''}
+      ${proofEntry?.missing && (proofEntry.missing.tables?.length || proofEntry.missing.fields?.length || proofEntry.missing.external_sources?.length) ? `
+        <div class="card accent-gray sp-md">
+          <div class="eyebrow">Missing evidence</div>
+          ${proofEntry.missing.tables?.length ? `<p style="margin-top: 8px;"><strong>Source tables:</strong> ${proofEntry.missing.tables.map(sourceLink).join(' ')}</p>` : ''}
+          ${proofEntry.missing.fields?.length ? `<p><strong>Fields:</strong> ${proofEntry.missing.fields.map(t => `<code>${escText(t)}</code>`).join(' ')}</p>` : ''}
+          ${proofEntry.missing.external_sources?.length ? `<p><strong>Outside sources:</strong> ${proofEntry.missing.external_sources.map(s => escText(s)).join(' · ')}</p>` : ''}
+        </div>
+      ` : ''}
 
-        ${renderDecisionPanel(challenge.id, challenge.decision_prompt)}
-        ${renderRelated(challenge.related_findings)}
-      </div>
-      <div>
-        ${renderQARail(challenge.id, challenge.title)}
-      </div>
+      ${renderDecisionPanel(challenge.id, challenge.decision_prompt)}
+      ${renderRelated(challenge.related_findings)}
+
+      ${renderAskPanel(challenge)}
     </div>
   `;
 
   wireDecisionPanel(main, challenge.id);
-  wireQARail(main, challenge.id);
-
-  // Mobile: collapse the right rail under the main column
-  const mq = window.matchMedia('(max-width: 880px)');
-  function applyResponsive() {
-    const grid = main.querySelector('#challenge-grid');
-    if (mq.matches) grid.style.gridTemplateColumns = '1fr';
-    else grid.style.gridTemplateColumns = '1fr 320px';
-  }
-  applyResponsive();
-  mq.addEventListener('change', applyResponsive);
+  wireChallengeFindings(main, challengeFindings, allChallenges);
 }
 
 function statusToCls(status) {

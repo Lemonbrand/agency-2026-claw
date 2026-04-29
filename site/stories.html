@@ -71,6 +71,8 @@
   .hero-story__refs { display: flex; gap: 8px; flex-wrap: wrap; }
   .hero-story__refs a { font-family: "JetBrains Mono", monospace; font-size: 11px; padding: 4px 10px; border-radius: 999px; background: var(--paper-2); border: 1px solid var(--border); color: var(--ink); text-decoration: none; }
   .hero-story__refs a:hover { background: var(--ink); color: var(--paper); }
+  .hero-story__cta { transition: transform 0.15s, color 0.15s; }
+  .hero-story.is-clickable:hover .hero-story__cta { transform: translateX(4px); color: var(--orange-deep); }
 
   /* Cross-signal panel */
   .crosslist { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
@@ -83,6 +85,9 @@
   .crossitem__name { font-family: "Outfit", sans-serif; font-weight: 700; font-size: 15px; color: var(--ink); margin-bottom: 4px; }
   .crossitem__count { display: inline-block; padding: 1px 7px; border-radius: 999px; background: var(--navy); color: var(--paper); font-family: "JetBrains Mono", monospace; font-size: 10px; margin-right: 8px; }
   .crossitem__where { font-size: 12px; color: var(--ink-2); line-height: 1.45; }
+  .crossitem__cta { transition: transform 0.15s; display: inline-block; }
+  .crossitem.is-clickable:hover .crossitem__cta { transform: translateX(4px); }
+  .crossitem.is-clickable:hover { border-color: var(--navy); }
 
   /* Refusals */
   .refusal {
@@ -137,27 +142,27 @@
     <span class="chip" id="cross-count">loading</span>
   </div>
 
-  <h1 class="hero-h1">The review leads the data supports. <span class="accent">Plus the claims we refuse to make.</span></h1>
-  <p class="hero-sub">Eleven accountability checks. Three review leads worth a deputy minister's time. A handful of cross-signal entities. Three refusals where the data does not support the question. Each lead is one line, one interpretation, and a link to the evidence.</p>
+  <h1 class="hero-h1">Three things worth opening. <span class="accent">Plus what we refuse to claim.</span></h1>
+  <p class="hero-sub">Eleven checks ran on Alberta data today. Three produced something a deputy minister should look at. A short list of names showed up across more than one check. Three checks were refused because the data could not support the question.</p>
 
   <!-- REVIEW LEADS (curated, opinionated) -->
-  <h2 class="section-h">Three review leads worth opening</h2>
-  <p class="section-sub">Hand-picked from the run. Each is an interpretation of what the pattern means, not a "gotcha". The data alone is a number. The interpretation is what makes it useful.</p>
+  <h2 class="section-h">Three things worth opening</h2>
+  <p class="section-sub">Picked from the run. Each one is a read on what the pattern means, not a gotcha. A number on its own is just a number. The read is what makes it useful.</p>
   <div class="hero-stories" id="hero-stories"></div>
 
   <!-- CROSS-SIGNAL ENTITIES -->
-  <h2 class="section-h">Cross-signal entities</h2>
-  <p class="section-sub">Entities that surfaced in two or more independent review leads across the accountability checks. The cross-reference itself is the signal: not that any one lead is damning, but that the system flagged the same name from multiple angles.</p>
+  <h2 class="section-h">Names that came up more than once</h2>
+  <p class="section-sub">These names showed up in two or more separate checks, on their own. No one told the system to look for them. One check is a coincidence. Two or more is something to open.</p>
   <div class="crosslist" id="cross-list"></div>
 
   <!-- REFUSALS -->
-  <h2 class="section-h">Three checks we refused to promote</h2>
-  <p class="section-sub">The system declined to fabricate. Each refusal names what data would change the answer. This is not a failure mode; it is the evidence discipline working.</p>
+  <h2 class="section-h">Three checks we refused to make</h2>
+  <p class="section-sub">The system would not invent an answer. Each refusal names the data that would change it. This is the discipline working, not a failure.</p>
   <div id="refusals"></div>
 
   <!-- ALL FINDINGS, FILTERABLE -->
   <h2 class="section-h">Every finding, with a one-line read</h2>
-  <p class="section-sub">Filterable index of every review lead the system surfaced. Items flagged <code>data issue</code> are likely data-quality issues, not real-world concerns, and are kept here for transparency.</p>
+  <p class="section-sub">A searchable list of every lead the system surfaced. <strong>Click any row to open the full detail.</strong> Rows marked <code>data issue</code> are data-quality problems, not real-world concerns. They are kept here so nothing is hidden.</p>
   <div class="filter-row">
     <input type="text" id="filter-input" placeholder="Search by entity, headline, challenge id...">
     <select id="filter-loop">
@@ -200,6 +205,11 @@ import '/src/lib/nav.js';
 import { loadChallenges, loadFindingsIndex } from '/src/lib/manifest.js';
 import { fmtInt, escText, escAttr } from '/src/lib/data-format.js';
 import { startLivePoll } from '/src/lib/live-poll.js';
+import { openFindingDrawer } from '/src/lib/finding-drawer.js';
+
+// Findings cache by id, populated in main loader. Keys click handlers.
+const _byId = new Map();
+let _challenges = [];
 
 // ── Editorial overlay: hand-curated opinions ─────────────────────
 // These are the "first-principles" reads on the strongest findings.
@@ -210,8 +220,8 @@ const HERO_STORIES = [
     rank: '1',
     entity: 'CANADA GIVES',
     challenge_id: '03-funding-loops',
-    one_line: 'A donor-advised foundation sitting in 321 qualified-donee funding cycles with a CRA risk score of 23/30 and $4.1M in circular volume.',
-    opinion: '<strong>Read it as platform behaviour, not a flag.</strong> Donor-advised funds aggregate gifts and re-disburse them. The high circular-gift score is what the architecture of platform giving looks like in CRA T3010 data. The review lead is not "Canada Gives is suspect". It is "the data does not distinguish a platform from a network of round-tripping". Until the source data separates donor-advised funds from anomalous cycles, the score should be treated as structural, not behavioural.',
+    one_line: 'A registered donation platform with $4.1M flowing in loops between charities and a CRA risk score of 23 out of 30.',
+    opinion: '<strong>Read it as platform behaviour, not a red flag.</strong> Canada Gives is a charitable donation platform. By design, money cycles between donors and charities on the platform. The high score is what platform giving looks like in CRA records. The review lead is not "Canada Gives is suspect". It is "the data does not distinguish a platform from a small network round-tripping money". Until CRA filings separate donation platforms from anomalous cycles, the score is a structural artifact, not a behavioural one.',
     refs: [
       { id: '03', label: 'Funding cycles' }
     ],
@@ -221,8 +231,8 @@ const HERO_STORIES = [
     rank: '2',
     entity: 'Alberta Blue Cross + B+H Architects + Telus Health',
     challenge_id: '05-vendor-concentration',
-    one_line: 'Three Alberta vendors dominate both the competitive AND sole-source spend lines in their respective ministries.',
-    opinion: '<strong>This is the procurement framework choosing the incumbent, not a vendor gaming the system.</strong> When a single vendor sits at the top of both competitive AND sole-source spend in the same ministry, the buying architecture has granted them a default-incumbent role. That is a policy outcome, not a procurement violation. The interesting question is whether the ministry intended that role and whether the rest of the market knows.',
+    one_line: 'Three vendors win both the open-bid and the no-bid contracts in their ministries. They win when the door is open, and they win when it stays closed.',
+    opinion: '<strong>Read this as the rules picking a favourite, not a vendor breaking them.</strong> When one vendor sits on top of both the open-bid and the no-bid spend in the same ministry, the way the government buys has made them the default winner. That is a policy choice, not wrongdoing. The question worth a deputy minister\'s time: was that choice intentional, and does the rest of the market know the door is effectively closed?',
     refs: [
       { id: '05', label: 'Vendor concentration' },
       { id: '04', label: 'Amendment creep' }
@@ -233,8 +243,8 @@ const HERO_STORIES = [
     rank: '3',
     entity: 'IBM Canada / TransAlta / Wood Buffalo',
     challenge_id: '06-related-parties',
-    one_line: 'Each appears in two or more independent review leads across the accountability checks.',
-    opinion: '<strong>The cross-reference is the finding.</strong> Not that any one signal damns the entity, but that the system surfaced the same name from multiple angles without being told to. For a deputy minister, the cross-signal list is the natural starting point: every entry is already a triangulation. The risk in a one-lead view is that a single weak signal masquerades as evidence. The cross-signal view raises that bar.',
+    one_line: 'Each name shows up in two or more separate checks. The system picked them out without being told to.',
+    opinion: '<strong>The repeat appearance is the finding.</strong> One check on its own can be a coincidence. The same name surfacing from two or three angles is something to open. For a deputy minister, this is the natural starting list: every entry has already been cross-checked. A single weak signal can look like evidence. A name that lights up from multiple angles is harder to dismiss.',
     refs: [
       { id: '06', label: 'Related parties' },
       { id: '04', label: 'Amendment creep' },
@@ -248,17 +258,17 @@ const REFUSALS = [
   {
     id: '07-policy-misalignment',
     head: 'Policy misalignment',
-    why: 'Needs a policy commitment corpus. Federal budgets and Treasury Board guidance are not in the GovAlta bundle. The system refuses to fabricate the alignment claim from spend data alone.',
+    why: 'To say spending does not match policy, the system needs the policy text. Federal budgets and Treasury Board priorities are not in the dataset. Without them, the question cannot be answered honestly.',
   },
   {
     id: '10-adverse-media',
     head: 'Adverse media',
-    why: 'Needs regulator, court, and news ingestion. The internal CRA arithmetic-violation table is a surrogate signal at best. Refused as a primary review lead; surfaced only as a quality flag.',
+    why: 'To flag vendors with regulator or news problems, the system needs court records and a news feed. Neither was in the dataset. The CRA arithmetic-error table is the closest the system could get, and it is not enough on its own.',
   },
   {
     id: '08b-funding-gaps',
     head: 'Funding gaps',
-    why: 'Needs policy commitment data. "Where governments claim priority but none fund" requires the policy text to know what was claimed. Refused.',
+    why: 'To find priorities that were promised but never funded, the system needs the promises in writing. Spending data alone cannot prove a gap. Refused.',
   },
 ];
 
@@ -281,11 +291,13 @@ function loopLabel(challengeId, challenges) {
 
 function paintHero() {
   const root = document.getElementById('hero-stories');
-  root.innerHTML = HERO_STORIES.map(s => `
-    <article class="hero-story kind-${escAttr(s.kind)}">
+  root.innerHTML = HERO_STORIES.map(s => {
+    const primaryHref = `/challenges/${s.refs[0].id}-${slugFor(s.refs[0].id)}.html`;
+    return `
+    <article class="hero-story is-clickable kind-${escAttr(s.kind)}" data-primary="${escAttr(primaryHref)}" tabindex="0" role="link" aria-label="Open ${escAttr(s.entity)}">
       <div class="hero-story__rank">${escText(s.rank)}</div>
       <div>
-        <div class="hero-story__entity">${escText(s.entity)}</div>
+        <div class="hero-story__entity">${escText(s.entity)} <span class="hero-story__cta" style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.06em;color:var(--ink-3);font-weight:500;margin-left:6px;">Open ›</span></div>
         <p class="hero-story__one-line">${escText(s.one_line)}</p>
         <div class="hero-story__opinion">${s.opinion}</div>
         <div class="hero-story__refs">
@@ -293,7 +305,21 @@ function paintHero() {
         </div>
       </div>
     </article>
-  `).join('');
+  `;
+  }).join('');
+  // Card-level navigation: click anywhere on the card opens the primary ref.
+  root.querySelectorAll('.hero-story[data-primary]').forEach(el => {
+    const href = el.getAttribute('data-primary');
+    const go = () => { window.location.href = href; };
+    el.addEventListener('click', e => {
+      // Let inner anchors handle their own navigation.
+      if (e.target.closest('a')) return;
+      go();
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+    });
+  });
 }
 
 function slugFor(id) {
@@ -355,12 +381,31 @@ function paintCrossSignal(findings, challenges) {
     const display = arr[0].entity;
     const challengeIds = [...new Set(arr.map(f => f.challenge_id))];
     return `
-      <div class="crossitem">
+      <div class="crossitem is-clickable" data-cross-key="${escAttr(key)}" tabindex="0" role="button" aria-label="Open details for ${escAttr(display)}">
         <div class="crossitem__name"><span class="crossitem__count">${arr.length}</span>${escText(display)}</div>
-        <div class="crossitem__where">Surfaces in: ${challengeIds.map(id => `<a href="/challenges/${escAttr(id)}.html" style="color: var(--navy); border-bottom: 1px dotted var(--navy-border);">${escText(loopLabel(id, challenges))}</a>`).join(' · ')}</div>
+        <div class="crossitem__where">Surfaces in: ${challengeIds.map(id => escText(loopLabel(id, challenges))).join(' · ')}</div>
+        <div class="crossitem__cta" style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--navy);">Open details ›</div>
       </div>
     `;
   }).join('');
+  // Wire click handlers
+  root.querySelectorAll('[data-cross-key]').forEach(el => {
+    const key = el.getAttribute('data-cross-key');
+    const arr = (cross.find(([k]) => k === key) || [])[1] || [];
+    if (!arr.length) return;
+    const open = () => {
+      const seed = arr[0];
+      const crossEntries = arr.map(f => ({
+        challenge_id: f.challenge_id,
+        title: loopLabel(f.challenge_id, challenges),
+      }));
+      openFindingDrawer(seed, { challenges, crossEntries, eyebrow: `Cross-signal · ${arr.length} angles` });
+    };
+    el.addEventListener('click', open);
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+    });
+  });
   return cross;
 }
 
@@ -377,23 +422,24 @@ function paintFindings(findings, challenges, crossSet) {
     loopSel.appendChild(opt);
   }
 
-  const all = findings.map(f => ({
+  const all = findings.map((f, i) => ({
     ...f,
     _kind: classifyFinding(f),
     _isCross: crossSet.has((f.entity || '').toLowerCase().replace(/\s+/g, ' ').trim()),
+    finding_id: f.finding_id || `${f.challenge_id}-${i}`,
   }));
+  // Index for drawer click handlers
+  for (const f of all) _byId.set(f.finding_id, f);
 
   function paint(rows) {
     const tbody = document.querySelector('#findings-table tbody');
     if (rows.length === 0) {
       tbody.innerHTML = '<tr><td colspan="5" class="empty">No findings match the filter.</td></tr>';
     } else {
-      tbody.innerHTML = rows.map(f => `
-        <tr class="${f._kind === 'artifact' ? 'is-artifact' : ''}">
+      tbody.innerHTML = rows.map((f, i) => `
+        <tr class="${f._kind === 'artifact' ? 'is-artifact' : ''}" data-finding="${escAttr(f.finding_id || `${f.challenge_id}-${i}`)}" tabindex="0" role="button" aria-label="Open details for ${escAttr(f.entity || 'finding')}">
           <td>
-            <a href="/challenges/${escAttr(f.challenge_id)}.html">
-              <strong>${escText((f.challenge_id || '').split('-')[0])}</strong>
-            </a>
+            <strong>${escText((f.challenge_id || '').split('-')[0])}</strong>
             ${f._isCross ? `<span class="chip" style="margin-left: 6px; font-size: 10px; padding: 1px 7px; background: var(--navy-wash); color: var(--navy-deep); border-color: var(--navy-border);">cross</span>` : ''}
           </td>
           <td><strong>${escText(f.entity)}</strong></td>
@@ -402,6 +448,18 @@ function paintFindings(findings, challenges, crossSet) {
           <td>${f.top_metric ? `${escText(f.top_metric.label || '')}: <strong>${escText(f.top_metric.value || '')}</strong>` : ''}</td>
         </tr>
       `).join('');
+      // Wire click + keyboard activation
+      tbody.querySelectorAll('tr[data-finding]').forEach(tr => {
+        const id = tr.getAttribute('data-finding');
+        const open = () => {
+          const f = _byId.get(id);
+          if (f) openFindingDrawer(f, { challenges: _challenges });
+        };
+        tr.addEventListener('click', open);
+        tr.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+        });
+      });
     }
     document.getElementById('findings-count').textContent = `${rows.length} findings`;
   }
@@ -444,6 +502,7 @@ function sevCls(s) {
 
 (async () => {
   const [challenges, findings] = await Promise.all([loadChallenges(), loadFindingsIndex()]);
+  _challenges = challenges;
   paintHero();
   paintRefusals();
   const cross = paintCrossSignal(findings, challenges);

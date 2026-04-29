@@ -8,7 +8,7 @@
  * That is 2026-04-29T18:00:00Z UTC.
  */
 
-import { fmtUSD, fmtInt } from './data-format.js';
+import { fmtUSD, fmtCAD, fmtInt } from './data-format.js';
 import { renderCostOverTime, renderHHI } from './charts.js';
 
 const FREEZE_AT_UTC = '2026-04-29T18:00:00Z';
@@ -92,13 +92,18 @@ async function refreshNumbers() {
   const map = {
     'm-rows': fmtInt(n.rows_scanned),
     'm-findings': fmtInt(n.findings),
-    'm-dollars': fmtUSD(n.dollars_today),
-    'cost-headline': n.dollars_today != null ? `${fmtUSD(n.dollars_today)} today.` : null,
-    'sov-headline': n.dollars_today != null ? `${fmtUSD(n.dollars_today)} today.` : null,
-    // Per-provider breakdown from sovereignty tracker
-    'c-claude': sov.claude_cost_usd != null ? fmtUSD(sov.claude_cost_usd) : null,
-    'c-codex': sov.codex_cost_usd != null ? fmtUSD(sov.codex_cost_usd) : null,
-    'c-openrouter': sov.openrouter_cost_usd != null ? fmtUSD(sov.openrouter_cost_usd) : null,
+    'm-dollars': fmtCAD(n.dollars_today),
+    'cost-headline': n.dollars_today != null ? `${fmtCAD(n.dollars_today)} today.` : null,
+    'sov-headline': n.dollars_today != null ? `${fmtCAD(n.dollars_today)} today.` : null,
+    // Per-provider breakdown from sovereignty tracker (CAD on the card)
+    'c-claude': sov.claude_cost_usd != null ? fmtCAD(sov.claude_cost_usd) : null,
+    'c-codex': sov.codex_cost_usd != null ? fmtCAD(sov.codex_cost_usd) : null,
+    'c-openrouter': sov.openrouter_cost_usd != null ? fmtCAD(sov.openrouter_cost_usd) : null,
+    // USD echo on the same cards
+    'c-claude-usd': sov.claude_cost_usd != null ? fmtUSD(sov.claude_cost_usd) : null,
+    'c-codex-usd': sov.codex_cost_usd != null ? fmtUSD(sov.codex_cost_usd) : null,
+    'c-openrouter-usd': sov.openrouter_cost_usd != null ? fmtUSD(sov.openrouter_cost_usd) : null,
+    'big-cost-usd': n.dollars_today != null ? fmtUSD(n.dollars_today) : null,
   };
   for (const [id, val] of Object.entries(map)) {
     const el = document.getElementById(id);

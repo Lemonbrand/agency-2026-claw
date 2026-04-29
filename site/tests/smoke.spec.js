@@ -6,6 +6,7 @@ const ROUTES = [
   { path: '/index.html',                             title: /Agency 2026/, marker: 'h1, .pill-money' },
   { path: '/stories.html',                           title: /Findings/i,   marker: 'h1, .hero-h1' },
   { path: '/trust.html',                             title: /Evidence|Trust/i, marker: 'h1, .h1' },
+  { path: '/sovereignty-dialogue.html',              title: /Canadian AI Compute/i, marker: 'h1' },
   { path: '/challenges/01-zombie-recipients.html',   title: /Zombie/i,     marker: 'main h1' },
   { path: '/challenges/02-ghost-capacity.html',      title: /Ghost/i,      marker: 'main h1' },
   { path: '/challenges/03-funding-loops.html',       title: /Funding/i,    marker: 'main h1' },
@@ -32,6 +33,9 @@ const ASSETS = [
   '/icons/bulb.png',
   '/icons/tick.png',
   '/icons/rocket.png',
+  '/img/3dicons/rocket.png',
+  '/img/3dicons/money-bag.png',
+  '/img/3dicons/tools.png',
 ];
 
 const DATA = [
@@ -123,6 +127,104 @@ test.describe('Internal links', () => {
   });
 });
 
+test.describe('Challenge Ask handoff', () => {
+  const challengeRoutes = ROUTES
+    .filter(r => r.path.startsWith('/challenges/'))
+    .map(r => r.path);
+
+  test('every challenge has scoped Ask buttons with questions', async ({ page }) => {
+    for (const path of challengeRoutes) {
+      await page.goto(path);
+      await page.waitForLoadState('networkidle');
+      const links = await page.locator('a[data-ask-question]').evaluateAll(els => els.map(el => ({
+        text: el.textContent?.trim(),
+        q: el.getAttribute('data-ask-question'),
+        href: el.getAttribute('href'),
+      })));
+      expect(links.length, `${path} ask question buttons`).toBe(4);
+      for (const link of links) {
+        const url = new URL(link.href || '', 'http://localhost:4173');
+        expect(url.pathname, `${path} ask link path`).toBe('/explore/ask.html');
+        expect(url.searchParams.get('q'), `${path} q param`).toBeTruthy();
+        expect(url.searchParams.get('q'), `${path} data question match`).toBe(link.q);
+        expect(url.searchParams.get('scope'), `${path} scope`).toMatch(/^challenge:/);
+        expect(url.searchParams.get('ask'), `${path} autorun`).toBe('1');
+      }
+      const openHref = await page.locator('a[data-ask-open="true"]').first().getAttribute('href');
+      const openUrl = new URL(openHref || '', 'http://localhost:4173');
+      expect(openUrl.pathname, `${path} open ask path`).toBe('/explore/ask.html');
+      expect(openUrl.searchParams.get('q'), `${path} open ask q`).toBeTruthy();
+      expect(openUrl.searchParams.get('ask'), `${path} open ask should not autorun`).toBeNull();
+    }
+  });
+
+  test('clicking a challenge Ask button opens Ask and submits the scoped question', async ({ page }) => {
+    await page.route('**/api/ask', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        answer: 'Mock cited answer from the scoped challenge.',
+        model: 'moonshotai/kimi-k2.6',
+        tokens_in: 10,
+        tokens_out: 8,
+        cost_usd: 0.0001,
+        citations: [{ ref: 'sha abc123', kind: 'sql' }],
+        trace: [{ status: 'done', title: 'Mock trace', detail: 'Scoped Ask link submitted correctly.' }],
+        evidence: { sql_hash: 'abc123', rows_returned: 1 },
+        via: 'local-data-api',
+      }),
+    }));
+    await page.goto('/challenges/05-vendor-concentration.html');
+    await page.waitForLoadState('networkidle');
+    await page.locator('a[data-ask-question]', { hasText: 'Strongest evidence' }).click();
+    await page.waitForURL(/\/explore\/ask\.html\?.*scope=challenge%3A05/);
+    await page.waitForSelector('.message--assistant .message__text.is-rendered');
+    await expect(page.locator('#scope-chip')).toHaveText('scope: check 05');
+    await expect(page.locator('.message--user .message__text').last()).toContainText('Check 05');
+    await expect(page.locator('.message--assistant .message__text').last()).toContainText('Mock cited answer');
+    await expect(page.locator('.message__trace').last()).toContainText('Mock trace');
+  });
+
+  test('generic Open Ask link prefills without submitting', async ({ page }) => {
+    await page.goto('/challenges/03-funding-loops.html');
+    await page.waitForLoadState('networkidle');
+    const href = await page.locator('a[data-ask-open="true"]').first().getAttribute('href');
+    await page.goto(href || '/explore/ask.html');
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#scope-chip')).toHaveText('scope: check 03');
+    await expect(page.locator('#ask-input')).toHaveValue(/Check 03/);
+    await expect(page.locator('#answer-count')).toHaveText('0 answers');
+  });
+
+  test('Ask reset clears the conversation and keeps the page usable', async ({ page }) => {
+    await page.route('**/api/ask', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        answer: 'Mock answer with a receipt.',
+        model: 'moonshotai/kimi-k2.6',
+        tokens_in: 12,
+        tokens_out: 7,
+        cost_usd: 0.0001,
+        trace: [{ status: 'done', title: 'Mock trace', detail: 'Reset test.' }],
+        evidence: { sql_hash: 'abc123', rows_returned: 1 },
+        via: 'local-data-api',
+      }),
+    }));
+    await page.goto('/explore/ask.html?scope=challenge%3A05');
+    await page.fill('#ask-input', 'Which department spending is concentrated?');
+    await page.click('#ask-submit');
+    await page.waitForSelector('.message--assistant .message__text.is-rendered');
+    await expect(page.locator('#answer-count')).toHaveText('1 answer');
+    await page.click('#ask-reset');
+    await expect(page.locator('#answer-count')).toHaveText('0 answers');
+    await expect(page.locator('#ask-input')).toHaveValue('');
+    await expect(page.locator('#scope-chip')).toHaveText('scope: check 05');
+    await expect(page.locator('#prompt-grid')).toBeVisible();
+    await expect(page.locator('.message[data-turn="true"]')).toHaveCount(0);
+  });
+});
+
 test.describe('Charts render', () => {
   test('home renders charts and headline cost', async ({ page }) => {
     await page.goto('/');
@@ -134,9 +236,9 @@ test.describe('Charts render', () => {
     const bigCost = await page.locator('#big-cost').textContent();
     expect(bigCost).toBeTruthy();
     expect(bigCost?.length).toBeGreaterThanOrEqual(1);
-    // Per-provider breakdown should render dollar amounts
+    // Per-provider breakdown should render CAD amounts
     const claude = await page.locator('#c-claude').textContent();
-    expect(claude?.startsWith('$')).toBeTruthy();
+    expect(claude?.startsWith('CA$')).toBeTruthy();
   });
 
   test('sovereignty page renders chart + headline', async ({ page }) => {
@@ -161,6 +263,65 @@ test.describe('Decisions persist', () => {
     expect(badgeClass).not.toContain('is-zero');
     const badgeText = await page.locator('.nav__badge[data-badge="reviews"]').textContent();
     expect(Number(badgeText)).toBeGreaterThanOrEqual(1);
+  });
+});
+
+test.describe('Finding drawer', () => {
+  test('clicking a row on /stories.html opens the drawer', async ({ page }) => {
+    await page.goto('/stories.html');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1200);
+    const row = page.locator('table#findings-table tbody tr[data-finding]').first();
+    await row.waitFor({ state: 'visible', timeout: 8000 });
+    await row.click();
+    const drawer = page.locator('.drawer.is-open');
+    await drawer.waitFor({ state: 'visible', timeout: 4000 });
+    const title = await drawer.locator('#drawer-title').textContent();
+    expect((title || '').length).toBeGreaterThan(0);
+    const ctaCount = await drawer.locator('a.btn--primary').count();
+    expect(ctaCount).toBeGreaterThan(0);
+    // ESC closes
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(400);
+    const stillOpen = await page.locator('.drawer.is-open').count();
+    expect(stillOpen).toBe(0);
+  });
+
+  test('clicking a row on /explore/data-tables.html opens the drawer', async ({ page }) => {
+    await page.goto('/explore/data-tables.html');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1200);
+    const row = page.locator('table#findings-table tbody tr[data-finding]').first();
+    await row.waitFor({ state: 'visible', timeout: 8000 });
+    await row.click();
+    const drawer = page.locator('.drawer.is-open');
+    await drawer.waitFor({ state: 'visible', timeout: 4000 });
+    const title = await drawer.locator('#drawer-title').textContent();
+    expect((title || '').length).toBeGreaterThan(0);
+  });
+});
+
+test.describe('First-visit tour', () => {
+  test('auto-fires on first visit and replay button restarts it', async ({ page }) => {
+    // Clear any stored "seen" flag
+    await page.goto('/');
+    await page.evaluate(() => localStorage.removeItem('lc_tour_seen_v1'));
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1800);
+    const tip = page.locator('.tour-tip.is-on');
+    await tip.waitFor({ state: 'visible', timeout: 4000 });
+    const stepText = await tip.locator('.tour-tip__step').textContent();
+    expect(stepText).toMatch(/step 1 of/i);
+    // ESC closes and persists
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    const seen = await page.evaluate(() => localStorage.getItem('lc_tour_seen_v1'));
+    expect(seen).toBe('1');
+    // Replay button restarts
+    await page.locator('#replay-tour').click();
+    await page.waitForTimeout(400);
+    await page.locator('.tour-tip.is-on').waitFor({ state: 'visible', timeout: 3000 });
   });
 });
 

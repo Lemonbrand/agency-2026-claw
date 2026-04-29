@@ -3,152 +3,913 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ask the System · Agency 2026</title>
+<title>Ask the Evidence · Agency 2026</title>
 <link rel="icon" href="/icons/bulb.png" type="image/png">
 <link rel="stylesheet" href="/src/styles/lemon.css">
 <style>
-  .ask-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
-  @media (max-width: 880px) { .ask-grid { grid-template-columns: 1fr; } }
-  .ask-stage { display: flex; flex-direction: column; gap: 14px; min-height: 480px; }
-  .turn { background: var(--paper); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
-  .turn.q { background: var(--paper-2); border-left: 4px solid var(--orange); }
-  .turn.a { border-left: 4px solid var(--navy); }
-  .turn .meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-2); }
-  .turn .text { white-space: pre-wrap; line-height: 1.55; }
-  .ask-form { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 14px 16px; background: var(--paper-2); border: 1px solid var(--border); border-radius: 10px; }
-  .ask-form .row-1 { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .ask-form select, .ask-form input { font-family: "DM Sans", sans-serif; font-size: 14px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--paper); }
-  .ask-form input { flex: 1; min-width: 200px; }
-  .chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip-btn { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.05em; padding: 6px 10px; border: 1px solid var(--navy-border); border-radius: 999px; background: var(--paper); color: var(--navy); cursor: pointer; }
-  .chip-btn:hover { background: var(--navy); color: var(--paper); }
+  body { padding-bottom: 32px; }
+  .ask-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: calc(100dvh - 64px);
+  }
+  .ask-hero {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 18px;
+    align-items: center;
+    max-width: 980px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .ask-hero__icon {
+    width: 62px;
+    height: 62px;
+    border-radius: 18px;
+    background: linear-gradient(145deg, var(--paper), var(--navy-wash));
+    display: grid;
+    place-items: center;
+    border: 1px solid hsl(200, 12%, 85%, 0.78);
+    box-shadow: var(--shadow-md);
+  }
+  .ask-hero__icon img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+  }
+  .ask-hero h1 {
+    margin-bottom: 8px;
+    font-size: clamp(34px, 4.4vw, 48px);
+  }
+  .ask-hero .lede {
+    margin-bottom: 0;
+    max-width: 850px;
+  }
+  .chat-frame {
+    width: min(100%, 980px);
+    margin: 0 auto;
+    background: hsl(210, 17%, 99%, 0.86);
+    border: 1px solid hsl(200, 12%, 82%, 0.86);
+    border-radius: 18px;
+    box-shadow: 0 24px 70px hsl(200, 18%, 45%, 0.22);
+    overflow: hidden;
+  }
+  .chat-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    background: hsl(200, 12%, 94%, 0.72);
+    border-bottom: 1px solid var(--border);
+  }
+  .chat-status__left,
+  .chat-status__right {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .ask-reset {
+    cursor: pointer;
+    font: inherit;
+  }
+  .ask-reset:hover {
+    border-color: var(--orange-border);
+    color: var(--ink);
+  }
+  .chat-thread {
+    min-height: min(46dvh, 430px);
+    max-height: min(52dvh, 500px);
+    overflow-y: auto;
+    padding: 26px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scroll-behavior: smooth;
+  }
+  .message {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    animation: pasteIn 0.22s cubic-bezier(0.21, 1, 0.33, 1) both;
+  }
+  .message--user {
+    justify-content: flex-end;
+  }
+  .message__avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  .message__avatar img {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+  }
+  .message__bubble {
+    max-width: min(760px, 88%);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 14px 16px;
+    background: var(--paper);
+    box-shadow: var(--shadow-sm);
+  }
+  .message--assistant .message__bubble {
+    border-top-left-radius: 6px;
+  }
+  .message--user .message__bubble {
+    border-top-right-radius: 6px;
+    background: var(--navy);
+    border-color: var(--navy);
+    color: var(--paper);
+    box-shadow: 0 10px 24px hsl(207, 35%, 18%, 0.16);
+  }
+  .message__text {
+    white-space: pre-wrap;
+    line-height: 1.56;
+  }
+  .message__text.is-rendered {
+    white-space: normal;
+  }
+  .message__text.is-rendered p {
+    margin: 0;
+  }
+  .message__text.is-rendered p + p,
+  .message__text.is-rendered ul + p,
+  .message__text.is-rendered p + ul {
+    margin-top: 10px;
+  }
+  .message__text.is-rendered ul {
+    margin: 10px 0 0;
+    padding-left: 20px;
+  }
+  .message__text.is-rendered li + li {
+    margin-top: 5px;
+  }
+  .message__text.is-rendered code {
+    font-size: 12px;
+  }
+  .message__text.is-thinking {
+    color: var(--ink-2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: normal;
+  }
+  .thinking-pulse {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--orange);
+    box-shadow: 0 0 0 0 hsl(28, 79%, 52%, 0.38);
+    animation: pulseThinking 1.35s ease-in-out infinite;
+    flex: 0 0 auto;
+  }
+  .thinking-copy strong {
+    display: block;
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .thinking-copy span {
+    display: block;
+    margin-top: 2px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.03em;
+    color: var(--ink-3);
+  }
+  .message__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid hsl(200, 12%, 85%, 0.72);
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10.8px;
+    line-height: 1.35;
+    color: var(--ink-2);
+  }
+  .message__meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 7px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--paper-2);
+  }
+  .message__trace {
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--paper-2);
+  }
+  .message__trace-title {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-bottom: 8px;
+  }
+  .trace-list {
+    display: grid;
+    gap: 7px;
+  }
+  .trace-step {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+    font-size: 12.5px;
+    line-height: 1.35;
+    color: var(--ink-2);
+  }
+  .trace-dot {
+    width: 9px;
+    height: 9px;
+    margin-top: 4px;
+    border-radius: 999px;
+    background: var(--gray-border);
+  }
+  .trace-step[data-status="active"] .trace-dot {
+    background: var(--orange);
+    animation: pulseThinking 1.35s ease-in-out infinite;
+  }
+  .trace-step[data-status="done"] .trace-dot { background: var(--green); }
+  .trace-step[data-status="warning"] .trace-dot { background: var(--amber); }
+  .trace-step[data-status="error"] .trace-dot { background: var(--red); }
+  .trace-step strong {
+    display: block;
+    color: var(--ink);
+    font-size: 12.8px;
+  }
+  .trace-step span {
+    display: block;
+    margin-top: 2px;
+  }
+  .trace-note {
+    margin-top: 9px;
+    font-size: 11.5px;
+    color: var(--ink-3);
+  }
+  .assistant-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .assistant-list span {
+    padding: 10px 11px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--paper-2);
+    color: var(--ink-2);
+    font-size: 12.5px;
+    line-height: 1.35;
+  }
+  .prompt-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding-left: 46px;
+  }
+  .prompt-grid.is-hidden {
+    display: none;
+  }
+  .prompt-card {
+    text-align: left;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: hsl(210, 17%, 98%, 0.88);
+    padding: 12px 13px;
+    min-height: 86px;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  }
+  .prompt-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--orange-border);
+    box-shadow: var(--shadow-md);
+  }
+  .prompt-card strong {
+    display: block;
+    font-family: "Outfit", sans-serif;
+    font-size: 14px;
+    line-height: 1.2;
+    color: var(--ink);
+  }
+  .prompt-card span {
+    display: block;
+    margin-top: 6px;
+    color: var(--ink-2);
+    font-size: 12.5px;
+    line-height: 1.35;
+  }
+  .composer {
+    padding: 14px 16px 16px;
+    border-top: 1px solid var(--border);
+    background: hsl(210, 17%, 98%, 0.78);
+    backdrop-filter: blur(18px) saturate(1.08);
+    -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  }
+  .composer__box {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    padding: 9px;
+    border: 1px solid hsl(200, 12%, 78%, 0.9);
+    border-radius: 18px;
+    background: var(--paper);
+    box-shadow: var(--shadow-sm);
+  }
+  .composer textarea {
+    flex: 1;
+    min-height: 44px;
+    max-height: 150px;
+    resize: none;
+    border: 0;
+    background: transparent;
+    padding: 10px 11px;
+    font-family: "DM Sans", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    color: var(--ink);
+    outline: none;
+  }
+  .composer textarea::placeholder {
+    color: var(--ink-3);
+  }
+  .composer__send {
+    min-width: 78px;
+    min-height: 42px;
+    border-radius: 13px;
+    justify-content: center;
+  }
+  .composer__meta {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .composer select {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-2);
+    padding: 7px 9px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--paper);
+  }
+  .composer__hint {
+    color: var(--ink-2);
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+  }
+  .ask-principles {
+    width: min(100%, 980px);
+    margin: 0 auto;
+  }
+  .principle-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    min-height: 126px;
+  }
+  .principle-card img {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+  }
+  .principle-card h3 {
+    margin-bottom: 6px;
+  }
+  .principle-card p {
+    color: var(--ink-2);
+    font-size: 13px;
+    line-height: 1.46;
+  }
+  .ask-footer {
+    width: min(100%, 980px);
+    margin: 0 auto;
+  }
+  @media (max-width: 880px) {
+    .ask-hero {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .ask-hero__icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+    }
+    .ask-hero__icon img {
+      width: 38px;
+      height: 38px;
+    }
+    .chat-status {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+    .chat-thread {
+      min-height: 285px;
+      max-height: 42dvh;
+    }
+    .assistant-list,
+    .prompt-grid {
+      grid-template-columns: 1fr;
+    }
+    .prompt-grid {
+      padding-left: 46px;
+    }
+  }
+  @media (max-width: 600px) {
+    body { padding-bottom: 16px; }
+    .ask-page { gap: 14px; }
+    .ask-hero {
+      display: block;
+    }
+    .ask-hero__icon {
+      display: none;
+    }
+    .ask-hero .row.sp-md {
+      margin-bottom: 8px;
+    }
+    .ask-hero h1 { font-size: 32px; }
+    .ask-hero .lede {
+      font-size: 13.5px;
+      line-height: 1.4;
+    }
+    .chat-frame {
+      margin-left: -4px;
+      margin-right: -4px;
+      width: calc(100% + 8px);
+      border-radius: 14px;
+    }
+    .chat-thread {
+      min-height: 210px;
+      max-height: 28dvh;
+      padding: 13px 12px 10px;
+      gap: 10px;
+    }
+    .message {
+      gap: 8px;
+    }
+    .message__bubble {
+      max-width: 92%;
+      padding: 12px 13px;
+    }
+    .message__avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+    }
+    .message__avatar img {
+      width: 22px;
+      height: 22px;
+    }
+    .prompt-grid {
+      padding-left: 38px;
+    }
+    .prompt-card {
+      min-height: 76px;
+      padding: 10px 11px;
+    }
+    .composer {
+      padding: 12px;
+    }
+    .composer__box {
+      border-radius: 15px;
+    }
+    .composer__send {
+      min-width: 58px;
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+    .composer__hint {
+      font-size: 10.5px;
+    }
+    .grid.ask-principles {
+      grid-template-columns: 1fr !important;
+    }
+    .principle-card {
+      min-height: auto;
+      grid-template-columns: 42px minmax(0, 1fr);
+    }
+  }
+  @keyframes pulseThinking {
+    0% { transform: scale(0.88); box-shadow: 0 0 0 0 hsl(28, 79%, 52%, 0.36); }
+    70% { transform: scale(1); box-shadow: 0 0 0 9px hsl(28, 79%, 52%, 0); }
+    100% { transform: scale(0.88); box-shadow: 0 0 0 0 hsl(28, 79%, 52%, 0); }
+  }
 </style>
 </head>
 <body>
-<div class="page">
+<div class="page ask-page">
 <nav class="nav"></nav>
 
-<div class="row sp-md">
-  <span class="chip primary">Ask</span>
-  <span class="chip" id="conn-chip">checking connection...</span>
-</div>
-<h1>Ask the system. Make it cite its work.</h1>
-<p class="lede">Pick a question or write your own. Answers come back with the model badge, token count, cost, and citations to specific review leads. The cost chip on every answer is the sovereignty argument restated quietly.</p>
-
-<div class="ask-grid">
+<header class="ask-hero">
+  <div class="ask-hero__icon" aria-hidden="true"><img src="/img/3dicons/shield.png" alt=""></div>
   <div>
-    <div class="ask-stage" id="stage">
-      <div class="turn">
-        <div class="text">Try one of the suggested questions, or type your own. The system will refuse to speculate past the evidence and will name what data would change the answer.</div>
-      </div>
+    <div class="row sp-md">
+      <span class="chip primary">Ask</span>
+      <span class="chip" id="conn-chip">checking connection...</span>
+      <span class="chip green">stays in the evidence</span>
     </div>
-    <div class="ask-form sp-md" style="margin-top: 14px;">
-      <div class="chip-list">
-        <button class="chip-btn" data-q="What is the strongest finding the system surfaced?">Strongest finding</button>
-        <button class="chip-btn" data-q="Which entity recurs across CRA, federal, and Alberta records?">Cross-jurisdictional entity</button>
-        <button class="chip-btn" data-q="What did the system refuse to answer and why?">What was refused</button>
-        <button class="chip-btn" data-q="Show me one source-data query that ran successfully today.">Show a query that ran</button>
-        <button class="chip-btn" data-q="What is the countercheck on the funding-cycles review lead?">Countercheck funding cycles</button>
-        <button class="chip-btn" data-q="Which department has the highest HHI vendor concentration?">Top HHI department</button>
-      </div>
-      <div class="row-1">
-        <select id="ask-model">
-          <option value="sonnet">Claude Sonnet 4.5 · US</option>
-          <option value="opus">Claude Opus 4.1 · US (deep)</option>
-          <option value="cohere">Cohere Command A · Sovereign / Canadian</option>
-        </select>
-        <input type="text" id="ask-input" placeholder="Type a question. Press enter.">
-        <button class="btn btn--primary" id="ask-submit">Ask</button>
-      </div>
+    <h1>Ask the evidence.</h1>
+    <p class="lede">ChatGPT-style questions, evidence-bound answers. Each answer names the source, the AI used, the cost, and what still needs human review.</p>
+  </div>
+</header>
+
+<main class="chat-frame" aria-label="Evidence chat">
+  <div class="chat-status">
+    <div class="chat-status__left">
+      <span class="chip orange">not an oracle</span>
+      <span class="chip gray">review leads only</span>
+      <span class="chip gray">human decision required</span>
+    </div>
+    <div class="chat-status__right">
+      <span class="chip" id="scope-chip">scope: all evidence</span>
+      <span class="chip" id="answer-count">0 answers</span>
+      <button class="chip gray ask-reset" id="ask-reset" type="button">Reset</button>
     </div>
   </div>
 
-  <aside>
-    <div class="card sp-md">
-      <div class="eyebrow">Where the answer comes from</div>
-      <p class="note" style="margin-top: 8px;">When the droplet API is reachable, questions go through <code>/api/ask</code>, which can run live read-only queries against the GovAlta database and pull outside evidence with citations.</p>
-      <p class="note">When the droplet is offline, the static page falls back to a curated context bundle (<code>qa-context.json</code>) and a capped event OpenRouter key. Same contract, less reach.</p>
-      <p class="note">The system is instructed to refuse claims past the data, name missing sources, and cite review leads by id and hash.</p>
+  <div class="chat-thread" id="stage">
+    <div class="message message--assistant" data-starter="true">
+      <div class="message__avatar" aria-hidden="true"><img src="/img/3dicons/folder.png" alt=""></div>
+      <div class="message__bubble">
+        <div class="eyebrow">Evidence assistant</div>
+        <div class="message__text">Ask a direct question about today's evidence. The useful answer is cited, costed, and clear about what still needs a human or outside source.</div>
+        <div class="assistant-list">
+          <span>Summarize the strongest review leads.</span>
+          <span>Explain why a claim was refused.</span>
+          <span>Point back to source tables, receipts, and costs.</span>
+        </div>
+      </div>
     </div>
-    <div class="card accent-orange">
-      <div class="eyebrow">Costs you incur</div>
-      <p class="note">Every Q&amp;A turn carries a model badge, token count, and dollar cost. The disposable event key is rate-limited and capped. After 14:00 ET, this page enters frozen submission mode.</p>
-    </div>
-  </aside>
-</div>
 
-<footer class="footer">
-  <div class="footer__close">If the auditors won't, the system will, and it will show its work.</div>
+    <div class="prompt-grid" id="prompt-grid">
+      <button class="prompt-card" data-q="What is the strongest finding the system surfaced?">
+        <strong>Strongest finding</strong>
+        <span>Ask for the clearest review lead and what proves it.</span>
+      </button>
+      <button class="prompt-card" data-q="Which name shows up in CRA, federal, and Alberta records?">
+        <strong>Three-level match</strong>
+        <span>Find a name crossing CRA, federal, and Alberta records.</span>
+      </button>
+      <button class="prompt-card" data-q="What did the system refuse to answer and why?">
+        <strong>Refusals</strong>
+        <span>Show where the data was not enough to make a claim.</span>
+      </button>
+      <button class="prompt-card" data-q="Show me one source-data query that ran successfully today.">
+        <strong>Replay a query</strong>
+        <span>Ask for a receipt-level example from the evidence trail.</span>
+      </button>
+      <button class="prompt-card" data-q="What is the countercheck on the funding-cycles review lead?">
+        <strong>Countercheck</strong>
+        <span>See what would weaken or disprove one review lead.</span>
+      </button>
+      <button class="prompt-card" data-q="Which department's spending is most concentrated in a few vendors?">
+        <strong>Vendor dependence</strong>
+        <span>Explore concentration without claiming wrongdoing.</span>
+      </button>
+    </div>
+  </div>
+
+  <form class="composer" id="ask-form">
+    <div class="composer__box">
+      <textarea id="ask-input" rows="1" placeholder="Ask about a challenge, a finding, a refusal, or the evidence trail."></textarea>
+      <button class="btn btn--primary composer__send" id="ask-submit" type="submit">Ask</button>
+    </div>
+    <div class="composer__meta">
+      <select id="ask-model" aria-label="Model">
+        <option value="kimi">Kimi K2.6 / OpenRouter</option>
+        <option value="sonnet">Claude Sonnet 4.5 / US</option>
+        <option value="opus">Claude Opus 4.1 / US deep</option>
+        <option value="cohere">Cohere Command A / CA</option>
+      </select>
+      <span class="composer__hint">Every answer shows the AI used, the cost, and the citations.</span>
+    </div>
+  </form>
+</main>
+
+<section class="grid grid--3 ask-principles" aria-label="How to read answers">
+  <div class="card principle-card">
+    <img src="/img/3dicons/tools.png" alt="" aria-hidden="true">
+    <div>
+      <h3>What it can do</h3>
+      <p>Explain review leads, compare checks, and turn technical receipts into plain questions a reviewer can act on.</p>
+    </div>
+  </div>
+  <div class="card principle-card">
+    <img src="/img/3dicons/lock.png" alt="" aria-hidden="true">
+    <div>
+      <h3>What it must refuse</h3>
+      <p>Claims about fraud, business closure, news problems, or intent when the source data cannot prove them.</p>
+    </div>
+  </div>
+  <div class="card principle-card">
+    <img src="/img/3dicons/dollar.png" alt="" aria-hidden="true">
+    <div>
+      <h3>Why the cost is shown</h3>
+      <p>The cost on every answer is the sovereignty story stated quietly. Useful government AI needs evidence discipline and domestic compute.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer ask-footer">
+  <div class="footer__close">Ask a question. Read the receipt. Decide what a human should verify next.</div>
   <div class="footer__meta"><a href="/index.html">Home</a> · <a href="/explore/decisions.html">My decisions</a></div>
 </footer>
 </div>
 <script type="module">
 import '/src/lib/nav.js';
 import { ask, checkDroplet } from '/src/lib/openrouter.js';
-import { fmtUSD, fmtInt, escText } from '/src/lib/data-format.js';
+import { fmtUSD, fmtCAD, fmtInt, escText } from '/src/lib/data-format.js';
 import { startLivePoll } from '/src/lib/live-poll.js';
 
 const stage = document.getElementById('stage');
 const input = document.getElementById('ask-input');
 const sel = document.getElementById('ask-model');
+const form = document.getElementById('ask-form');
 const submit = document.getElementById('ask-submit');
+const reset = document.getElementById('ask-reset');
 const connChip = document.getElementById('conn-chip');
+const promptGrid = document.getElementById('prompt-grid');
+const answerCount = document.getElementById('answer-count');
+const scopeChip = document.getElementById('scope-chip');
+const askParams = new URLSearchParams(window.location.search);
+const initialQuestion = askParams.get('q') || '';
+const currentScope = askParams.get('scope') || 'home';
+const shouldAutorun = askParams.get('ask') === '1' || askParams.get('autorun') === '1';
+let answers = 0;
+let hasAsked = false;
+let runSerial = 0;
 
 (async () => {
   const reachable = await checkDroplet();
   if (reachable) {
-    connChip.textContent = 'live · droplet API';
+    connChip.textContent = 'live queries available';
     connChip.className = 'chip green';
   } else {
-    connChip.textContent = 'static · curated bundle';
+    connChip.textContent = 'offline evidence pack';
     connChip.className = 'chip amber';
   }
 })();
 
-function appendTurn(kind, text, meta) {
+function setAnswerCount() {
+  answerCount.textContent = `${answers} answer${answers === 1 ? '' : 's'}`;
+}
+
+function setScopeChip() {
+  if (!currentScope || currentScope === 'home') {
+    scopeChip.textContent = 'scope: all evidence';
+    return;
+  }
+  const label = currentScope.replace(/^challenge:/, 'check ');
+  scopeChip.textContent = `scope: ${label}`;
+}
+
+function hideStarterPrompts() {
+  if (hasAsked) return;
+  hasAsked = true;
+  promptGrid.classList.add('is-hidden');
+}
+
+function resetAskState({ clearUrl = true } = {}) {
+  runSerial += 1;
+  stage.querySelectorAll('.message[data-turn="true"]').forEach(el => el.remove());
+  promptGrid.classList.remove('is-hidden');
+  input.value = '';
+  resizeInput();
+  submit.disabled = false;
+  answers = 0;
+  hasAsked = false;
+  setAnswerCount();
+  if (clearUrl) {
+    const next = new URL(window.location.href);
+    next.searchParams.delete('q');
+    next.searchParams.delete('ask');
+    next.searchParams.delete('autorun');
+    history.replaceState(null, '', `${next.pathname}${next.search}${next.hash}`);
+  }
+  input.focus();
+}
+
+function appendTurn(kind, text, meta, options = {}) {
+  const isUser = kind === 'q';
   const div = document.createElement('div');
-  div.className = `turn ${kind}`;
-  div.innerHTML = `<div class="text"></div>` + (meta ? `<div class="meta">${meta}</div>` : '');
-  div.querySelector('.text').textContent = text;
+  div.className = `message message--${isUser ? 'user' : 'assistant'}`;
+  div.dataset.turn = 'true';
+  const avatar = isUser ? '' : '<div class="message__avatar" aria-hidden="true"><img src="/img/3dicons/shield.png" alt=""></div>';
+  const trace = !isUser && options.trace !== false ? '<div class="message__trace" aria-live="polite"></div>' : '';
+  div.innerHTML = `${avatar}<div class="message__bubble"><div class="message__text"></div>${trace}${meta !== undefined && meta !== null ? '<div class="message__meta"></div>' : ''}</div>`;
+  const textEl = div.querySelector('.message__text');
+  if (options.thinking) {
+    textEl.classList.add('is-thinking');
+    textEl.innerHTML = thinkingHTML(0);
+  } else {
+    textEl.textContent = text;
+  }
+  const metaEl = div.querySelector('.message__meta');
+  if (metaEl) metaEl.innerHTML = meta || '';
   stage.appendChild(div);
   div.scrollIntoView({ behavior: 'smooth', block: 'end' });
   return div;
 }
 
-document.querySelectorAll('.chip-btn').forEach(btn => {
-  btn.addEventListener('click', () => { input.value = btn.dataset.q; run(); });
+function thinkingHTML(elapsed) {
+  const eta = elapsed < 12 ? 'estimated 10-25 seconds' : elapsed < 35 ? 'still working through the evidence packet' : 'still waiting on model response';
+  return `<span class="thinking-pulse" aria-hidden="true"></span><span class="thinking-copy"><strong>Reading evidence and preparing an answer.</strong><span>${elapsed}s elapsed · ${eta}</span></span>`;
+}
+
+function traceHTML(steps) {
+  const rendered = (steps || []).map(step => `
+    <div class="trace-step" data-status="${escText(step.status || 'done')}">
+      <span class="trace-dot" aria-hidden="true"></span>
+      <div><strong>${escText(step.title || 'Step')}</strong>${step.detail ? `<span>${escText(step.detail)}</span>` : ''}</div>
+    </div>
+  `).join('');
+  return `<div class="message__trace-title">Public work trace</div><div class="trace-list">${rendered}</div><div class="trace-note">This is the audit trail of actions taken, not hidden chain-of-thought.</div>`;
+}
+
+function renderTrace(turn, steps) {
+  const traceEl = turn.querySelector('.message__trace');
+  if (!traceEl) return;
+  traceEl.innerHTML = traceHTML(steps);
+}
+
+function startThinking(turn) {
+  const textEl = turn.querySelector('.message__text');
+  const started = Date.now();
+  const staged = [
+    { status: 'done', title: 'Question received', detail: 'The system is preparing an evidence-bound answer.' },
+    { status: 'active', title: 'Loading evidence', detail: 'Reading exported review leads and proof records.' },
+    { status: 'active', title: 'Parsing source data', detail: 'If the local API is available, it can run read-only SQL probes.' },
+    { status: 'active', title: 'Writing cited answer', detail: 'Kimi receives the evidence packet and returns a receipt.' },
+  ];
+  renderTrace(turn, staged.slice(0, 2));
+  const timer = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - started) / 1000);
+    textEl.innerHTML = thinkingHTML(elapsed);
+    const count = elapsed < 4 ? 2 : elapsed < 10 ? 3 : 4;
+    renderTrace(turn, staged.slice(0, count));
+  }, 1000);
+  return () => {
+    clearInterval(timer);
+    textEl.classList.remove('is-thinking');
+    textEl.textContent = '';
+  };
+}
+
+function citationMeta(citations) {
+  if (!citations || !citations.length) return '';
+  const label = citations.length === 1 ? '1 citation' : `${citations.length} citations`;
+  const refs = citations.slice(0, 3).map(c => escText(c.ref)).join(', ');
+  return `<span>${label}${refs ? `: ${refs}` : ''}</span>`;
+}
+
+function inlineMarkdown(line) {
+  return escText(line)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+}
+
+function renderAnswer(el, text) {
+  const lines = String(text || '').trim().split(/\r?\n/);
+  let html = '';
+  let inList = false;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      if (inList) { html += '</ul>'; inList = false; }
+      continue;
+    }
+    const bullet = trimmed.match(/^[-*]\s+(.*)$/);
+    if (bullet) {
+      if (!inList) { html += '<ul>'; inList = true; }
+      html += `<li>${inlineMarkdown(bullet[1])}</li>`;
+    } else {
+      if (inList) { html += '</ul>'; inList = false; }
+      html += `<p>${inlineMarkdown(trimmed)}</p>`;
+    }
+  }
+  if (inList) html += '</ul>';
+  el.classList.add('is-rendered');
+  el.innerHTML = html || '<p>(no answer)</p>';
+}
+
+function resizeInput() {
+  input.style.height = 'auto';
+  input.style.height = `${Math.min(input.scrollHeight, 150)}px`;
+}
+
+document.querySelectorAll('.prompt-card').forEach(btn => {
+  btn.addEventListener('click', () => {
+    input.value = btn.dataset.q;
+    resizeInput();
+    run();
+  });
 });
-input.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
-submit.addEventListener('click', run);
+
+input.addEventListener('input', resizeInput);
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    run();
+  }
+});
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  run();
+});
+reset.addEventListener('click', () => resetAskState());
 
 async function run() {
   const q = input.value.trim();
-  if (!q) return;
-  appendTurn('q', q, '');
+  if (!q || submit.disabled) return;
+  const serial = ++runSerial;
+  hideStarterPrompts();
+  appendTurn('q', q, null);
   input.value = '';
+  resizeInput();
   submit.disabled = true;
-  const aTurn = appendTurn('a', '', `<span>Asking · ${escText(sel.value)}…</span>`);
-  const textEl = aTurn.querySelector('.text');
-  const metaEl = aTurn.querySelector('.meta');
+  const aTurn = appendTurn('a', '', `<span>asking ${escText(sel.value)}</span><span>checking evidence boundary</span>`, { thinking: true });
+  const textEl = aTurn.querySelector('.message__text');
+  const metaEl = aTurn.querySelector('.message__meta');
+  const stopThinking = startThinking(aTurn);
+  let firstChunk = true;
   try {
     const r = await ask({
-      question: q, scope: 'home', model: sel.value,
-      onChunk: chunk => { textEl.textContent += chunk; },
+      question: q, scope: currentScope, model: sel.value,
+      onTrace: steps => {
+        if (serial === runSerial) renderTrace(aTurn, steps);
+      },
+      onChunk: chunk => {
+        if (serial !== runSerial) return;
+        if (firstChunk) {
+          stopThinking();
+          firstChunk = false;
+        }
+        textEl.classList.remove('is-rendered');
+        textEl.textContent += chunk;
+      },
     });
-    if (!textEl.textContent) textEl.textContent = r.answer || '(no answer)';
+    if (serial !== runSerial) return;
+    if (firstChunk) {
+      stopThinking();
+      firstChunk = false;
+    }
+    if (r.trace) renderTrace(aTurn, r.trace);
+    renderAnswer(textEl, r.answer || textEl.textContent || '(no answer)');
     metaEl.innerHTML = [
       `<span>via <code>${escText(r.via)}</code></span>`,
       `<span>${escText(r.model)}</span>`,
-      `<span>in ${fmtInt(r.tokens_in)} · out ${fmtInt(r.tokens_out)}</span>`,
-      `<span>${fmtUSD(r.cost_usd, 4)}</span>`,
-      (r.citations || []).length ? `<span>${r.citations.length} citation${r.citations.length === 1 ? '' : 's'}</span>` : '',
+      `<span>in ${fmtInt(r.tokens_in)} / out ${fmtInt(r.tokens_out)}</span>`,
+      `<span>${fmtCAD(r.cost_usd, 4)} / ${fmtUSD(r.cost_usd, 4)}</span>`,
+      r.evidence?.sql_hash ? `<span>sql ${escText(r.evidence.sql_hash.slice(0, 10))}</span>` : '',
+      r.refused ? '<span>refusal boundary used</span>' : '',
+      citationMeta(r.citations),
     ].filter(Boolean).join('');
+    answers += 1;
+    setAnswerCount();
   } catch (err) {
+    if (serial !== runSerial) return;
+    if (firstChunk) stopThinking();
     textEl.textContent = `Could not ask: ${err.message}`;
-    metaEl.innerHTML = '';
+    metaEl.innerHTML = '<span>no answer logged</span>';
   } finally {
+    if (serial !== runSerial) return;
     submit.disabled = false;
     input.focus();
+  }
+}
+
+setAnswerCount();
+setScopeChip();
+resizeInput();
+if (initialQuestion) {
+  input.value = initialQuestion;
+  resizeInput();
+  input.focus();
+  if (shouldAutorun) {
+    setTimeout(() => run(), 300);
   }
 }
 startLivePoll({ includeCostChart: false, includeHHIChart: false });

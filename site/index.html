@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Agency 2026 · LemonClaw</title>
-<meta name="description" content="One day of AI auditing. $752 spent. All of it routed through US infrastructure.">
+<meta name="description" content="One day of AI auditing. Tracked spend routed through US infrastructure.">
 <link rel="icon" href="/icons/dollar.png" type="image/png">
 <link rel="stylesheet" href="/src/styles/lemon.css">
 <style>
@@ -19,9 +19,17 @@
     font-family: "Outfit", sans-serif; font-weight: 800;
     font-size: clamp(72px, 12vw, 168px); line-height: 0.92;
     letter-spacing: -0.045em; color: var(--ink);
-    margin: 0 0 22px;
+    margin: 0 0 8px;
   }
-  .pill-money .currency { font-size: 0.5em; font-weight: 700; color: var(--ink-2); margin-right: 0.05em; vertical-align: 24%; }
+  .pill-money .currency { font-size: 0.42em; font-weight: 700; color: var(--ink-2); margin-right: 0.08em; vertical-align: 24%; letter-spacing: -0.02em; }
+  .fx-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--ink-3);
+    margin-bottom: 16px;
+  }
+  .fx-chip code { background: var(--paper-2); padding: 2px 6px; border-radius: 4px; font-size: 11px; color: var(--ink-2); }
 
   .pill-statement {
     font-family: "Outfit", sans-serif; font-weight: 700;
@@ -134,9 +142,71 @@
   .provider.openrouter .label::before { background: hsl(216, 90%, 72%); }
   .provider .num {
     font-family: "Outfit", sans-serif; font-weight: 800;
-    font-size: 36px; color: var(--ink); letter-spacing: -0.02em; line-height: 1;
+    font-size: 32px; color: var(--ink); letter-spacing: -0.02em; line-height: 1;
   }
+  .provider .num .usd { font-size: 12px; color: var(--ink-3); font-weight: 500; margin-left: 6px; letter-spacing: 0.04em; font-family: "JetBrains Mono", monospace; vertical-align: 8%; }
   .provider .country { font-size: 13px; color: var(--ink-2); margin-top: 6px; }
+  .provider .tokens {
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.04em;
+    color: var(--ink-2);
+  }
+  .provider .tokens strong { color: var(--ink); font-weight: 700; }
+
+  .dialogue-ask {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 22px;
+    align-items: center;
+    border: 1px solid var(--orange-border);
+    border-left: 5px solid var(--orange);
+    border-radius: 12px;
+    background: hsl(28, 79%, 95%, 0.42);
+    padding: 22px 24px;
+    margin: -16px 0 30px;
+  }
+  @media (max-width: 760px) { .dialogue-ask { grid-template-columns: 1fr; margin-top: -8px; } }
+  .dialogue-ask__kicker {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--orange-deep);
+    margin-bottom: 8px;
+  }
+  .dialogue-ask__title {
+    font-family: "Outfit", sans-serif;
+    font-weight: 800;
+    font-size: clamp(22px, 2.4vw, 30px);
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .dialogue-ask__copy {
+    color: var(--ink-2);
+    font-size: 14.5px;
+    line-height: 1.55;
+    max-width: 760px;
+  }
+  .dialogue-ask__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+    min-width: 220px;
+  }
+  .dialogue-ask__note {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    line-height: 1.45;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
 
   /* Highlighted findings block */
   .stories-section h2 {
@@ -159,7 +229,10 @@
   .ministory.k-platform { border-left-color: var(--green); }
   .ministory.k-cross    { border-left-color: var(--navy); }
   .ministory.k-incumbency { border-left-color: var(--orange); }
-  .ministory:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); transition: 0.15s; }
+  .ministory { transition: transform 0.15s, box-shadow 0.15s, border-left-color 0.15s; }
+  .ministory:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .ministory .more { transition: transform 0.15s, color 0.15s; display: inline-block; }
+  .ministory:hover .more { transform: translateX(4px); color: var(--orange); }
   .ministory .tag {
     font-family: "JetBrains Mono", monospace; font-size: 10px;
     letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2);
@@ -179,7 +252,7 @@
   }
 
   .cta-row {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;
     margin-top: 8px;
   }
   @media (max-width: 720px) { .cta-row { grid-template-columns: 1fr; } }
@@ -192,6 +265,8 @@
     min-height: 180px;
   }
   .cta-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--orange); }
+  .cta-card .cg { transition: transform 0.15s; display: inline-block; }
+  .cta-card:hover .cg { transform: translateX(4px); }
   .cta-card.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
   .cta-card.primary .ct, .cta-card.primary .cs { color: var(--paper); }
   .cta-card.primary .cs { opacity: 0.78; }
@@ -220,18 +295,32 @@
   <div class="eyebrow-row">
     <span class="chip primary">Lemonclaw / Agency 2026</span>
     <span class="chip" id="freeze-chip">Live · refreshes every minute</span>
+    <button type="button" class="tour-replay" id="replay-tour" aria-label="Replay the guided tour">Replay tour</button>
   </div>
 
   <h1 class="visually-hidden" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;">
-    Agency 2026 LemonClaw: $<span id="h1-cost">752</span> spent today on AI auditing the Government of Alberta. All routed through US infrastructure.
+    Agency 2026 LemonClaw: CA$<span id="h1-cost">1,605</span> spent today on AI auditing the Government of Alberta. All routed through US infrastructure.
   </h1>
   <div class="pill-money">
-    <span class="currency">$</span><span id="big-cost">752</span>
+    <span class="currency">CA$</span><span id="big-cost">1,605</span>
   </div>
+  <div class="fx-chip">USD spend today: <code id="big-cost-usd">$1,160</code> · 1 USD ≈ 1.39 CAD</div>
 
   <div class="pill-statement">
-    One day of AI auditing the Government of Alberta. <span class="muted">Every dollar routed through</span> <span class="accent">US-controlled infrastructure</span>.
+    One day. AI auditing the Government of Alberta. <span class="muted">Every dollar routed through</span> <span class="accent">US-controlled infrastructure</span>.
   </div>
+
+  <section class="dialogue-ask" aria-label="Sovereign data center dialogue ask">
+    <div>
+      <div class="dialogue-ask__kicker">Open question</div>
+      <div class="dialogue-ask__title">Run sensitive public-sector AI on Canadian compute.</div>
+      <p class="dialogue-ask__copy">Today's tools work. The bill went to US providers. What would it take to run sensitive Alberta and federal AI work on Canadian-controlled data centres? Municipal, provincial, federal, and infrastructure partners all need to weigh in.</p>
+    </div>
+    <div class="dialogue-ask__actions">
+      <a class="btn btn--primary" href="/sovereignty-dialogue.html">Open the dialogue brief</a>
+      <div class="dialogue-ask__note">A conversation, not a procurement claim.</div>
+    </div>
+  </section>
 
   <!-- ── Pie + Map ─────────────────────────────────── -->
   <div class="viz-grid">
@@ -250,8 +339,8 @@
 
     <!-- MAP -->
     <div class="viz-card">
-      <h3>Where the inference runs</h3>
-      <div class="h2">Blue lights are US datacenters. Red is the Canadian one.</div>
+      <h3>Where the AI work runs</h3>
+      <div class="h2">Blue dots are US datacenters. Red is the Canadian one.</div>
       <div class="map-frame" id="map-frame">
         <!-- d3-geo + topojson-client renders the map and projects city coords
              from real (lng, lat). See src/lib/map.js. -->
@@ -264,21 +353,36 @@
   </div>
 
   <div class="provider-row">
-    <div class="provider claude"><div class="label">Claude · Anthropic</div><div class="num" id="c-claude">$0</div><div class="country">San Francisco, USA</div></div>
-    <div class="provider codex"><div class="label">Codex · OpenAI</div><div class="num" id="c-codex">$0</div><div class="country">San Francisco, USA</div></div>
-    <div class="provider openrouter"><div class="label">OpenRouter · Z.ai</div><div class="num" id="c-openrouter">$0</div><div class="country">Routed via San Francisco, USA</div></div>
+    <div class="provider claude">
+      <div class="label">Claude · Anthropic</div>
+      <div class="num"><span id="c-claude">CA$0</span><span class="usd" id="c-claude-usd">$0</span></div>
+      <div class="country">San Francisco, USA</div>
+      <div class="tokens" id="t-claude">— tokens</div>
+    </div>
+    <div class="provider codex">
+      <div class="label">Codex · OpenAI</div>
+      <div class="num"><span id="c-codex">CA$0</span><span class="usd" id="c-codex-usd">$0</span></div>
+      <div class="country">San Francisco, USA</div>
+      <div class="tokens" id="t-codex">— tokens</div>
+    </div>
+    <div class="provider openrouter">
+      <div class="label">OpenRouter · Z.ai</div>
+      <div class="num"><span id="c-openrouter">CA$0</span><span class="usd" id="c-openrouter-usd">$0</span></div>
+      <div class="country">Routed via San Francisco, USA</div>
+      <div class="tokens" id="t-openrouter">tokens not exposed</div>
+    </div>
   </div>
 
   <!-- Highlighted findings -->
   <section class="stories-section">
     <h2>What it bought.</h2>
-    <p class="subline">Three findings worth a deputy minister's time. Eight challenges classified honestly. Cross-signal entities flagged. Refusals named.</p>
+    <p class="subline">Three names worth a deputy minister's time. Eight more checks classified honestly. Three things the system refused to claim.</p>
     <div class="story-row">
       <a class="ministory k-platform" href="/stories.html#canada-gives">
         <div>
           <div class="tag">Check 03 · Funding cycles</div>
           <div class="ent">Canada Gives</div>
-          <div class="one">Donor-advised foundation in 321 qualified-donee funding cycles with $4.1M circular volume. Read it as platform behaviour, not a flag.</div>
+          <div class="one">Donation platform: $4.1M flowing in loops between charities. That is what platforms do, not a red flag.</div>
         </div>
         <div class="more">Open the story →</div>
       </a>
@@ -286,7 +390,7 @@
         <div>
           <div class="tag">Checks 04 + 05 · Vendor concentration</div>
           <div class="ent">Alberta Blue Cross + B+H + Telus Health</div>
-          <div class="one">Three vendors dominate both competitive and sole-source spend in their ministries. The procurement design picked the incumbent.</div>
+          <div class="one">Three vendors win the open-bid and the no-bid contracts in their ministries. The buying rules picked them.</div>
         </div>
         <div class="more">Open the story →</div>
       </a>
@@ -294,7 +398,7 @@
         <div>
           <div class="tag">Cross-signal entities</div>
           <div class="ent">IBM Canada · TransAlta · Wood Buffalo</div>
-          <div class="one">Each flagged from two or more independent angles without being told to look. The cross-reference is the story.</div>
+          <div class="one">Each name showed up in two or more separate checks, without being told to look. The repeat is the story.</div>
         </div>
         <div class="more">Open the story →</div>
       </a>
@@ -306,13 +410,13 @@
     <a class="cta-card primary" href="/stories.html">
       <img class="ci" src="/icons/target.png" alt="">
       <div class="ct">All findings</div>
-      <div class="cs">Three to open. Eight more to skim. Three claims the system refused to promote.</div>
+      <div class="cs">Three to open. Eight to skim. Three the system refused to claim.</div>
       <span class="cg">Open findings →</span>
     </a>
     <a class="cta-card" href="/trust.html">
       <img class="ci" src="/icons/shield.png" alt="">
       <div class="ct">Evidence trail</div>
-      <div class="cs">Three review assistants. One evidence trail. Every claim hashed and replayable.</div>
+      <div class="cs">Three AI reviewers. One trail of receipts. Every claim verifiable.</div>
       <span class="cg">Open evidence →</span>
     </a>
     <a class="cta-card" href="/explore/ask.html">
@@ -321,13 +425,20 @@
       <div class="cs">Every answer cites source data, model, and cost.</div>
       <span class="cg">Open Q&amp;A →</span>
     </a>
+    <a class="cta-card" href="/sovereignty-dialogue.html">
+      <img class="ci" src="/icons/shield.png" alt="">
+      <div class="ct">Sovereign data centre dialogue</div>
+      <div class="cs">A practical agenda for municipal, provincial, federal, and infrastructure partners.</div>
+      <span class="cg">Open dialogue brief →</span>
+    </a>
   </div>
 
   <div class="footer-strip">
     <span>If the auditors won't, the system will.</span>
     <span class="spacer"></span>
     <a href="/explore/sovereignty.html">Cost detail</a>
-    <a href="/explore/audit.html">Audit ledger</a>
+    <a href="/sovereignty-dialogue.html">Dialogue brief</a>
+    <a href="/explore/audit.html">Evidence trail</a>
     <a href="/explore/data-tables.html">Findings table</a>
     <a href="/explore/decisions.html">My review</a>
   </div>
@@ -340,15 +451,50 @@ import { Chart, registerables } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { loadOverview } from '/src/lib/manifest.js';
 import { startLivePoll } from '/src/lib/live-poll.js';
-import { fmtUSD } from '/src/lib/data-format.js';
+import { fmtUSD, fmtCAD, usdToCad, fmtCompact } from '/src/lib/data-format.js';
 import { buildMap } from '/src/lib/map.js';
+import { autoStartIfFirstVisit, bindTourTrigger } from '/src/lib/tour.js';
 Chart.register(...registerables);
+
+const TOUR_STEPS = [
+  {
+    selector: '.pill-money',
+    title: 'One day. Real spend.',
+    body: 'This counter is live. Every prompt and every answer the system ran on Alberta data today shows up here within 60 seconds.',
+  },
+  {
+    selector: '.viz-grid',
+    title: 'All of it routed through US data centres.',
+    body: 'Pie shows the split by provider. Map plots the cities those providers run from. Zero spend hit a Canadian data centre.',
+  },
+  {
+    selector: '.story-row',
+    title: 'Three findings worth opening.',
+    body: 'Hand-picked from eleven accountability checks. Each card opens a full-detail page with the data, the read-only query, and a counter-check.',
+  },
+  {
+    selector: '.cta-row',
+    title: 'Pick your path.',
+    body: 'All findings to skim them. Evidence trail to see the receipts. Ask to pose your own question. Dialogue brief if Canadian compute is your portfolio.',
+  },
+  {
+    selector: '.nav__link--decision',
+    title: 'Make the call.',
+    body: 'On any check, escalate, hold, or close. Your decisions stay on this device. Download them as a record before you leave.',
+  },
+];
 
 function fmtBigDollar(n) {
   if (n == null || isNaN(n)) return '0';
   if (n < 10) return n.toFixed(2);
   if (n < 1000) return Math.round(n).toString();
   return Math.round(n).toLocaleString('en-US');
+}
+// Big number for the hero, but in CAD (converted from USD).
+function fmtBigCAD(usd) {
+  if (usd == null || isNaN(usd)) return '0';
+  const cad = usdToCad(usd);
+  return fmtBigDollar(cad);
 }
 
 let _pie = null;
@@ -357,7 +503,8 @@ function renderPie(claude, codex, openrouter) {
   const canvas = document.getElementById('pie-chart');
   if (_pie) _pie.destroy();
   const total = claude + codex + openrouter;
-  document.getElementById('pie-total').textContent = total >= 100 ? `$${Math.round(total).toLocaleString()}` : `$${total.toFixed(2)}`;
+  const totalCad = total * 1.385;
+  document.getElementById('pie-total').textContent = totalCad >= 100 ? `CA$${Math.round(totalCad).toLocaleString()}` : `CA$${totalCad.toFixed(2)}`;
   _pie = new Chart(canvas, {
     type: 'doughnut',
     data: {
@@ -378,7 +525,7 @@ function renderPie(claude, codex, openrouter) {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: ctx => `${ctx.label}: $${ctx.parsed.toFixed(2)} (${(ctx.parsed/total*100).toFixed(1)}%)`,
+            label: ctx => `${ctx.label}: CA$${(ctx.parsed * 1.385).toFixed(2)} (${(ctx.parsed/total*100).toFixed(1)}%)`,
           },
         },
       },
@@ -386,18 +533,44 @@ function renderPie(claude, codex, openrouter) {
   });
 }
 
+function paintTokens(sov) {
+  const claudeT = sov.claude_tokens_today;
+  const codexT = sov.codex_tokens_today;
+  const claudeM = sov.claude_msgs_today;
+  const codexM = sov.codex_msgs_today;
+  const tClaude = document.getElementById('t-claude');
+  const tCodex = document.getElementById('t-codex');
+  if (tClaude) {
+    tClaude.innerHTML = claudeT
+      ? `<strong>${fmtCompact(claudeT)}</strong> tokens · ${fmtCompact(claudeM || 0)} msgs`
+      : '— tokens';
+  }
+  if (tCodex) {
+    tCodex.innerHTML = codexT
+      ? `<strong>${fmtCompact(codexT)}</strong> tokens · ${fmtCompact(codexM || 0)} calls`
+      : '— tokens';
+  }
+}
+
 async function paint() {
   const ov = await loadOverview();
   const n = ov.headline_numbers || {};
   const sov = ov.sovereignty || {};
   const total = n.dollars_today ?? 0;
-  document.getElementById('big-cost').textContent = fmtBigDollar(total);
+  document.getElementById('big-cost').textContent = fmtBigCAD(total);
+  document.getElementById('big-cost-usd').textContent = fmtUSD(total);
+  const h1Cost = document.getElementById('h1-cost');
+  if (h1Cost) h1Cost.textContent = fmtBigCAD(total);
   const claude = sov.claude_cost_usd ?? 0;
   const codex  = sov.codex_cost_usd ?? 0;
   const orouter = sov.openrouter_cost_usd ?? 0;
-  document.getElementById('c-claude').textContent = fmtUSD(claude);
-  document.getElementById('c-codex').textContent = fmtUSD(codex);
-  document.getElementById('c-openrouter').textContent = fmtUSD(orouter);
+  document.getElementById('c-claude').textContent = fmtCAD(claude);
+  document.getElementById('c-codex').textContent = fmtCAD(codex);
+  document.getElementById('c-openrouter').textContent = fmtCAD(orouter);
+  document.getElementById('c-claude-usd').textContent = fmtUSD(claude);
+  document.getElementById('c-codex-usd').textContent = fmtUSD(codex);
+  document.getElementById('c-openrouter-usd').textContent = fmtUSD(orouter);
+  paintTokens(sov);
   renderPie(claude, codex, orouter);
 }
 
@@ -417,7 +590,7 @@ setInterval(async () => {
     const n = ov.headline_numbers || {};
     const sov = ov.sovereignty || {};
     const total = n.dollars_today ?? 0;
-    const next = fmtBigDollar(total);
+    const next = fmtBigCAD(total);
     const el = document.getElementById('big-cost');
     if (el && el.textContent !== next) {
       el.textContent = next;
@@ -426,14 +599,23 @@ setInterval(async () => {
       el.style.color = 'var(--orange)';
       setTimeout(() => { el.style.color = orig; }, 600);
     }
-    document.getElementById('c-claude').textContent = fmtUSD(sov.claude_cost_usd ?? 0);
-    document.getElementById('c-codex').textContent = fmtUSD(sov.codex_cost_usd ?? 0);
-    document.getElementById('c-openrouter').textContent = fmtUSD(sov.openrouter_cost_usd ?? 0);
+    document.getElementById('big-cost-usd').textContent = fmtUSD(total);
+    document.getElementById('c-claude').textContent = fmtCAD(sov.claude_cost_usd ?? 0);
+    document.getElementById('c-codex').textContent = fmtCAD(sov.codex_cost_usd ?? 0);
+    document.getElementById('c-openrouter').textContent = fmtCAD(sov.openrouter_cost_usd ?? 0);
+    document.getElementById('c-claude-usd').textContent = fmtUSD(sov.claude_cost_usd ?? 0);
+    document.getElementById('c-codex-usd').textContent = fmtUSD(sov.codex_cost_usd ?? 0);
+    document.getElementById('c-openrouter-usd').textContent = fmtUSD(sov.openrouter_cost_usd ?? 0);
+    paintTokens(sov);
     renderPie(sov.claude_cost_usd ?? 0, sov.codex_cost_usd ?? 0, sov.openrouter_cost_usd ?? 0);
   } catch { /* ignore */ }
 }, 60_000);
 
 startLivePoll({ includeCostChart: false, includeHHIChart: false });
+
+// First-visit guided tour. Replay button always available.
+bindTourTrigger('#replay-tour', TOUR_STEPS);
+autoStartIfFirstVisit(TOUR_STEPS, 1200);
 </script>
 </body>
 </html>
