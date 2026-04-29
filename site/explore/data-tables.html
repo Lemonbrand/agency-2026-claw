@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Findings Index · Agency 2026</title>
+<link rel="icon" href="/icons/chart.png" type="image/png">
+<link rel="stylesheet" href="/src/styles/lemon.css">
+<style>
+  .filter-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+  .filter-row input[type=text], .filter-row select { font-family: "DM Sans", sans-serif; font-size: 14px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--paper); }
+  .filter-row input[type=text] { flex: 1; min-width: 200px; }
+  .pill { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-family: "JetBrains Mono", monospace; background: var(--paper-2); border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="page">
+<nav class="nav"></nav>
+
+<div class="row sp-md">
+  <span class="chip primary">Explore</span>
+  <span class="chip">findings</span>
+</div>
+<h1>Every finding the system surfaced.</h1>
+<p class="lede">Searchable index of findings across all eleven loops. Click a row to open the loop deep-dive. Severity and support status from the audit pipeline.</p>
+
+<div class="filter-row">
+  <input type="text" id="filter-input" placeholder="Search by entity, headline, or challenge id...">
+  <select id="filter-status">
+    <option value="">All support statuses</option>
+    <option value="supported">Supported</option>
+    <option value="contested">Contested</option>
+    <option value="inconclusive">Inconclusive</option>
+    <option value="not_checked">Not checked</option>
+  </select>
+  <select id="filter-severity">
+    <option value="">All severities</option>
+    <option value="high">High</option>
+    <option value="medium">Medium</option>
+    <option value="low">Low</option>
+  </select>
+  <span class="note note--small" style="margin-left: auto;" id="filter-count">0 findings</span>
+</div>
+
+<table class="table" id="findings-table">
+  <thead>
+    <tr>
+      <th>Loop</th>
+      <th>Entity</th>
+      <th>Headline</th>
+      <th>Top metric</th>
+      <th>Severity</th>
+      <th>Support</th>
+      <th>SHA</th>
+    </tr>
+  </thead>
+  <tbody><tr><td colspan="7" class="empty">Loading findings index...</td></tr></tbody>
+</table>
+
+<footer class="footer">
+  <div class="footer__close">If the auditors won't, the system will, and it will show its work.</div>
+  <div class="footer__meta"><a href="/index.html">Home</a></div>
+</footer>
+</div>
+<script type="module">
+import '/src/lib/nav.js';
+import { loadFindingsIndex } from '/src/lib/manifest.js';
+import { fmtInt, escText, escAttr, shortHash } from '/src/lib/data-format.js';
+import { startLivePoll } from '/src/lib/live-poll.js';
+
+let _all = [];
+
+function sevCls(s) {
+  switch ((s || '').toLowerCase()) { case 'high': return 'red'; case 'medium': return 'amber'; case 'low': return 'green'; default: return 'gray'; }
+}
+function supCls(s) {
+  switch ((s || '').toLowerCase()) { case 'supported': return 'green'; case 'contested': return 'red'; case 'inconclusive': return 'amber'; default: return 'gray'; }
+}
+
+function paint(rows) {
+  const tbody = document.querySelector('#findings-table tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">No findings match your filter.</td></tr>';
+  } else {
+    tbody.innerHTML = rows.map(f => `
+      <tr>
+        <td><a href="/challenges/${escAttr(f.challenge_id)}.html">${escText(f.challenge_id)}</a></td>
+        <td><strong>${escText(f.entity)}</strong></td>
+        <td>${escText(f.headline || '')}</td>
+        <td>${f.top_metric ? `${escText(f.top_metric.label || '')}: <strong>${escText(f.top_metric.value || '')}</strong>` : ''}</td>
+        <td><span class="chip ${sevCls(f.severity)}">${escText(f.severity || '')}</span></td>
+        <td><span class="chip ${supCls(f.support_status)}">${escText(f.support_status || '')}</span></td>
+        <td><span class="pill">${escText(shortHash(f.sha))}</span></td>
+      </tr>
+    `).join('');
+  }
+  document.getElementById('filter-count').textContent = `${rows.length} findings`;
+}
+
+function applyFilters() {
+  const q = (document.getElementById('filter-input').value || '').toLowerCase();
+  const status = document.getElementById('filter-status').value;
+  const sev = document.getElementById('filter-severity').value;
+  const filtered = _all.filter(f => {
+    if (status && f.support_status !== status) return false;
+    if (sev && f.severity !== sev) return false;
+    if (q) {
+      const hay = [f.entity, f.headline, f.challenge_id, f.finding_id].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  paint(filtered);
+}
+
+(async () => {
+  _all = await loadFindingsIndex();
+  paint(_all);
+  ['filter-input', 'filter-status', 'filter-severity'].forEach(id => {
+    document.getElementById(id).addEventListener('input', applyFilters);
+    document.getElementById(id).addEventListener('change', applyFilters);
+  });
+})();
+
+startLivePoll({ includeCostChart: false, includeHHIChart: false });
+</script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audit Verdict · Agency 2026</title>
+<link rel="icon" href="/icons/tick.png" type="image/png">
+<link rel="stylesheet" href="/src/styles/lemon.css">
+<style>
+  .iframe-shell { background: var(--paper-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .iframe-shell iframe { width: 100%; height: 1800px; border: 0; border-radius: 8px; background: var(--paper); }
+  .iframe-meta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-2); }
+  .verdict-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+  @media (max-width: 720px) { .verdict-strip { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="page">
+<nav class="nav"></nav>
+
+<div class="row sp-md">
+  <span class="chip primary">Explore</span>
+  <span class="chip">audit</span>
+</div>
+<h1>Audit verdict.</h1>
+<p class="lede">Lexical audit over every brief. References checked against the verified schema. Placeholder names, fake IDs, and known-bad table refs counted. Every brief carries a SHA-256 so a reviewer can confirm the file they read is the file we audited.</p>
+
+<div class="verdict-strip">
+  <div class="metric accent-green"><strong id="audit-clean">—</strong><span>clean</span></div>
+  <div class="metric accent-amber"><strong id="audit-review">—</strong><span>needs review</span></div>
+  <div class="metric accent-red"><strong id="audit-unsafe">—</strong><span>unsafe</span></div>
+</div>
+
+<h2 class="sp-md">Per-loop verdict</h2>
+<table class="table sp-md" id="audit-table">
+  <thead><tr><th>Loop</th><th>Verdict</th><th>Known bad</th><th>Suspect</th><th>Placeholders</th><th>SQL blocks</th><th>SHA</th></tr></thead>
+  <tbody><tr><td colspan="7" class="empty">Loading audit summary...</td></tr></tbody>
+</table>
+
+<h2 class="sp-md">Underlying audit page</h2>
+<p class="note sp-md">The full audit report, embedded as a proof artifact.</p>
+<div class="iframe-shell">
+  <div class="iframe-meta">
+    <span>source: <code>web/agency-loop-audit.html</code></span>
+    <a href="/embeds/agency-loop-audit.html" target="_blank" rel="noopener">Open in own tab ↗</a>
+  </div>
+  <iframe src="/embeds/agency-loop-audit.html" title="Agency loop audit"></iframe>
+</div>
+
+<footer class="footer">
+  <div class="footer__close">If the auditors won't, the system will, and it will show its work.</div>
+  <div class="footer__meta"><a href="/index.html">Home</a> · <a href="/explore/sovereignty.html">Cost</a></div>
+</footer>
+</div>
+<script type="module">
+import '/src/lib/nav.js';
+import { loadAuditSummary } from '/src/lib/manifest.js';
+import { fmtInt, escText, shortHash } from '/src/lib/data-format.js';
+import { startLivePoll } from '/src/lib/live-poll.js';
+
+function vCls(v) {
+  switch ((v || '').toLowerCase()) {
+    case 'clean': return 'green';
+    case 'review': return 'amber';
+    case 'unsafe': return 'red';
+    default: return 'gray';
+  }
+}
+
+async function paint() {
+  const a = await loadAuditSummary();
+  document.getElementById('audit-clean').textContent = fmtInt(a.clean);
+  document.getElementById('audit-review').textContent = fmtInt(a.needs_review);
+  document.getElementById('audit-unsafe').textContent = fmtInt(a.unsafe);
+  const tbody = document.querySelector('#audit-table tbody');
+  if (!a.per_challenge || !a.per_challenge.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Audit will populate as the backend completes the lexical pass.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = a.per_challenge.map(p => `
+    <tr id="challenge-${escText(p.id)}">
+      <td><a href="/challenges/${escText(p.id)}.html"><strong>${escText(p.id)}</strong></a></td>
+      <td><span class="chip ${vCls(p.verdict)}">${escText(p.verdict)}</span></td>
+      <td>${fmtInt(p.known_bad_count)}</td>
+      <td>${fmtInt(p.suspect_count)}</td>
+      <td>${fmtInt(p.placeholder_count)}</td>
+      <td>${fmtInt(p.sql_blocks)}</td>
+      <td><code>${escText(shortHash(p.sha))}</code></td>
+    </tr>
+  `).join('');
+}
+
+paint();
+startLivePoll({ includeCostChart: false, includeHHIChart: false });
+</script>
+</body>
+</html>

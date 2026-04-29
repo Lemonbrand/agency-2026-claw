@@ -1,0 +1,53 @@
+{
+  "caption": "API-equivalent cost by provider for the event day.",
+  "date": "2026-04-29",
+  "generated_at": "2026-04-29T14:58:48Z",
+  "providers": [
+    {
+      "cost_usd": 524.1784319999999,
+      "provider": "Claude"
+    },
+    {
+      "cost_usd": 7.566406400000001,
+      "provider": "Codex"
+    },
+    {
+      "cost_usd": 6.43341201,
+      "provider": "OpenRouter"
+    }
+  ],
+  "series": [
+    {
+      "label": "Claude",
+      "points": [
+        {
+          "cost_usd": 524.1784319999999,
+          "ts": "2026-04-29"
+        }
+      ],
+      "provider": "anthropic"
+    },
+    {
+      "label": "Codex",
+      "points": [
+        {
+          "cost_usd": 7.566406400000001,
+          "ts": "2026-04-29"
+        }
+      ],
+      "provider": "openai"
+    },
+    {
+      "label": "OpenRouter",
+      "points": [
+        {
+          "cost_usd": 6.43341201,
+          "ts": "2026-04-29"
+        }
+      ],
+      "provider": "openrouter"
+    }
+  ],
+  "title": "Model usage and routing",
+  "type": "cost_over_time"
+}

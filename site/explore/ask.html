@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask the System · Agency 2026</title>
+<link rel="icon" href="/icons/bulb.png" type="image/png">
+<link rel="stylesheet" href="/src/styles/lemon.css">
+<style>
+  .ask-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+  @media (max-width: 880px) { .ask-grid { grid-template-columns: 1fr; } }
+  .ask-stage { display: flex; flex-direction: column; gap: 14px; min-height: 480px; }
+  .turn { background: var(--paper); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .turn.q { background: var(--paper-2); border-left: 4px solid var(--orange); }
+  .turn.a { border-left: 4px solid var(--navy); }
+  .turn .meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-2); }
+  .turn .text { white-space: pre-wrap; line-height: 1.55; }
+  .ask-form { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 14px 16px; background: var(--paper-2); border: 1px solid var(--border); border-radius: 10px; }
+  .ask-form .row-1 { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .ask-form select, .ask-form input { font-family: "DM Sans", sans-serif; font-size: 14px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--paper); }
+  .ask-form input { flex: 1; min-width: 200px; }
+  .chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip-btn { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.05em; padding: 6px 10px; border: 1px solid var(--navy-border); border-radius: 999px; background: var(--paper); color: var(--navy); cursor: pointer; }
+  .chip-btn:hover { background: var(--navy); color: var(--paper); }
+</style>
+</head>
+<body>
+<div class="page">
+<nav class="nav"></nav>
+
+<div class="row sp-md">
+  <span class="chip primary">Ask</span>
+  <span class="chip" id="conn-chip">checking connection...</span>
+</div>
+<h1>Ask the system. Make it cite its work.</h1>
+<p class="lede">Pick a question or write your own. Answers come back with the model badge, token count, cost, and citations to specific findings. The cost chip on every answer is the sovereignty argument restated quietly.</p>
+
+<div class="ask-grid">
+  <div>
+    <div class="ask-stage" id="stage">
+      <div class="turn">
+        <div class="text">Try one of the suggested questions, or type your own. The system will refuse to speculate past the evidence and will name what data would change the answer.</div>
+      </div>
+    </div>
+    <div class="ask-form sp-md" style="margin-top: 14px;">
+      <div class="chip-list">
+        <button class="chip-btn" data-q="What is the strongest finding the system surfaced?">Strongest finding</button>
+        <button class="chip-btn" data-q="Which entity recurs across CRA, federal, and Alberta records?">Cross-jurisdictional entity</button>
+        <button class="chip-btn" data-q="What did the system refuse to answer and why?">What was refused</button>
+        <button class="chip-btn" data-q="Show me one SQL probe that ran successfully today.">Show a SQL probe</button>
+        <button class="chip-btn" data-q="What is the disconfirming check on the funding-loops finding?">Disconfirm funding loops</button>
+        <button class="chip-btn" data-q="Which department has the highest HHI vendor concentration?">Top HHI department</button>
+      </div>
+      <div class="row-1">
+        <select id="ask-model">
+          <option value="sonnet">Claude Sonnet 4.5 · US</option>
+          <option value="opus">Claude Opus 4.1 · US (deep)</option>
+          <option value="cohere">Cohere Command A · Sovereign / Canadian</option>
+        </select>
+        <input type="text" id="ask-input" placeholder="Type a question. Press enter.">
+        <button class="btn btn--primary" id="ask-submit">Ask</button>
+      </div>
+    </div>
+  </div>
+
+  <aside>
+    <div class="card sp-md">
+      <div class="eyebrow">Where the answer comes from</div>
+      <p class="note" style="margin-top: 8px;">When the droplet API is reachable, questions go through <code>/api/ask</code>, which can run live SQL probes against the GovAlta database and pull external evidence with citations.</p>
+      <p class="note">When the droplet is offline, the static page falls back to a curated context bundle (<code>qa-context.json</code>) and a capped event OpenRouter key. Same contract, less reach.</p>
+      <p class="note">The system is instructed to refuse claims past the data, name missing sources, and cite findings by id and SHA.</p>
+    </div>
+    <div class="card accent-orange">
+      <div class="eyebrow">Costs you incur</div>
+      <p class="note">Every Q&amp;A turn carries a model badge, token count, and dollar cost. The disposable event key is rate-limited and capped. After 14:00 ET, this page enters frozen submission mode.</p>
+    </div>
+  </aside>
+</div>
+
+<footer class="footer">
+  <div class="footer__close">If the auditors won't, the system will, and it will show its work.</div>
+  <div class="footer__meta"><a href="/index.html">Home</a> · <a href="/explore/decisions.html">My review</a></div>
+</footer>
+</div>
+<script type="module">
+import '/src/lib/nav.js';
+import { ask, checkDroplet } from '/src/lib/openrouter.js';
+import { fmtUSD, fmtInt, escText } from '/src/lib/data-format.js';
+import { startLivePoll } from '/src/lib/live-poll.js';
+
+const stage = document.getElementById('stage');
+const input = document.getElementById('ask-input');
+const sel = document.getElementById('ask-model');
+const submit = document.getElementById('ask-submit');
+const connChip = document.getElementById('conn-chip');
+
+(async () => {
+  const reachable = await checkDroplet();
+  if (reachable) {
+    connChip.textContent = 'live · droplet API';
+    connChip.className = 'chip green';
+  } else {
+    connChip.textContent = 'static · curated bundle';
+    connChip.className = 'chip amber';
+  }
+})();
+
+function appendTurn(kind, text, meta) {
+  const div = document.createElement('div');
+  div.className = `turn ${kind}`;
+  div.innerHTML = `<div class="text"></div>` + (meta ? `<div class="meta">${meta}</div>` : '');
+  div.querySelector('.text').textContent = text;
+  stage.appendChild(div);
+  div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  return div;
+}
+
+document.querySelectorAll('.chip-btn').forEach(btn => {
+  btn.addEventListener('click', () => { input.value = btn.dataset.q; run(); });
+});
+input.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
+submit.addEventListener('click', run);
+
+async function run() {
+  const q = input.value.trim();
+  if (!q) return;
+  appendTurn('q', q, '');
+  input.value = '';
+  submit.disabled = true;
+  const aTurn = appendTurn('a', '', `<span>Asking · ${escText(sel.value)}…</span>`);
+  const textEl = aTurn.querySelector('.text');
+  const metaEl = aTurn.querySelector('.meta');
+  try {
+    const r = await ask({
+      question: q, scope: 'home', model: sel.value,
+      onChunk: chunk => { textEl.textContent += chunk; },
+    });
+    if (!textEl.textContent) textEl.textContent = r.answer || '(no answer)';
+    metaEl.innerHTML = [
+      `<span>via <code>${escText(r.via)}</code></span>`,
+      `<span>${escText(r.model)}</span>`,
+      `<span>in ${fmtInt(r.tokens_in)} · out ${fmtInt(r.tokens_out)}</span>`,
+      `<span>${fmtUSD(r.cost_usd, 4)}</span>`,
+      (r.citations || []).length ? `<span>${r.citations.length} citation${r.citations.length === 1 ? '' : 's'}</span>` : '',
+    ].filter(Boolean).join('');
+  } catch (err) {
+    textEl.textContent = `Could not ask: ${err.message}`;
+    metaEl.innerHTML = '';
+  } finally {
+    submit.disabled = false;
+    input.focus();
+  }
+}
+startLivePoll({ includeCostChart: false, includeHHIChart: false });
+</script>
+</body>
+</html>

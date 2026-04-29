@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.vercel/
+public/data/
+public/embeds/
+public/briefs/
+*.log
+.DS_Store

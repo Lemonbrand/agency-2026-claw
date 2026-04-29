@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stories · Agency 2026</title>
+<link rel="icon" href="/icons/shield.png" type="image/png">
+<link rel="stylesheet" href="/src/styles/lemon.css">
+<style>
+  .iframe-shell { background: var(--paper-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .iframe-shell iframe { width: 100%; height: 1400px; border: 0; border-radius: 8px; background: var(--paper); }
+  .iframe-meta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-2); }
+</style>
+</head>
+<body>
+<div class="page">
+<nav class="nav"></nav>
+
+<div class="row sp-md">
+  <span class="chip primary">Explore</span>
+  <span class="chip">stories</span>
+</div>
+<h1>The story dashboard.</h1>
+<p class="lede">The original LemonClaw story view: three columns of risks, operating insight, and opportunities, with cross-signal callouts. This page is embedded as a proof artifact, not as the data layer.</p>
+
+<div class="iframe-shell">
+  <div class="iframe-meta">
+    <span>source: <code>web/dashboard.html</code></span>
+    <a href="/embeds/dashboard.html" target="_blank" rel="noopener">Open in own tab ↗</a>
+  </div>
+  <iframe src="/embeds/dashboard.html" title="LemonClaw stories"></iframe>
+</div>
+
+<footer class="footer">
+  <div class="footer__close">If the auditors won't, the system will, and it will show its work.</div>
+  <div class="footer__meta"><a href="/index.html">Home</a> · <a href="/explore/audit.html">Audit</a> · <a href="/explore/sovereignty.html">Cost</a></div>
+</footer>
+</div>
+<script type="module">
+import '/src/lib/nav.js';
+import { startLivePoll } from '/src/lib/live-poll.js';
+startLivePoll({ includeCostChart: false, includeHHIChart: false });
+</script>
+</body>
+</html>

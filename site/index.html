@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agency 2026 · LemonClaw</title>
+<meta name="description" content="Eleven Government of Alberta accountability loops, classified honestly. Every answer carries its own receipt.">
+<link rel="icon" href="/icons/shield.png" type="image/png">
+<link rel="stylesheet" href="/src/styles/lemon.css">
+<style>
+  .hero__icon { width: 56px; height: 56px; flex-shrink: 0; object-fit: contain; }
+  .hero__head-row { display: flex; align-items: flex-start; gap: 18px; margin-bottom: 12px; }
+  .hero__chart { background: var(--paper-2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; min-height: 320px; }
+  .hero__chart-canvas { height: 280px; }
+  .hero__caption { margin-top: 12px; font-style: italic; color: var(--ink-2); font-size: 13px; line-height: 1.5; }
+
+  .position { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  @media (max-width: 720px) { .position { grid-template-columns: 1fr; } }
+  .position p { color: var(--ink-2); font-size: 14px; line-height: 1.55; }
+
+  .status-strip {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    background: var(--paper-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; margin: 16px 0 0;
+  }
+  .status-strip > div strong { font-size: 22px; font-family: "Outfit", sans-serif; font-weight: 800; display: block; }
+  .status-strip > div span { font-size: 11px; font-family: "JetBrains Mono", monospace; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+  @media (max-width: 720px) { .status-strip { grid-template-columns: 1fr 1fr; } }
+
+  .loops-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .loop-card { display: flex; flex-direction: column; gap: 10px; padding: 18px 18px 16px; min-height: 200px; transition: transform 0.15s, box-shadow 0.15s; cursor: pointer; text-decoration: none; color: inherit; border: 1px solid var(--border); border-radius: 10px; background: var(--paper); border-left: 4px solid var(--gray-border); }
+  .loop-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-left-color: var(--orange); }
+  .loop-card[data-status="runnable"]    { border-left-color: var(--green); }
+  .loop-card[data-status="materialized"] { border-left-color: var(--amber); }
+  .loop-card[data-status="external"]    { border-left-color: var(--ink-3); }
+  .loop-card[data-status="refused"]     { border-left-color: var(--ink-3); }
+  .loop-card__num { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.08em; color: var(--ink-3); text-transform: uppercase; }
+  .loop-card__title { font-family: "Outfit", sans-serif; font-weight: 700; font-size: 17px; line-height: 1.3; color: var(--ink); margin: 4px 0 6px; }
+  .loop-card__one-line { font-size: 13.5px; color: var(--ink-2); line-height: 1.5; flex: 1; }
+  .loop-card__chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .loop-card__arrow { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--orange); letter-spacing: 0.06em; text-transform: uppercase; }
+
+  .strongest { display: grid; grid-template-columns: 1fr; gap: 18px; padding: 24px 28px; border-radius: 12px; background: linear-gradient(135deg, var(--navy-deep), var(--navy)); color: var(--paper); margin-top: 16px; }
+  .strongest h2 { color: var(--paper); }
+  .strongest h2 .accent { color: var(--orange); }
+  .strongest__chart { background: hsl(207, 35%, 14%); border-radius: 8px; padding: 16px; min-height: 320px; }
+  .strongest__chart-canvas { height: 280px; }
+  .strongest__cap { color: hsl(207, 25%, 88%); font-size: 14px; line-height: 1.5; }
+
+  .arch-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 720px) { .arch-row { grid-template-columns: 1fr; } }
+  .arch-card { padding: 18px 20px; }
+  .arch-card h3 { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .arch-card h3 img { width: 28px; height: 28px; }
+  .arch-card p { font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
+
+  .cost-row { display: grid; grid-template-columns: 1fr 1.4fr; gap: 18px; align-items: stretch; }
+  @media (max-width: 880px) { .cost-row { grid-template-columns: 1fr; } }
+  .cost-chart { background: var(--paper); border: 1px solid var(--border); border-radius: 12px; padding: 18px; min-height: 280px; }
+  .cost-chart-canvas { height: 240px; }
+  .cost-cta h2 { display: flex; align-items: center; gap: 10px; }
+  .cost-cta h2 img { width: 32px; height: 32px; }
+  .cost-cta p { color: var(--ink-2); font-size: 14px; line-height: 1.55; margin-bottom: 12px; }
+
+  .qa-inline { background: var(--paper-2); border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px; }
+  .qa-inline__row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0 14px; }
+  .qa-inline__row select, .qa-inline__row input[type="text"] { font-family: "DM Sans", sans-serif; font-size: 14px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--paper); }
+  .qa-inline__row input[type="text"] { flex: 1; min-width: 200px; }
+  .qa-inline__chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .qa-inline__chip-btn { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.05em; padding: 6px 10px; border: 1px solid var(--navy-border); border-radius: 999px; background: var(--paper); color: var(--navy); cursor: pointer; }
+  .qa-inline__chip-btn:hover { background: var(--navy); color: var(--paper); }
+  .qa-inline__answer { background: var(--paper); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; min-height: 80px; font-size: 14px; line-height: 1.55; white-space: pre-wrap; }
+  .qa-inline__meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-2); }
+
+  .review-bar { background: var(--paper); border: 1px dashed var(--border-s); border-radius: 10px; padding: 14px 16px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .review-bar strong { font-family: "Outfit", sans-serif; font-size: 16px; }
+  .review-bar .stat { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.06em; }
+  .review-bar .stat b { color: var(--ink); font-size: 13px; }
+
+  .data-loading-banner { background: var(--amber-wash); border: 1px solid var(--amber-border); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--amber-deep); margin-bottom: 16px; }
+  .data-loading-banner.is-hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="page">
+<nav class="nav"></nav>
+
+<div class="data-loading-banner is-hidden" id="data-banner">
+  Backend bundle is still being produced. The page will fill in as artifacts land.
+</div>
+
+<!-- ── HERO ─────────────────────────────────────── -->
+<section class="hero fade-in">
+  <div>
+    <div class="hero__head-row">
+      <img class="hero__icon" src="/icons/shield.png" alt="">
+      <div>
+        <div class="eyebrow">LemonClaw / Agency 2026 / GoA Hackathon Submission</div>
+        <h1>Audit your agencies <span class="accent">before someone else does.</span></h1>
+      </div>
+    </div>
+    <p class="lede">
+      Eleven loops. Some runnable today. Some need one more dataset. Some the system honestly refused.
+      <strong>Every answer carries its own receipt.</strong>
+    </p>
+
+    <div class="hero__numbers">
+      <div class="metric accent-navy"><strong id="m-rows">—</strong><span>rows scanned</span></div>
+      <div class="metric accent-orange"><strong id="m-findings">—</strong><span>findings surfaced</span></div>
+      <div class="metric accent-green"><strong id="m-dollars">—</strong><span>API-equivalent today</span></div>
+    </div>
+
+    <div class="status-strip" id="status-strip">
+      <div><strong id="s-sql">—</strong><span>sql executed</span></div>
+      <div><strong id="s-mat">—</strong><span>materialization</span></div>
+      <div><strong id="s-ext">—</strong><span>external data</span></div>
+      <div><strong id="s-safe">—</strong><span>schema safe</span></div>
+    </div>
+
+    <div class="hero__cta-row">
+      <a class="btn btn--primary" href="#loops">See the eleven loops</a>
+      <a class="btn" href="#ask">Ask the system</a>
+    </div>
+  </div>
+
+  <div class="hero__chart fade-in delay-1">
+    <div class="eyebrow">Vendor concentration · top 15 federal departments</div>
+    <div class="hero__chart-canvas"><canvas id="chart-hhi"></canvas></div>
+    <div class="hero__caption" id="cap-hhi">HHI by department. Green stays competitive. Amber crosses the FTC moderate line. Red sits past the highly-concentrated threshold.</div>
+  </div>
+</section>
+
+<!-- ── POSITION ────────────────────────────────── -->
+<section class="sp-lg fade-in delay-2">
+  <div class="eyebrow">The position</div>
+  <h2>What was asked. What ran. What was refused.</h2>
+  <div class="position" id="position-text">
+    <p>The Government of Alberta posed ten accountability questions. We classified eleven (one split for honesty) and produced one artifact for each. Some are findings. Some are review leads. Some are honest refusals with the missing data named.</p>
+    <p>Every challenge page carries a proof level. Schema safe means the references resolve. SQL executed means the probe ran end-to-end. Materialization means we know exactly what subset is needed. External-needed means we will not pretend the data is in our hands.</p>
+    <p>The system did not guess. It assembled evidence packets, ran checks, and refused claims the data could not support. The audit page lists every reference. The cost panel shows where the bytes went.</p>
+  </div>
+</section>
+
+<!-- ── 11 LOOPS GRID ──────────────────────────── -->
+<section class="sp-lg fade-in delay-3" id="loops">
+  <div class="eyebrow">The loops, classified by what actually ran</div>
+  <h2>Eleven challenges. Eleven evidence packets.</h2>
+  <p class="note sp-md">Green border means we ran the SQL. Amber means we need one more dataset. Gray means we said no and named the missing source.</p>
+  <div class="loops-grid" id="loops-grid">
+    <div class="empty">Loading challenges…</div>
+  </div>
+</section>
+
+<!-- ── STRONGEST FINDING (SANKEY) ─────────────── -->
+<section class="strongest sp-lg fade-in">
+  <div class="eyebrow" style="color: hsl(28, 79%, 75%);">The strongest finding</div>
+  <h2>One charity drew funds from <span class="accent">three jurisdictions</span> in one year.</h2>
+  <div class="strongest__chart">
+    <div class="strongest__chart-canvas"><canvas id="chart-sankey"></canvas></div>
+  </div>
+  <p class="strongest__cap" id="cap-sankey">Cross-jurisdictional flows surfaced via the GovAlta golden-records layer. The system flagged this without being told to look.</p>
+</section>
+
+<!-- ── ARCHITECTURE ────────────────────────────── -->
+<section class="sp-lg fade-in">
+  <div class="eyebrow">Architecture, briefly</div>
+  <h2>Three brains. Three jobs.</h2>
+  <div class="arch-row">
+    <div class="card arch-card accent-orange">
+      <h3><img src="/icons/bulb.png" alt="">Discovery</h3>
+      <p><strong>GLM 5.1</strong> generates the per-challenge research briefs in parallel. Cheap, fast, ten loops at once.</p>
+    </div>
+    <div class="card arch-card accent-navy">
+      <h3><img src="/icons/tick.png" alt="">Replay & verify</h3>
+      <p><strong>Codex GPT-5.5</strong> connects directly to the GovAlta Postgres. Verifies references, runs probes, captures SQL hashes and row counts.</p>
+    </div>
+    <div class="card arch-card accent-green">
+      <h3><img src="/icons/shield.png" alt="">Audit & narrative</h3>
+      <p><strong>Claude Opus 4.7</strong> runs the lexical audit, assembles the storyboard, and refuses the claims the data does not support.</p>
+    </div>
+  </div>
+  <p class="note" style="margin-top: 14px;">Read the <a href="/explore/audit.html">full audit verdict</a>. Every brief has a SHA. Every claim cites its source.</p>
+</section>
+
+<!-- ── COST & SOVEREIGNTY ──────────────────────── -->
+<section class="sp-lg fade-in">
+  <div class="cost-row">
+    <div class="cost-cta">
+      <div class="eyebrow">Cost &amp; sovereignty</div>
+      <h2><img src="/icons/dollar.png" alt=""> <span id="cost-headline">Forty-three cents.</span></h2>
+      <p>All of it routed through US infrastructure. This is the sovereignty argument as a line on a bill. Every byte of every prompt and every response crossed the border. Multiply by every Canadian government workload running similar shapes and the policy ask writes itself.</p>
+      <a class="btn" href="/explore/sovereignty.html">Open the cost tracker</a>
+    </div>
+    <div class="cost-chart">
+      <div class="eyebrow">Spend over time · stacked by provider</div>
+      <div class="cost-chart-canvas"><canvas id="chart-cost"></canvas></div>
+      <div class="hero__caption" id="cap-cost"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── ASK INLINE ──────────────────────────────── -->
+<section class="sp-lg fade-in" id="ask">
+  <div class="qa-inline">
+    <div class="eyebrow">Q&amp;A</div>
+    <h2>Ask the system. Make it cite its work.</h2>
+    <p class="note sp-md">The answers come back with sources, model, and cost attached. The cost chip on every answer is the same argument the cost section makes, restated quietly.</p>
+    <div class="qa-inline__chips">
+      <button class="qa-inline__chip-btn" data-q="What is the strongest finding and why?">What is the strongest finding?</button>
+      <button class="qa-inline__chip-btn" data-q="Which entity recurs across multiple jurisdictions?">Which entity recurs across jurisdictions?</button>
+      <button class="qa-inline__chip-btn" data-q="What did the system refuse to answer and why?">What did the system refuse to answer?</button>
+      <button class="qa-inline__chip-btn" data-q="Show me a SQL probe that actually ran today.">Show me a SQL probe that ran.</button>
+    </div>
+    <div class="qa-inline__row">
+      <select id="qa-model">
+        <option value="sonnet">Claude Sonnet 4.5 · US</option>
+        <option value="opus">Claude Opus 4.1 · US (deep)</option>
+        <option value="cohere">Cohere Command A · Sovereign / Canadian</option>
+      </select>
+      <input type="text" id="qa-input" placeholder="Or type your own question. Press enter.">
+      <button class="btn btn--primary" id="qa-submit">Ask</button>
+    </div>
+    <div class="qa-inline__answer" id="qa-answer">Pick a question or type your own. The system will cite findings and show the model and cost on every answer.</div>
+    <div class="qa-inline__meta" id="qa-meta"></div>
+  </div>
+</section>
+
+<!-- ── REVIEW SUMMARY ──────────────────────────── -->
+<section class="sp-lg fade-in">
+  <div class="eyebrow">Your review</div>
+  <h2>Mark what's worth promoting. Take it with you.</h2>
+  <div class="review-bar">
+    <strong>Decisions so far:</strong>
+    <span class="stat"><b id="r-promote">0</b> promote</span>
+    <span class="stat"><b id="r-review">0</b> need review</span>
+    <span class="stat"><b id="r-reject">0</b> reject</span>
+    <span class="stat"><b id="r-questions">0</b> questions asked</span>
+    <span class="stat" style="margin-left: auto;"><b id="r-cost">$0.00</b> total Q&amp;A cost</span>
+    <a class="btn" href="/explore/decisions.html">Review &amp; export</a>
+  </div>
+</section>
+
+<!-- ── FOOTER ──────────────────────────────────── -->
+<footer class="footer">
+  <div class="footer__close">
+    If the auditors won't, the system will, and it will show its work.
+  </div>
+  <div class="footer__meta" id="footer-meta">
+    Build sha: pending · Generated: pending<br>
+    <a href="/explore/audit.html">Audit</a> · <a href="/explore/sovereignty.html">Cost</a> · <a href="/explore/stories.html">Stories</a> · <a href="/explore/data-tables.html">Data</a>
+  </div>
+</footer>
+
+</div>
+
+<script type="module">
+  import '/src/lib/nav.js';
+  import { loadOverview, loadChallenges, isBundleReady } from '/src/lib/manifest.js';
+  import { renderProofChips, statusToChipClass, statusLabel } from '/src/lib/proof.js';
+  import { fmtUSD, fmtInt, escText, escAttr, shortHash } from '/src/lib/data-format.js';
+  import { renderHHI, renderSankey, renderCostOverTime } from '/src/lib/charts.js';
+  import { ask } from '/src/lib/openrouter.js';
+  import { summary as decisionSummary } from '/src/lib/decisions.js';
+  import { startLivePoll } from '/src/lib/live-poll.js';
+
+  async function paintHero() {
+    const [ov, challenges] = await Promise.all([loadOverview(), loadChallenges()]);
+    if (ov._missing) {
+      document.getElementById('data-banner').classList.remove('is-hidden');
+    }
+    const n = ov.headline_numbers || {};
+    document.getElementById('m-rows').textContent = fmtInt(n.rows_scanned);
+    document.getElementById('m-findings').textContent = fmtInt(n.findings);
+    document.getElementById('m-dollars').textContent = fmtUSD(n.dollars_today);
+
+    // Derive status strip from per-challenge proof_levels.
+    const counts = { 'sql-executed': 0, materialized: 0, 'external-needed': 0, 'schema-safe': 0 };
+    for (const c of challenges) {
+      for (const lv of (c.proof_levels || [])) {
+        if (lv in counts) counts[lv]++;
+      }
+    }
+    document.getElementById('s-sql').textContent = fmtInt(counts['sql-executed']);
+    document.getElementById('s-mat').textContent = fmtInt(counts.materialized);
+    document.getElementById('s-ext').textContent = fmtInt(counts['external-needed']);
+    document.getElementById('s-safe').textContent = fmtInt(counts['schema-safe']);
+
+    if (Array.isArray(ov.position) && ov.position.length) {
+      document.getElementById('position-text').innerHTML =
+        ov.position.map(p => `<p>${escText(p)}</p>`).join('');
+    }
+
+    if (n.dollars_today != null) {
+      document.getElementById('cost-headline').textContent =
+        `${fmtUSD(n.dollars_today)} today.`;
+    }
+
+    const meta = ov.build_meta || {};
+    document.getElementById('footer-meta').innerHTML =
+      `Build sha: <code>${escText(shortHash(meta.build_sha))}</code> · Generated: ${escText(meta.generated_at || 'pending')}<br>` +
+      `<a href="/explore/audit.html">Audit</a> · <a href="/explore/sovereignty.html">Cost</a> · <a href="/explore/stories.html">Stories</a> · <a href="/explore/data-tables.html">Data</a>`;
+  }
+
+  async function paintLoops() {
+    const challenges = await loadChallenges();
+    const grid = document.getElementById('loops-grid');
+    if (!challenges || challenges.length === 0) {
+      grid.innerHTML = `<div class="empty">Challenges will appear once the backend bundle lands.</div>`;
+      return;
+    }
+    grid.innerHTML = challenges.map(c => `
+      <a class="loop-card" href="/challenges/${escAttr(c.slug)}.html" data-status="${escAttr(c.status)}">
+        <div class="loop-card__num">Loop ${escText(c.id || c.number)} · ${escText(statusLabel(c.status))}</div>
+        <div class="loop-card__title">${escText(c.title)}</div>
+        <div class="loop-card__one-line">${escText(c.presentation_sentence || c.subtitle || '')}</div>
+        <div class="loop-card__chips">${renderProofChips(c.proof_levels || [])}</div>
+        <span class="loop-card__arrow">Open the brief →</span>
+      </a>
+    `).join('');
+  }
+
+  async function paintReviewBar() {
+    const s = decisionSummary();
+    document.getElementById('r-promote').textContent = s.promote;
+    document.getElementById('r-review').textContent = s.review;
+    document.getElementById('r-reject').textContent = s.reject;
+    document.getElementById('r-questions').textContent = s.questions_asked;
+    document.getElementById('r-cost').textContent = fmtUSD(s.total_qa_cost_usd);
+  }
+  document.addEventListener('lc:decisions-changed', paintReviewBar);
+
+  async function paintCharts() {
+    try { await renderHHI(document.getElementById('chart-hhi'), document.getElementById('cap-hhi')); }
+    catch (err) { console.warn('HHI chart failed:', err); }
+    try { await renderSankey(document.getElementById('chart-sankey'), document.getElementById('cap-sankey')); }
+    catch (err) { console.warn('Sankey chart failed:', err); }
+    try { await renderCostOverTime(document.getElementById('chart-cost'), document.getElementById('cap-cost')); }
+    catch (err) { console.warn('Cost chart failed:', err); }
+  }
+
+  function wireQA() {
+    const input = document.getElementById('qa-input');
+    const modelSel = document.getElementById('qa-model');
+    const answer = document.getElementById('qa-answer');
+    const meta = document.getElementById('qa-meta');
+    const submit = document.getElementById('qa-submit');
+
+    document.querySelectorAll('.qa-inline__chip-btn').forEach(btn => {
+      btn.addEventListener('click', () => { input.value = btn.dataset.q; runAsk(); });
+    });
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') runAsk(); });
+    submit.addEventListener('click', runAsk);
+
+    async function runAsk() {
+      const q = input.value.trim();
+      if (!q) return;
+      const model = modelSel.value;
+      answer.textContent = '';
+      meta.innerHTML = `<span>Asking · ${escText(model)}</span>`;
+      submit.disabled = true;
+      try {
+        const result = await ask({
+          question: q,
+          scope: 'home',
+          model,
+          onChunk: (chunk) => { answer.textContent += chunk; },
+        });
+        if (!answer.textContent) answer.textContent = result.answer || '(no answer)';
+        meta.innerHTML = [
+          `<span>via <code>${escText(result.via)}</code></span>`,
+          `<span>${escText(result.model)}</span>`,
+          `<span>in ${fmtInt(result.tokens_in)} · out ${fmtInt(result.tokens_out)}</span>`,
+          `<span>${fmtUSD(result.cost_usd, 4)}</span>`,
+          (result.citations || []).length ? `<span>${result.citations.length} citation${result.citations.length === 1 ? '' : 's'}</span>` : '',
+        ].filter(Boolean).join('');
+      } catch (err) {
+        answer.textContent = `Could not ask: ${err.message}`;
+        meta.innerHTML = '';
+      } finally {
+        submit.disabled = false;
+      }
+    }
+  }
+
+  paintHero();
+  paintLoops();
+  paintReviewBar();
+  paintCharts();
+  wireQA();
+  // Live polling: refresh hero numbers + cost chart every 90s until 14:00 ET freeze.
+  startLivePoll({ includeCostChart: true, includeHHIChart: true });
+</script>
+</body>
+</html>

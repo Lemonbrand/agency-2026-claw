@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cost &amp; Sovereignty · Agency 2026</title>
+<link rel="icon" href="/icons/dollar.png" type="image/png">
+<link rel="stylesheet" href="/src/styles/lemon.css">
+<style>
+  .iframe-shell { background: var(--paper-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .iframe-shell iframe { width: 100%; height: 2200px; border: 0; border-radius: 8px; background: var(--paper); }
+  .iframe-meta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-2); }
+  .live-card { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+  @media (max-width: 720px) { .live-card { grid-template-columns: 1fr; } }
+  .live-chart { background: var(--paper); border: 1px solid var(--border); border-radius: 10px; padding: 16px; min-height: 280px; }
+  .live-chart-canvas { height: 240px; }
+</style>
+</head>
+<body>
+<div class="page">
+<nav class="nav"></nav>
+
+<div class="row sp-md">
+  <span class="chip primary">Explore</span>
+  <span class="chip">cost</span>
+  <span class="chip orange" id="cost-live-chip">live</span>
+</div>
+<h1><span id="sov-headline">Forty-three cents.</span> All routed through Virginia.</h1>
+<p class="lede">This is the sovereignty argument as a line on a bill. Every byte of every prompt and every response crossed the border. Multiply by every Canadian government workload running similar shapes and the policy ask writes itself.</p>
+
+<div class="live-card">
+  <div class="metric accent-navy"><strong id="m-rows">—</strong><span>rows scanned</span></div>
+  <div class="metric accent-orange"><strong id="m-findings">—</strong><span>findings surfaced</span></div>
+</div>
+<div class="live-card">
+  <div class="metric accent-green"><strong id="m-dollars">—</strong><span>API-equivalent today</span></div>
+  <div class="live-chart">
+    <div class="eyebrow">Spend over time · stacked by provider</div>
+    <div class="live-chart-canvas"><canvas id="chart-cost"></canvas></div>
+    <div class="hero__caption" id="cap-cost"></div>
+  </div>
+</div>
+
+<h2 class="sp-md">Underlying tracker</h2>
+<p class="note sp-md">The classic cost dashboard, embedded. Refreshes when the backend regenerates <code>web/sovereignty.html</code>.</p>
+<div class="iframe-shell">
+  <div class="iframe-meta">
+    <span>source: <code>web/sovereignty.html</code></span>
+    <a href="/embeds/sovereignty.html" target="_blank" rel="noopener">Open in own tab ↗</a>
+  </div>
+  <iframe src="/embeds/sovereignty.html" title="Sovereignty tracker"></iframe>
+</div>
+
+<footer class="footer">
+  <div class="footer__close">If the auditors won't, the system will, and it will show its work.</div>
+  <div class="footer__meta"><a href="/index.html">Home</a> · <a href="/explore/audit.html">Audit</a></div>
+</footer>
+</div>
+<script type="module">
+import '/src/lib/nav.js';
+import { loadOverview } from '/src/lib/manifest.js';
+import { renderCostOverTime } from '/src/lib/charts.js';
+import { fmtUSD, fmtInt } from '/src/lib/data-format.js';
+import { startLivePoll } from '/src/lib/live-poll.js';
+
+async function paint() {
+  const ov = await loadOverview();
+  const n = ov.headline_numbers || {};
+  document.getElementById('m-rows').textContent = fmtInt(n.rows_scanned);
+  document.getElementById('m-findings').textContent = fmtInt(n.findings);
+  document.getElementById('m-dollars').textContent = fmtUSD(n.dollars_today);
+  if (n.dollars_today != null) {
+    document.getElementById('sov-headline').textContent = `${fmtUSD(n.dollars_today)} today.`;
+  }
+  await renderCostOverTime(document.getElementById('chart-cost'), document.getElementById('cap-cost'));
+}
+paint();
+startLivePoll({ includeCostChart: true, includeHHIChart: false });
+</script>
+</body>
+</html>

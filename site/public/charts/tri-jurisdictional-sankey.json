@@ -1,0 +1,418 @@
+{
+  "caption": "Top entities with both federal and Alberta funding, using GovAlta golden records.",
+  "generated_at": "2026-04-29T14:58:48Z",
+  "links": [
+    {
+      "flow": 593217.45,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "Calgary Roman Catholic Separate School District No. 1",
+      "to": "Calgary Roman Catholic Separate School District No. 1",
+      "value": 593217.45
+    },
+    {
+      "flow": 5054423839.41,
+      "from": "Calgary Roman Catholic Separate School District No. 1",
+      "source": "Calgary Roman Catholic Separate School District No. 1",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 5054423839.41
+    },
+    {
+      "flow": 2713504804.97,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "Government of the Northwest Territories",
+      "to": "Government of the Northwest Territories",
+      "value": 2713504804.97
+    },
+    {
+      "flow": 1500000.0,
+      "from": "Government of the Northwest Territories",
+      "source": "Government of the Northwest Territories",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 1500000.0
+    },
+    {
+      "flow": 484081078.12,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "The Edmonton Catholic Separate School Division",
+      "to": "The Edmonton Catholic Separate School Division",
+      "value": 484081078.12
+    },
+    {
+      "flow": 2120696435.58,
+      "from": "The Edmonton Catholic Separate School Division",
+      "source": "The Edmonton Catholic Separate School Division",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 2120696435.58
+    },
+    {
+      "flow": 64633772.05,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "Northern Alberta Institute of Technology",
+      "to": "Northern Alberta Institute of Technology",
+      "value": 64633772.05
+    },
+    {
+      "flow": 2502792616.58,
+      "from": "Northern Alberta Institute of Technology",
+      "source": "Northern Alberta Institute of Technology",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 2502792616.58
+    },
+    {
+      "flow": 65620386.9,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "Board of Governors of the Southern Alberta Institute of Technology",
+      "to": "Board of Governors of the Southern Alberta Institute of Technology",
+      "value": 65620386.9
+    },
+    {
+      "flow": 2166131022.39,
+      "from": "Board of Governors of the Southern Alberta Institute of Technology",
+      "source": "Board of Governors of the Southern Alberta Institute of Technology",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 2166131022.39
+    },
+    {
+      "flow": 1675564603.16,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "Bow Valley College",
+      "to": "Bow Valley College",
+      "value": 1675564603.16
+    },
+    {
+      "flow": 553895612.11,
+      "from": "Bow Valley College",
+      "source": "Bow Valley College",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 553895612.11
+    },
+    {
+      "flow": 853896.89,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "Rocky View School Division No. 41",
+      "to": "Rocky View School Division No. 41",
+      "value": 853896.89
+    },
+    {
+      "flow": 2087756072.72,
+      "from": "Rocky View School Division No. 41",
+      "source": "Rocky View School Division No. 41",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 2087756072.72
+    },
+    {
+      "flow": 281249905.0,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "Canadian Blood Services / Soci\u00e9t\u00e9 canadienne du sang",
+      "to": "Canadian Blood Services / Soci\u00e9t\u00e9 canadienne du sang",
+      "value": 281249905.0
+    },
+    {
+      "flow": 1407278512.67,
+      "from": "Canadian Blood Services / Soci\u00e9t\u00e9 canadienne du sang",
+      "source": "Canadian Blood Services / Soci\u00e9t\u00e9 canadienne du sang",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 1407278512.67
+    },
+    {
+      "flow": 1672841535.02,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "The Canadian Red Cross Society",
+      "to": "The Canadian Red Cross Society",
+      "value": 1672841535.02
+    },
+    {
+      "flow": 15160100.65,
+      "from": "The Canadian Red Cross Society",
+      "source": "The Canadian Red Cross Society",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 15160100.65
+    },
+    {
+      "flow": 46420396.43,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "The University of Lethbridge",
+      "to": "The University of Lethbridge",
+      "value": 46420396.43
+    },
+    {
+      "flow": 1566210003.97,
+      "from": "The University of Lethbridge",
+      "source": "The University of Lethbridge",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 1566210003.97
+    },
+    {
+      "flow": 8125668.0,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "The Board of Governors of Grant MacEwan University",
+      "to": "The Board of Governors of Grant MacEwan University",
+      "value": 8125668.0
+    },
+    {
+      "flow": 1396887811.69,
+      "from": "The Board of Governors of Grant MacEwan University",
+      "source": "The Board of Governors of Grant MacEwan University",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 1396887811.69
+    },
+    {
+      "flow": 9862857.0,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "Mount Royal University",
+      "to": "Mount Royal University",
+      "value": 9862857.0
+    },
+    {
+      "flow": 1376057846.01,
+      "from": "Mount Royal University",
+      "source": "Mount Royal University",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 1376057846.01
+    },
+    {
+      "flow": 992220118.18,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "University of Saskatchewan",
+      "to": "University of Saskatchewan",
+      "value": 992220118.18
+    },
+    {
+      "flow": 65989678.34,
+      "from": "University of Saskatchewan",
+      "source": "University of Saskatchewan",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 65989678.34
+    },
+    {
+      "flow": 15109815.38,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "Parkland School Division No. 70",
+      "to": "Parkland School Division No. 70",
+      "value": 15109815.38
+    },
+    {
+      "flow": 1038532391.47,
+      "from": "Parkland School Division No. 70",
+      "source": "Parkland School Division No. 70",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 1038532391.47
+    },
+    {
+      "flow": 3387110.0,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "Chinook's Edge School Division No. 73",
+      "to": "Chinook's Edge School Division No. 73",
+      "value": 3387110.0
+    },
+    {
+      "flow": 1040969800.15,
+      "from": "Chinook's Edge School Division No. 73",
+      "source": "Chinook's Edge School Division No. 73",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 1040969800.15
+    },
+    {
+      "flow": 265628.29,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "Red Deer Catholic Regional Division No. 39",
+      "to": "Red Deer Catholic Regional Division No. 39",
+      "value": 265628.29
+    },
+    {
+      "flow": 916281107.0,
+      "from": "Red Deer Catholic Regional Division No. 39",
+      "source": "Red Deer Catholic Regional Division No. 39",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 916281107.0
+    },
+    {
+      "flow": 861661860.34,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "University of Waterloo",
+      "to": "University of Waterloo",
+      "value": 861661860.34
+    },
+    {
+      "flow": 2227306.86,
+      "from": "University of Waterloo",
+      "source": "University of Waterloo",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 2227306.86
+    },
+    {
+      "flow": 779759023.05,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "The Governors of the University of Alberta",
+      "to": "The Governors of the University of Alberta",
+      "value": 779759023.05
+    },
+    {
+      "flow": 42060725.33,
+      "from": "The Governors of the University of Alberta",
+      "source": "The Governors of the University of Alberta",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 42060725.33
+    },
+    {
+      "flow": 757906523.34,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "Catholic Social Services",
+      "to": "Catholic Social Services",
+      "value": 757906523.34
+    },
+    {
+      "flow": 25632490.9,
+      "from": "Catholic Social Services",
+      "source": "Catholic Social Services",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 25632490.9
+    },
+    {
+      "flow": 760992972.75,
+      "from": "Federal",
+      "source": "Federal",
+      "target": "Edmonton Newcomer Centre",
+      "to": "Edmonton Newcomer Centre",
+      "value": 760992972.75
+    },
+    {
+      "flow": 3029583.65,
+      "from": "Edmonton Newcomer Centre",
+      "source": "Edmonton Newcomer Centre",
+      "target": "Alberta",
+      "to": "Alberta",
+      "value": 3029583.65
+    }
+  ],
+  "nodes": [
+    {
+      "id": "Federal",
+      "label": "Federal"
+    },
+    {
+      "id": "Alberta",
+      "label": "Alberta"
+    },
+    {
+      "id": "Calgary Roman Catholic Separate School District No. 1",
+      "label": "Calgary Roman Catholic Separate School District No. 1"
+    },
+    {
+      "id": "Government of the Northwest Territories",
+      "label": "Government of the Northwest Territories"
+    },
+    {
+      "id": "The Edmonton Catholic Separate School Division",
+      "label": "The Edmonton Catholic Separate School Division"
+    },
+    {
+      "id": "Northern Alberta Institute of Technology",
+      "label": "Northern Alberta Institute of Technology"
+    },
+    {
+      "id": "Board of Governors of the Southern Alberta Institute of Technology",
+      "label": "Board of Governors of the Southern Alberta Institute of Technology"
+    },
+    {
+      "id": "Bow Valley College",
+      "label": "Bow Valley College"
+    },
+    {
+      "id": "Rocky View School Division No. 41",
+      "label": "Rocky View School Division No. 41"
+    },
+    {
+      "id": "Canadian Blood Services / Soci\u00e9t\u00e9 canadienne du sang",
+      "label": "Canadian Blood Services / Soci\u00e9t\u00e9 canadienne du sang"
+    },
+    {
+      "id": "The Canadian Red Cross Society",
+      "label": "The Canadian Red Cross Society"
+    },
+    {
+      "id": "The University of Lethbridge",
+      "label": "The University of Lethbridge"
+    },
+    {
+      "id": "The Board of Governors of Grant MacEwan University",
+      "label": "The Board of Governors of Grant MacEwan University"
+    },
+    {
+      "id": "Mount Royal University",
+      "label": "Mount Royal University"
+    },
+    {
+      "id": "University of Saskatchewan",
+      "label": "University of Saskatchewan"
+    },
+    {
+      "id": "Parkland School Division No. 70",
+      "label": "Parkland School Division No. 70"
+    },
+    {
+      "id": "Chinook's Edge School Division No. 73",
+      "label": "Chinook's Edge School Division No. 73"
+    },
+    {
+      "id": "Red Deer Catholic Regional Division No. 39",
+      "label": "Red Deer Catholic Regional Division No. 39"
+    },
+    {
+      "id": "University of Waterloo",
+      "label": "University of Waterloo"
+    },
+    {
+      "id": "The Governors of the University of Alberta",
+      "label": "The Governors of the University of Alberta"
+    },
+    {
+      "id": "Catholic Social Services",
+      "label": "Catholic Social Services"
+    },
+    {
+      "id": "Edmonton Newcomer Centre",
+      "label": "Edmonton Newcomer Centre"
+    }
+  ],
+  "title": "Tri-jurisdictional funding overlap",
+  "type": "sankey"
+}

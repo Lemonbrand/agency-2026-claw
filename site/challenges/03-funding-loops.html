@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="lc-challenge" content="03">
+<title>Funding Loops · Agency 2026</title>
+<link rel="icon" href="/icons/shield.png" type="image/png">
+<link rel="stylesheet" href="/src/styles/lemon.css">
+</head>
+<body>
+<div class="page">
+<nav class="nav"></nav>
+<main></main>
+<footer class="footer">
+  <div class="footer__close">If the auditors won't, the system will, and it will show its work.</div>
+  <div class="footer__meta">
+    <a href="/index.html">Home</a> · <a href="/explore/audit.html">Audit</a> · <a href="/explore/sovereignty.html">Cost</a> · <a href="/explore/decisions.html">My review</a>
+  </div>
+</footer>
+</div>
+
+<script type="module">
+import '/src/lib/nav.js';
+import { renderChallengePage } from '/src/lib/challenge-page.js';
+import { startLivePoll } from '/src/lib/live-poll.js';
+renderChallengePage();
+startLivePoll({ includeCostChart: false, includeHHIChart: false });
+</script>
+</body>
+</html>
