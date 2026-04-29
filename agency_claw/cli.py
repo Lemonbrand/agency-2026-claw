@@ -4,7 +4,7 @@ import argparse
 import sys
 
 from . import correlate as correlate_mod
-from . import dashboard, dataset, detectors, ledger, neotoma, paths
+from . import dashboard, dataset, detectors, hackathon, ledger, neotoma, paths
 from .disconfirm import disconfirm
 from .planner import create_plan
 from .resolution import resolve_entities
@@ -29,6 +29,14 @@ def cmd_onboard(_: argparse.Namespace) -> int:
     print(f"loaded {len(out['manifest'])} files")
     for profile in out["profiles"]:
         print(f"- {profile['table']}: {profile['row_count']} rows, {len(profile['columns'])} columns")
+    return 0
+
+
+def cmd_hackathon_onboard(_: argparse.Namespace) -> int:
+    out = hackathon.onboard()
+    print(f"materialized {len(out['manifest'])} hackathon tables from Postgres")
+    for profile in out["profiles"]:
+        print(f"- {profile['table']}: {profile['row_count']:,} rows, {len(profile['columns'])} columns")
     return 0
 
 
@@ -124,6 +132,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     onboard = sub.add_parser("onboard")
     onboard.set_defaults(func=cmd_onboard)
+
+    hackathon_onboard = sub.add_parser("hackathon-onboard")
+    hackathon_onboard.set_defaults(func=cmd_hackathon_onboard)
 
     plan = sub.add_parser("plan")
     plan.add_argument("--brain", choices=["heuristic", "codex"], default="heuristic")

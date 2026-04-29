@@ -48,11 +48,21 @@ def _packet_for_vendor_concentration(finding: dict[str, Any]) -> dict[str, Any]:
 
 def _packet_for_amendment_creep(finding: dict[str, Any]) -> dict[str, Any]:
     multiple = float(_metric(finding, "multiple", 1) or 1)
-    contract_ref = _metric(finding, "contract_ref", "this contract")
+    contract_ref = (
+        _metric(finding, "contract_ref")
+        or _metric(finding, "ref_number")
+        or "this agreement"
+    )
+    department = _metric(finding, "department")
+    recipient = _metric(finding, "recipient") or finding.get("entity", "")
+    department_phrase = f" for {department}" if department else ""
     return {
         "story_type": "risk",
         "lens": "post_award_growth",
-        "what_happened": f"Contract {contract_ref} grew {multiple:.1f}x its original awarded value through amendments.",
+        "what_happened": (
+            f"Agreement {contract_ref}{department_phrase} grew {multiple:.1f}x its "
+            f"original awarded value through amendments. Recipient: {recipient}."
+        ),
         "why_it_matters": (
             "Large post-award growth can indicate weak initial scoping, scope drift, or competitive "
             "thresholds being avoided through amendments rather than recompete."
@@ -104,10 +114,99 @@ def _generic_packet(finding: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _packet_for_tri_jurisdictional(finding: dict[str, Any]) -> dict[str, Any]:
+    fed = float(_metric(finding, "fed_total", 0) or 0)
+    ab = float(_metric(finding, "ab_total", 0) or 0)
+    fed_count = int(_metric(finding, "fed_count", 0) or 0)
+    ab_count = int(_metric(finding, "ab_count", 0) or 0)
+    bn = _metric(finding, "bn_root", "")
+    entity = finding.get("entity", "this organization")
+    return {
+        "story_type": "policy_gap",
+        "lens": "uncoordinated_overlap",
+        "what_happened": (
+            f"{entity} (BN {bn}) receives funding from all three Canadian jurisdictions: "
+            f"${fed:,.0f} federal across {fed_count} grants, ${ab:,.0f} Alberta across {ab_count} payments, "
+            f"plus a CRA charity registration."
+        ),
+        "why_it_matters": (
+            "Cross-jurisdictional support can be deliberate cofunding under a known program or "
+            "uncoordinated overlap where each level pays without the others knowing. The two stories "
+            "look identical in data and need different next actions."
+        ),
+        "who_is_affected": "Federal and provincial program leads, the recipient organization, and the policy committee that owns the file.",
+        "evidence_summary": (finding.get("evidence") or [{}])[0].get("summary", ""),
+        "what_could_disprove": (
+            "If the funding streams support distinct phases, geographies, or eligible cost categories, "
+            "the lens flips from uncoordinated overlap to portfolio coverage."
+        ),
+        "what_to_check_next": "Pull the program agreements at each level; map their scope and period overlap.",
+        "decision_enabled": "Decide whether to coordinate the funding streams or document why coordination is unnecessary.",
+    }
+
+
+def _packet_for_funding_loops(finding: dict[str, Any]) -> dict[str, Any]:
+    score = int(_metric(finding, "score", 0) or 0)
+    amount = float(_metric(finding, "total_circular_amt", 0) or 0)
+    loops = int(_metric(finding, "total_loops", 0) or 0)
+    entity = finding.get("entity", "this charity")
+    return {
+        "story_type": "risk",
+        "lens": "circular_transfer",
+        "what_happened": (
+            f"{entity} sits in {loops} qualified-donee gift loops with a CRA risk score of "
+            f"{score}/30 and ${amount:,.0f} in circular gift volume."
+        ),
+        "why_it_matters": (
+            "Circular qualified-donee gifts can be normal denominational structure, federated charity "
+            "operations, or revenue inflation. The CRA score quantifies the pattern; the next call is the human's."
+        ),
+        "who_is_affected": "Donors expecting their gifts to fund programs, and CRA's compliance review function.",
+        "evidence_summary": (finding.get("evidence") or [{}])[0].get("summary", ""),
+        "what_could_disprove": (
+            "If the loops match a documented denominational hierarchy or federated charity structure, "
+            "the score reflects normal flow rather than anomalous circular activity."
+        ),
+        "what_to_check_next": "Pull the loop participants from cra.loop_participants; check whether they share a denominational or federated parent.",
+        "decision_enabled": "Decide whether to escalate to compliance review or document as expected federated structure.",
+    }
+
+
+def _packet_for_sole_source_concentration(finding: dict[str, Any]) -> dict[str, Any]:
+    share = float(_metric(finding, "share", 0) or 0)
+    ministry = _metric(finding, "ministry", "this ministry")
+    spend = float(_metric(finding, "ministry_spend", 0) or 0)
+    vendor_count = int(_metric(finding, "vendor_count", 0) or 0)
+    vendor = finding.get("entity", "the top vendor")
+    return {
+        "story_type": "risk",
+        "lens": "sole_source_dominance",
+        "what_happened": (
+            f"{vendor} holds {share:.1%} of {ministry}'s sole-source spend "
+            f"(${spend:,.0f} across {vendor_count} sole-source vendors)."
+        ),
+        "why_it_matters": (
+            "Sole-source contracts bypass competitive procurement by design. Concentration there "
+            "is more meaningful than concentration in competitive contracts; it deserves a documented justification."
+        ),
+        "who_is_affected": "The procuring ministry, alternative vendors who never bid, and the public.",
+        "evidence_summary": (finding.get("evidence") or [{}])[0].get("summary", ""),
+        "what_could_disprove": (
+            "If the dominance reflects a specialized statutory function (single regulator, sole supplier "
+            "by law, or a permitted_situations code that explicitly justifies it), the lens shifts to centrality."
+        ),
+        "what_to_check_next": "Pull the permitted_situations codes for the contracts; verify the policy rationale per ministry.",
+        "decision_enabled": "Decide whether the ministry's sole-source design is justified or has drifted into incumbency.",
+    }
+
+
 PACKET_BUILDERS = {
     "vendor_concentration": _packet_for_vendor_concentration,
     "amendment_creep": _packet_for_amendment_creep,
     "related_parties": _packet_for_related_parties,
+    "tri_jurisdictional_funding": _packet_for_tri_jurisdictional,
+    "funding_loops": _packet_for_funding_loops,
+    "sole_source_concentration": _packet_for_sole_source_concentration,
 }
 
 

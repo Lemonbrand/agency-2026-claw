@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import detectors, ledger
+from . import detectors, hackathon, ledger
 from .planner import load_plan
 
 
@@ -10,6 +10,11 @@ DETECTORS = {
     "vendor-concentration": detectors.vendor_concentration,
     "amendment-creep": detectors.amendment_creep,
     "related-parties": detectors.related_parties,
+    "tri-jurisdictional-funding": hackathon.detect_tri_jurisdictional,
+    "cra-loop-risk": hackathon.detect_funding_loops,
+    "ab-sole-source-concentration": hackathon.detect_sole_source_concentration,
+    "fed-amendment-creep": hackathon.detect_amendment_creep_fed,
+    "cra-shared-directors": hackathon.detect_shared_directors,
 }
 
 

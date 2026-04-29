@@ -426,6 +426,102 @@
         }
       ],
       "disconfirming_checks": ["Check whether the spend label maps to the commitment through a different program name.", "Check whether the alignment is recent or sustained."]
+    },
+    {
+      "name": "tri-jurisdictional-funding",
+      "command": "tri-jurisdictional-funding",
+      "status": "implemented",
+      "priority": 5,
+      "story_type": "policy_gap",
+      "lens": "uncoordinated_overlap",
+      "description": "Find organizations funded by all three Canadian jurisdictions (CRA charity, federal grants, Alberta) without those funders necessarily knowing about each other.",
+      "why_it_matters": "Cross-jurisdictional funding can be deliberate cofunding or invisible duplication. Either lens deserves a coordination conversation, not an accusation.",
+      "table_scope": "single_table",
+      "requires": [
+        {"semantic": "canonical_name", "aliases": ["canonical_name"]},
+        {"semantic": "jurisdiction_count", "aliases": ["jurisdiction_count"]},
+        {"semantic": "fed_total", "aliases": ["fed_total"]},
+        {"semantic": "ab_total", "aliases": ["ab_total"]}
+      ],
+      "optional": [],
+      "disconfirming_checks": ["Check whether the funding streams support distinct programs, periods, or cost categories.", "Check whether the alignment is intentional cofunding under a known program."]
+    },
+    {
+      "name": "cra-loop-risk",
+      "command": "cra-loop-risk",
+      "status": "implemented",
+      "priority": 35,
+      "story_type": "risk",
+      "lens": "circular_transfer",
+      "description": "Wrap CRA's pre-computed circular-gifting risk score (0-30) per charity with seven-field story packets.",
+      "why_it_matters": "CRA's loop_universe scoring already cross-validates self-join and Johnson's algorithm. Our value is to package the high-score charities with caveats and a next action.",
+      "table_scope": "single_table",
+      "requires": [
+        {"semantic": "bn", "aliases": ["bn"]},
+        {"semantic": "score", "aliases": ["score"]},
+        {"semantic": "total_circular_amt", "aliases": ["total_circular_amt"]}
+      ],
+      "optional": [
+        {"semantic": "legal_name", "aliases": ["legal_name"]}
+      ],
+      "disconfirming_checks": ["Check whether the loops are denominational or federated structure rather than gaming.", "Check whether the score is driven by one large bottleneck or many small ones."]
+    },
+    {
+      "name": "ab-sole-source-concentration",
+      "command": "ab-sole-source-concentration",
+      "status": "implemented",
+      "priority": 15,
+      "story_type": "risk",
+      "lens": "sole_source_dominance",
+      "description": "Find Alberta ministries where one vendor dominates sole-source spend.",
+      "why_it_matters": "Sole-source contracts bypass competitive procurement. Concentration there is meaningfully different from concentration in competitive contracts.",
+      "table_scope": "single_table",
+      "requires": [
+        {"semantic": "vendor", "aliases": ["vendor"]},
+        {"semantic": "ministry", "aliases": ["ministry"]},
+        {"semantic": "amount", "aliases": ["amount"]}
+      ],
+      "optional": [
+        {"semantic": "permitted_situations", "aliases": ["permitted_situations"]}
+      ],
+      "disconfirming_checks": ["Check whether the dominance reflects a specialized statutory function (e.g. a single regulator).", "Check whether the permitted_situations code justifies the concentration."]
+    },
+    {
+      "name": "fed-amendment-creep",
+      "command": "fed-amendment-creep",
+      "status": "implemented",
+      "priority": 25,
+      "story_type": "risk",
+      "lens": "post_award_growth",
+      "description": "Find federal agreements whose current value materially exceeds the original (latest amendment compared to is_amendment=false original).",
+      "why_it_matters": "Implements F-3 mitigation: deduplicates per (ref_number, recipient_key) before comparing. Naive SUM on grants_contributions inflates by ~73%.",
+      "table_scope": "multi_table",
+      "requires": [
+        {"semantic": "ref_number", "aliases": ["ref_number"]},
+        {"semantic": "recipient_key", "aliases": ["recipient_key"]},
+        {"semantic": "agreement_value", "aliases": ["agreement_value"]}
+      ],
+      "optional": [
+        {"semantic": "owner_org_title", "aliases": ["owner_org_title"]}
+      ],
+      "disconfirming_checks": ["Check whether the amendments fund distinct phases authorized under the original procurement.", "Check whether the original_value is a placeholder rather than a true award amount."]
+    },
+    {
+      "name": "cra-shared-directors",
+      "command": "cra-shared-directors",
+      "status": "implemented",
+      "priority": 45,
+      "story_type": "operating_insight",
+      "lens": "name_overlap_review",
+      "description": "Directors appearing on the boards of 3+ distinct charities, surfaced as identity-validation review leads.",
+      "why_it_matters": "T3010 director rosters are the only pan-charity governance signal. Name overlap is a review lead, not a finding; identity validation is required.",
+      "table_scope": "single_table",
+      "requires": [
+        {"semantic": "person", "aliases": ["person"]},
+        {"semantic": "bn_count", "aliases": ["bn_count"]}
+      ],
+      "optional": [],
+      "disconfirming_checks": ["Check whether the matched persons share a unique identifier (DOB, address, declared affiliation).", "Check whether overlapping board terms actually existed in time."]
     }
   ]
 }

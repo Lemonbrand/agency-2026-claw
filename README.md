@@ -153,11 +153,16 @@ Large files stay in DuckDB. Neotoma only stores what matters for audit: profiles
 
 ## Implemented Skills
 
-| Skill | Story type | What it surfaces | Status |
-| --- | --- | --- | --- |
-| Vendor concentration | Risk | One vendor dominating spend in a category | Implemented |
-| Amendment creep | Risk | Contracts whose value grew materially after award | Implemented |
-| Related parties | Operating insight | Names appearing across organizations | Implemented as review leads |
+| Skill | Story type | What it surfaces | Source | Status |
+| --- | --- | --- | --- | --- |
+| Vendor concentration | Risk | One vendor dominating spend in a category | Local CSV / hackathon | Implemented |
+| Amendment creep | Risk | Contracts whose value grew materially after award (local files) | Local CSV | Implemented |
+| Related parties | Operating insight | Names appearing across organizations | Local CSV | Implemented |
+| **Tri-jurisdictional funding** | Policy gap | Organizations funded by all three Canadian jurisdictions | Hackathon `general.entity_golden_records` | Implemented |
+| **CRA loop risk** | Risk | High circular-gifting score on T3010 qualified-donee gifts | Hackathon `cra.loop_universe` | Implemented |
+| **AB sole-source concentration** | Risk | Vendor dominance inside Alberta sole-source contracts by ministry | Hackathon `ab.ab_sole_source` | Implemented |
+| **FED amendment creep** | Risk | Federal agreements whose current value materially exceeds the original (F-3-safe) | Hackathon `fed.grants_contributions` | Implemented |
+| **CRA shared directors** | Operating insight | Director names appearing on the boards of 3+ distinct charities | Hackathon `cra.cra_directors` | Implemented |
 
 Twelve more skills are declared in the registry as stubs, balanced across story types: zombie-recipients, ghost-capacity, funding-loops, policy-misalignment, duplicative-funding, contract-intelligence, adverse-media, **geographic-coverage**, **program-stability**, **delivery-diversity**, **scale-readiness**, **commitment-alignment**.
 
@@ -168,33 +173,50 @@ A stub can only be selected by the planner when both conditions are true:
 
 Stubs are surfaced as rejections with reasons. That is intentional. "We cannot support this story from this dataset" is part of the product. Implementing a stub is a small, well-scoped contribution: ship a detector function, set the `command` field, send a PR.
 
+## Hackathon Data Quality Notes
+
+LemonClaw's federal amendment-creep skill implements the [F-3 mitigation](https://github.com/GovAlta/agency-26-hackathon/blob/main/KNOWN-DATA-ISSUES.md) from the GovAlta `KNOWN-DATA-ISSUES.md`: it deduplicates per `(ref_number, recipient_key)` before comparing original to current value. Naive `SUM(agreement_value)` on `fed.grants_contributions` inflates by ~$388B (~73%) because every amendment row restates the running total.
+
+The CRA loop-risk skill wraps the pre-computed `cra.loop_universe` score (0-30) rather than rebuilding cycle detection. CRA's pipeline already cross-validates self-join against Johnson's algorithm; LemonClaw's value is to package the high-score charities with seven-field story packets and a next action.
+
+The tri-jurisdictional skill leans on `general.entity_golden_records` from the GovAlta entity-resolution pipeline (deterministic + Splink + LLM-authored). Findings emitted by `tri-jurisdictional-funding` carry the canonical name straight from the golden record. LemonClaw's separate entity-resolution module still runs the heuristic / Codex clustering on surfaced findings; folding golden-record IDs in as the primary cluster key is a tomorrow-morning improvement.
+
 ## Demo Workflow
 
-Use this for the public HTML presentation:
+### Option A — Hackathon dataset (real Canadian government data)
+
+Wires LemonClaw to the GovAlta Agency 2026 Postgres replica (CRA T3010 ~8.8M rows + federal grants ~1.3M + Alberta ~2.6M + golden records ~851K). Materializes a working subset locally, then runs the full LemonClaw pipeline against it.
 
 ```bash
-./scripts/bootstrap.sh
-make presentation
+./scripts/bootstrap.sh           # one-time: venv + Neotoma
+make hackathon                   # ~30s materialize + ~15s skills + dashboard
 open web/dashboard.html
 ```
 
-`make presentation` runs the local deterministic demo path and rebuilds the HTML dashboard. It does not require a live model call during the presentation.
+`make hackathon` runs:
+- `hackathon-onboard` — ATTACH Postgres via DuckDB's `postgres` extension, materialize six `hk_*` working tables (~3M rows total in ~30s).
+- `plan` — heuristic planner selects the implemented skills the data supports, rejects the rest with reasons.
+- `run-plan` — six skills execute against the materialized tables: `tri-jurisdictional-funding`, `cra-loop-risk`, `ab-sole-source-concentration`, `fed-amendment-creep`, `cra-shared-directors`, `vendor-concentration`.
+- `verify` → `disconfirm` → `resolve-entities` → `correlate` → `review` → `promote` → `ui` (same downstream pipeline as the demo path).
 
-For the full model-assisted preparation path:
+For the full model-assisted hackathon run (Codex planner, Claude story-shaper):
+
+```bash
+make hackathon-agentic
+```
+
+### Option B — Local demo data (offline development)
+
+Runs the same pipeline against the small CSV fixtures in `data/raw/` so contributors can develop without Postgres access.
 
 ```bash
 ./scripts/bootstrap.sh
-./scripts/create-demo-data.py
-make demo-agentic
+make demo                        # heuristic planner + heuristic reviewer
+make demo-agentic                # Codex planner + Claude reviewer
 open web/dashboard.html
 ```
 
-`make demo-agentic` uses:
-
-- Codex CLI for schema-to-skill planning, counterchecks, and entity clustering.
-- Claude CLI for skeptical second-pass review.
-- DuckDB for deterministic execution.
-- Local Neotoma for audit storage.
+The presentation path runs deterministically with no live model calls so venue Wi-Fi cannot break it. Codex / Claude run in the prep step (`make hackathon-agentic` or `make demo-agentic`) and their output is cached in `state/review.json` for the dashboard to read.
 
 ## Commands
 

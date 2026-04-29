@@ -1,4 +1,4 @@
-.PHONY: bootstrap demo presentation demo-agentic onboard plan run-plan run correlate verify disconfirm resolve review promote ui neotoma-smoke test
+.PHONY: bootstrap demo presentation demo-agentic hackathon hackathon-agentic onboard plan run-plan run correlate verify disconfirm resolve review promote ui neotoma-smoke test
 
 bootstrap:
 	./scripts/bootstrap.sh
@@ -20,6 +20,30 @@ presentation: demo
 
 demo-agentic:
 	./bin/agency onboard
+	./bin/agency plan --brain codex
+	./bin/agency run-plan
+	./bin/agency verify
+	./bin/agency disconfirm --brain codex
+	./bin/agency resolve-entities --brain codex
+	./bin/agency correlate
+	./bin/agency review --reviewer claude
+	./bin/agency promote
+	./bin/agency ui
+
+hackathon:
+	./bin/agency hackathon-onboard
+	./bin/agency plan --brain heuristic
+	./bin/agency run-plan
+	./bin/agency verify
+	./bin/agency disconfirm --brain heuristic
+	./bin/agency resolve-entities --brain heuristic
+	./bin/agency correlate
+	./bin/agency review --reviewer heuristic
+	./bin/agency promote
+	./bin/agency ui
+
+hackathon-agentic:
+	./bin/agency hackathon-onboard
 	./bin/agency plan --brain codex
 	./bin/agency run-plan
 	./bin/agency verify
