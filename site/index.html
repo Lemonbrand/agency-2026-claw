@@ -276,6 +276,99 @@
   .cta-card .cs { font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
   .cta-card .cg { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--orange-deep); }
 
+  .faq-section {
+    margin-top: 42px;
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .faq-section h2 {
+    margin-bottom: 8px;
+  }
+  .faq-section .subline {
+    color: var(--ink-2);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .faq-list {
+    display: grid;
+    gap: 12px;
+  }
+  .faq-item {
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--orange);
+    border-radius: 12px;
+    background: var(--paper);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .faq-item h3 {
+    font-size: 19px;
+    margin-bottom: 8px;
+  }
+  .faq-item p {
+    color: var(--ink-2);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  @media (max-width: 800px) {
+    .faq-section {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .page {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+    .stage {
+      margin: 14px 0 18px;
+      padding: 28px 14px 44px;
+    }
+    .eyebrow-row {
+      margin-bottom: 18px;
+    }
+    .pill-money {
+      font-size: clamp(64px, 23vw, 88px);
+    }
+    .pill-statement {
+      margin-bottom: 28px;
+    }
+    .viz-card,
+    .provider,
+    .ministory,
+    .cta-card,
+    .faq-item {
+      min-width: 0;
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+    .pie-frame {
+      height: 230px;
+      min-width: 0;
+    }
+    .pie-frame canvas {
+      max-width: 100%;
+      max-height: 230px;
+    }
+    .map-frame {
+      min-height: 270px;
+      padding: 10px;
+    }
+    .map-frame .legend {
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      border-radius: 10px;
+    }
+    .footer-strip {
+      gap: 10px;
+    }
+  }
+
   .footer-strip {
     display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
     margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border);
@@ -433,6 +526,24 @@
     </a>
   </div>
 
+  <section class="faq-section" aria-label="Frequently asked questions">
+    <div>
+      <div class="eyebrow">FAQ</div>
+      <h2>Two honest answers.</h2>
+      <p class="subline">The win matters less than the operating question it raises: how fast can this become a trusted internal capability?</p>
+    </div>
+    <div class="faq-list">
+      <article class="faq-item">
+        <h3>Can my whole department use this on Monday?</h3>
+        <p>The pattern works today. The infrastructure to run it across a department needs roughly the budget of a small data engineering team plus a Canadian compute lane partner. That is the same investment shape as any other internal-platform decision. The auditor general's office does not need a research grant. It needs a build-and-buy decision.</p>
+      </article>
+      <article class="faq-item">
+        <h3>Is this accusing anyone of wrongdoing?</h3>
+        <p>No. LemonClaw produces review leads, not allegations. A lead must point back to source tables, replayable SQL, proof level, and a countercheck. If the data cannot support a claim, the system says that visibly instead of filling the gap with language.</p>
+      </article>
+    </div>
+  </section>
+
   <div class="footer-strip">
     <span>If the auditors won't, the system will.</span>
     <span class="spacer"></span>
@@ -441,6 +552,7 @@
     <a href="/explore/audit.html">Evidence trail</a>
     <a href="/explore/data-tables.html">Findings table</a>
     <a href="/explore/decisions.html">My review</a>
+    <a href="https://github.com/Lemonbrand/agency-2026-claw" target="_blank" rel="noopener">GitHub</a>
   </div>
 </section>
 </div>

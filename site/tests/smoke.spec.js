@@ -36,6 +36,7 @@ const ASSETS = [
   '/img/3dicons/rocket.png',
   '/img/3dicons/money-bag.png',
   '/img/3dicons/tools.png',
+  '/img/3dicons/heart.png',
 ];
 
 const DATA = [
@@ -124,6 +125,23 @@ test.describe('Internal links', () => {
       const res = await request.get(path);
       expect(res.status(), `link ${path}`).toBeLessThan(400);
     }
+  });
+});
+
+test.describe('Award note', () => {
+  test('home shows first-place banner, FAQ, and dismissible popup', async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.removeItem('lc_award_popup_dismissed_v1'));
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('.award-banner')).toContainText('This project won first place.');
+    await expect(page.locator('.award-banner')).toContainText('Government of Alberta');
+    await expect(page.locator('.award-popup')).toContainText('This project won first place.');
+    await expect(page.locator('.faq-section')).toContainText('Can my whole department use this on Monday?');
+    await page.locator('.award-popup__close').click();
+    await expect(page.locator('.award-popup')).toHaveCount(0);
+    const dismissed = await page.evaluate(() => localStorage.getItem('lc_award_popup_dismissed_v1'));
+    expect(dismissed).toBe('1');
   });
 });
 
