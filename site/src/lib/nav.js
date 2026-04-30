@@ -78,6 +78,7 @@ function renderAwardPopup() {
     <div class="award-popup__body">
       <div class="award-popup__eyebrow">Agency 2026 Ottawa</div>
       <strong>This project won first place.</strong>
+      <p>Thank you to the <a href="https://luma.com/5e83iia8" target="_blank" rel="noopener">Government of Alberta</a> for making the event happen.</p>
       <p>Built in a day to show accountable AI for public data: find patterns, refuse weak claims, and leave receipts.</p>
       <div class="award-popup__actions">
         <a class="btn btn--primary btn--small" href="https://cal.com/lemonbrand/coffee" target="_blank" rel="noopener">Coffee with Simon</a>
