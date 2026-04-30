@@ -47,25 +47,6 @@ function bindScrollState(mount) {
   window.addEventListener('scroll', update, { passive: true });
 }
 
-function renderAwardBanner(mount) {
-  if (document.querySelector('.award-banner')) return;
-  const banner = document.createElement('section');
-  banner.className = 'award-banner';
-  banner.setAttribute('aria-label', 'Agency 2026 award note');
-  banner.innerHTML = `
-    <div class="award-banner__eyebrow">Agency 2026 Ottawa</div>
-    <div class="award-banner__copy">
-      <strong>This project won first place.</strong>
-      Thank you to the <a href="https://luma.com/5e83iia8" target="_blank" rel="noopener">Government of Alberta</a> for making the event happen, and to the organizers, sponsors, judges, and participants who pushed the work.
-    </div>
-    <div class="award-banner__links">
-      <a href="https://github.com/GovAlta/agency-26-hackathon" target="_blank" rel="noopener">GovAlta repo</a>
-      <a href="https://lemonbrand.io" target="_blank" rel="noopener">Lemonbrand</a>
-    </div>
-  `;
-  mount.insertAdjacentElement('afterend', banner);
-}
-
 function renderAwardPopup() {
   if (localStorage.getItem(AWARD_POPUP_KEY) === '1') return;
   if (document.querySelector('.award-popup')) return;
@@ -117,7 +98,6 @@ export function renderNav() {
 
   bindNavBadge('.nav__badge[data-badge="reviews"]');
   bindScrollState(mount);
-  renderAwardBanner(mount);
   renderAwardPopup();
 }
 

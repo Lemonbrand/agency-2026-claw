@@ -360,21 +360,7 @@ a:hover { color: var(--orange-deep); border-color: var(--orange); }
 }
 .nav__badge.is-zero { background: var(--gray-border); color: var(--ink-2); }
 
-/* ── First-place note ─────────────────────────── */
-.award-banner {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 14px;
-  align-items: center;
-  margin: -16px -48px 30px;
-  padding: 12px 48px;
-  border: 1px solid var(--orange-border);
-  border-left: 0;
-  border-right: 0;
-  background: hsl(28, 79%, 95%, 0.70);
-  color: var(--ink-2);
-}
-.award-banner__eyebrow,
+/* ── First-place popup ────────────────────────── */
 .award-popup__eyebrow {
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 10.5px;
@@ -384,41 +370,8 @@ a:hover { color: var(--orange-deep); border-color: var(--orange); }
   color: var(--orange-deep);
   white-space: nowrap;
 }
-.award-banner__copy {
-  font-size: 13.5px;
-  line-height: 1.45;
-}
-.award-banner__copy strong {
-  color: var(--ink);
-  font-weight: 800;
-}
-.award-banner a,
 .award-popup a {
   border-bottom: 0;
-}
-.award-banner__links {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  justify-content: flex-end;
-}
-.award-banner__links a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 6px 10px;
-  border: 1px solid var(--orange-border);
-  border-radius: 999px;
-  background: var(--paper);
-  color: var(--ink);
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.award-banner__links a:hover {
-  background: var(--orange);
-  border-color: var(--orange);
-  color: var(--paper);
 }
 .award-popup {
   position: fixed;
@@ -952,24 +905,6 @@ details.collapsible > *:not(summary) { margin-top: 12px; }
   .nav__link {
     padding: 7px 10px;
     font-size: 12.5px;
-  }
-  .award-banner {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    margin: -10px -8px 20px;
-    padding: 12px;
-    border: 1px solid var(--orange-border);
-    border-radius: 12px;
-  }
-  .award-banner__eyebrow {
-    white-space: normal;
-  }
-  .award-banner__copy {
-    font-size: 12.8px;
-  }
-  .award-banner__links {
-    justify-content: flex-start;
-    flex-wrap: wrap;
   }
   .award-popup {
     left: 12px;

@@ -129,15 +129,17 @@ test.describe('Internal links', () => {
 });
 
 test.describe('Award note', () => {
-  test('home shows first-place banner, FAQ, and dismissible popup', async ({ page }) => {
+  test('home shows post-event FAQ and dismissible first-place popup', async ({ page }) => {
     await page.goto('/');
     await page.evaluate(() => localStorage.removeItem('lc_award_popup_dismissed_v1'));
     await page.reload();
     await page.waitForLoadState('networkidle');
-    await expect(page.locator('.award-banner')).toContainText('This project won first place.');
-    await expect(page.locator('.award-banner')).toContainText('Government of Alberta');
+    await expect(page.locator('.award-banner')).toHaveCount(0);
     await expect(page.locator('.award-popup')).toContainText('This project won first place.');
+    await expect(page.locator('.award-popup')).toContainText('Government of Alberta');
+    await expect(page.locator('.award-popup a[href="https://luma.com/5e83iia8"]')).toHaveText('Government of Alberta');
     await expect(page.locator('.faq-section')).toContainText('Can my whole department use this on Monday?');
+    await expect(page.locator('.faq-section')).toContainText('Added after Agency 2026 Ottawa');
     await page.locator('.award-popup__close').click();
     await expect(page.locator('.award-popup')).toHaveCount(0);
     const dismissed = await page.evaluate(() => localStorage.getItem('lc_award_popup_dismissed_v1'));
